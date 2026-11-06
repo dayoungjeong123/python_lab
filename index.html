@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>while문 흐름 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+/* Layout: 학습지 예제 실행기 — 상단 탭, 코드 | 상태 | 흐름도, 비교 탭은 2열 */
+:root{
+  --bg:#EEF2F7; --panel:#FFFFFF; --ink:#152033; --muted:#5A6579; --line:#D6DDE8; --line-strong:#9AA6B8;
+  --accent:#2F6FEB; --accent-ink:#FFFFFF; --accent-soft:#E3ECFD;
+  --code-bg:#18202F; --code-fg:#E4E8F0; --code-dim:#6F7B91; --code-hi:rgba(255,204,77,.22); --code-hibar:#FFCC4D;
+  --t-kw:#8DB8FF; --t-str:#A9D48C; --t-com:#7D879B;
+  --m-init:#4FA3FF; --m-cond:#C08BFF; --m-upd:#FF8A5B;
+  --true:#16915F; --true-soft:#DDF5EA; --false:#D93A40; --false-soft:#FDE4E5;
+  --font-d:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
+  --font-b:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-m:"JetBrains Mono",ui-monospace,Consolas,"D2Coding",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}
+[hidden]{display:none!important}
+html{font-size:17px}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:1rem;line-height:1.55}
+.wrap{max-width:1500px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px;display:flex;flex-direction:column;gap:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--font-d);font-weight:400;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
+h1 code{font-family:var(--font-m);font-size:.85em;color:var(--accent)}
+.fontctl{display:flex;gap:6px;align-items:center}
+.exhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.exno{font-family:var(--font-d);font-size:1.7rem;line-height:1;background:var(--ink);color:var(--bg);border-radius:10px;padding:.25em .6em}
+.extitle{font-family:var(--font-d);font-size:1.5rem}
+.cmp-head b .tag{font-size:.8em;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:.05em .45em;margin-right:6px}
+details.jump-menu{position:relative}
+details.jump-menu summary{list-style:none;cursor:pointer;font-weight:700;border:1px solid var(--accent);color:var(--accent);background:var(--panel);border-radius:8px;padding:.42em .9em}
+details.jump-menu summary::-webkit-details-marker{display:none}
+details.jump-menu[open] summary{background:var(--accent);color:var(--accent-ink)}
+.jm-list{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:min(310px,90vw);box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.jm-list button{text-align:left;border:none;display:flex;gap:10px;align-items:center;font-size:1rem}
+.jm-list button{white-space:nowrap}
+.jm-list button b{font-family:var(--font-d);font-weight:400;font-size:1.1rem;min-width:5.2em}
+.jm-list .sec{font-size:.75rem;color:var(--muted);font-weight:700;padding:6px 8px 0}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);padding:.42em .9em}
+button:hover{background:var(--accent-soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.primary:hover{filter:brightness(1.08);background:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
+nav.tabs a{font-family:var(--font-d);font-size:1.2rem;padding:.4em 1em;color:var(--muted);text-decoration:none;border-radius:10px 10px 0 0;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
+nav.tabs a[aria-selected="true"]{color:var(--ink);background:var(--panel);border-color:var(--line)}
+.panel{display:flex;flex-direction:column;gap:12px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:.3em .9em;font-size:.95rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.msg{color:var(--true);font-weight:700}
+label.tog{display:flex;align-items:center;gap:6px;font-size:.92rem;cursor:pointer}
+details.opts summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:.4em .6em;list-style:none}
+details.opts summary::before{content:"⚙ "}
+.optbox{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:6px 4px;font-size:.9rem;color:var(--muted)}
+
+.rgrid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) minmax(0,.85fr);gap:14px;align-items:start}
+.rgrid.noflow{grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+@media (max-width:1150px){.rgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.flowpane{grid-column:1/-1}}
+@media (max-width:720px){.rgrid,.rgrid.noflow{grid-template-columns:minmax(0,1fr)}}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pane-h{font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+
+.code{background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 0;font-family:var(--font-m);font-size:1.12rem;overflow-x:auto}
+.ln{display:flex;white-space:pre;border-left:4px solid transparent;transition:background .2s}
+.ln .no{width:3em;flex:none;text-align:right;padding-right:.9em;color:var(--code-dim);user-select:none}
+.ln .tx{padding:.18em .8em .18em 0}
+.ln.done{background:var(--code-hi);border-left-color:var(--code-hibar)}
+.t-kw{color:var(--t-kw);font-weight:700}.t-str{color:var(--t-str)}.t-com{color:var(--t-com);font-style:italic}
+.marks-on .mk{border-bottom-width:3px;border-bottom-style:solid;padding-bottom:1px}
+.mk{border-bottom:0 solid transparent}.mk-i{border-bottom-color:var(--m-init)}.mk-c{border-bottom-color:var(--m-cond)}.mk-u{border-bottom-color:var(--m-upd)}
+.jump{min-height:1.6em;font-size:.98rem;font-weight:700;color:var(--accent)}
+
+.condcard{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.stepinfo{font-size:.82rem;color:var(--muted)}
+.expr{display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-family:var(--font-m);font-size:1.15rem}
+.expr code{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.1em .45em}
+.expr .arr{color:var(--muted)}
+.badge{font-family:var(--font-m);font-weight:700;border-radius:6px;padding:.1em .55em}
+.badge.T{background:var(--true-soft);color:var(--true)}
+.badge.F{background:var(--false-soft);color:var(--false)}
+.note{font-size:1.12rem}
+.note.muted{color:var(--muted)}
+.banner{border-radius:8px;padding:.5em .8em;font-weight:500;font-size:.95rem}
+.banner.ok{background:var(--true-soft);color:var(--true)}
+.banner.bad{background:var(--false-soft);color:var(--false)}
+.banner.done{background:var(--accent-soft);color:var(--ink)}
+.ask{display:flex;flex-direction:column;gap:8px}
+.ask .q{font-size:1.1rem;font-weight:700}
+.ask .q code{font-family:var(--font-m)}
+.ask .btns{display:flex;gap:8px}
+.ask .btns button{font-family:var(--font-m);font-weight:700;padding:.4em 1.2em}
+.ask .bt{border-color:var(--true);color:var(--true)}
+.ask .bf{border-color:var(--false);color:var(--false)}
+
+.vars{display:flex;flex-wrap:wrap;gap:10px}
+.var{border:2px solid var(--line-strong);border-radius:10px;min-width:88px;padding:6px 12px 8px;display:flex;flex-direction:column;align-items:center;background:var(--panel)}
+.var .vn{font-family:var(--font-m);font-size:.9rem;color:var(--muted)}
+.var .vv{font-family:var(--font-m);font-size:2rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums}
+.var .vo{font-size:.78rem;color:var(--muted);min-height:1.2em;font-family:var(--font-m)}
+.var.empty .vv{color:var(--line-strong)}
+.var.changed{border-color:var(--accent)}
+.var.changed .vv{animation:pop .35s ease}
+.var.secret{cursor:pointer}
+.var.secret .vv{font-size:1.2rem;padding-block:.35em}
+@keyframes pop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.var.changed .vv{animation:none}}
+
+.console{background:var(--code-bg);color:var(--code-fg);font-family:var(--font-m);border-radius:10px;padding:10px 12px;min-height:5.5em;max-height:16em;overflow:auto;font-size:1rem;white-space:pre-wrap;word-break:break-all}
+.console .newest{color:#FFFFFF;font-weight:700;background:rgba(255,204,77,.22);border-radius:3px}
+.console .inv{color:#7FD4FF;font-weight:700}
+.inrow{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;white-space:normal}
+.inrow input{font:inherit;width:6em;padding:.15em .4em;border-radius:6px;border:2px solid #7FB0FF;background:var(--code-bg);color:var(--code-fg)}
+.inrow button{padding:.15em .7em;font-size:.9rem}
+
+svg.flow{width:100%;height:auto;max-width:420px;display:block;margin:0 auto}
+svg.flow rect,svg.flow polygon{fill:var(--panel);stroke:var(--line-strong);stroke-width:2;transition:fill .2s,stroke .2s}
+svg.flow g.on rect,svg.flow g.on polygon{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3.5}
+svg.flow .fl-t{font-family:var(--font-m);font-size:13px;fill:var(--ink)}
+svg.flow .fl-lab{font-family:var(--font-b);font-size:11px;fill:var(--muted)}
+svg.flow path.ar{fill:none;stroke:var(--line-strong);stroke-width:2}
+svg.flow path.ar.on{stroke:var(--accent);stroke-width:4}
+svg.flow .ah{fill:var(--line-strong)}svg.flow .ah-on{fill:var(--accent)}
+svg.flow .lab-t{fill:var(--true);font-weight:700}svg.flow .lab-f{fill:var(--false);font-weight:700}
+
+details.trace{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+details.trace summary{cursor:pointer;font-weight:700}
+.tablewrap{overflow:auto;max-height:22em;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:.35em .6em;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);font-size:.8rem;color:var(--muted)}
+td.m{font-family:var(--font-m)}
+td.chg{color:var(--accent);font-weight:700}
+tr.cur td{background:var(--accent-soft)}
+
+.cmpgrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.cmpgrid{grid-template-columns:minmax(0,1fr)}}
+.cmp-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.cmp-head b{font-family:var(--font-d);font-weight:400;font-size:1.5rem}
+.cmp-head span{color:var(--muted);font-size:.9rem}
+.cmp-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
+.cmp-row>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.mini-ctl{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.condcard.small .expr{font-size:1rem}
+.condcard.small .note{font-size:1rem}
+.defs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:640px){.defs{grid-template-columns:minmax(0,1fr)}}
+.defs div{border:1px solid var(--line);border-radius:10px;padding:10px 14px;background:var(--panel)}
+.defs b{font-family:var(--font-m);color:var(--accent)}
+</style></head><body>
+
+<div class="wrap">
+  <header class="top">
+    <h1><code>while</code>문 흐름 실험실</h1>
+    <div class="fontctl"><details class="jump-menu" id="jm"><summary>📋 예제 선택 ▾</summary><div class="jm-list">
+      <div class="sec">1) while 형식</div><button data-go="ex11"><b>예제 1-1</b>Hello 5번 출력</button>
+      <div class="sec">2) for문 → while문</div><button data-go="cv0"><b>변환 ①</b>1부터 19까지 출력</button><button data-go="cv1"><b>변환 ②</b>구구단</button>
+      <div class="sec">3) break와 continue</div><button data-go="ex12"><b>예제 1-2</b>break</button><button data-go="ex13"><b>예제 1-3</b>continue</button>
+      <div class="sec">4) 실습</div><button data-go="ex14"><b>예제 1-4</b>숫자 맞추기 게임</button>
+    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button></div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <a href="#s1" role="tab" data-tab="s1">1) while 형식</a>
+    <a href="#s2" role="tab" data-tab="s2">2) for → while</a>
+    <a href="#s3" role="tab" data-tab="s3">3) break · continue</a>
+    <a href="#s4" role="tab" data-tab="s4">4) 숫자 맞추기 게임</a>
+  </nav>
+
+  <section data-panel="s1" class="panel" id="main-s1"></section>
+
+  <section data-panel="s2" class="panel" id="pair-convert"></section>
+
+  <section data-panel="s3" class="panel">
+    <div class="exhead"><span class="exno">예제 1-2 · 1-3</span><span class="extitle">break와 continue</span></div>
+    <div class="defs">
+      <div><b>break</b> 반복문을 그 즉시 끝낸다.</div>
+      <div><b>continue</b> 아래 코드는 건너뛰고, 반복문의 처음(조건)으로 돌아간다.</div>
+    </div>
+    <div id="pair-brk" class="panel"></div>
+  </section>
+
+  <section data-panel="s4" class="panel" id="main-s4"></section>
+</div>
+
+<script>
+// ---------- helpers ----------
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const fmt=v=>v===undefined?'—':(typeof v==='string'?`"${v}"`:String(v));
+function hlPlain(t){
+  const re=/("[^"]*"|'[^']*')|(#.*$)|\b(while|for|in|True|False|and|or|not|if|elif|else|break|continue|import)\b/g;
+  let out='',last=0,m;
+  while((m=re.exec(t))){out+=esc(t.slice(last,m.index));
+    out+=`<span class="${m[1]?'t-str':m[2]?'t-com':'t-kw'}">${esc(m[0])}</span>`;last=re.lastIndex}
+  return out+esc(t.slice(last));
+}
+const hl=code=>code.split(/(\{[icu]:[^}]*\})/).map(seg=>{const m=seg.match(/^\{([icu]):(.*)\}$/);
+  return m?`<span class="mk mk-${m[1]}">${hlPlain(m[2])}</span>`:hlPlain(seg)}).join('');
+const plain=code=>code.replace(/\{[icu]:([^}]*)\}/g,'$1');
+function rangeArr(a,b,c=1){const r=[];for(let v=a;(c>0?v<b:v>b)&&r.length<300;v+=c)r.push(v);return r}
+
+// ---------- 학습지 예제 ----------
+const PROGS={
+  ex11:{name:'[예제1-1]',vars:['i'],
+    flow:{init:'i = 0',cond:'i < 5 ?',body:'print("Hello")\ni += 1',exit:'반복 끝'},
+    lines:[
+      {code:'{i:i = 0}',op:'set',v:'i',f:()=>0},
+      {code:'while {c:i < 5}:',op:'while',cond:s=>s.i<5,sub:s=>`${s.i} < 5`},
+      {code:'    print("Hello")',op:'print',f:()=>['Hello']},
+      {code:'    {u:i+=1}',op:'set',v:'i',f:s=>s.i+1,expr:s=>`${s.i} + 1`}
+    ]},
+  ex14:{name:'[예제1-4]',vars:['a','num'],secret:['a'],
+    lines:[
+      {code:'import random',op:'noop',note:'random 모듈을 불러와요'},
+      {code:'a=random.randint(1,20)',op:'set',v:'a',f:()=>1+Math.floor(Math.random()*20),note:'a에 1~20 중 아무 수나 저장 (비밀!)'},
+      {code:'while True:',op:'while',cond:()=>true,sub:()=>'True'},
+      {code:'    num = int(input("1부터 20사이의 숫자를 맞춰보세요"))',op:'input',v:'num',prompt:'1부터 20사이의 숫자를 맞춰보세요'},
+      {code:'    if num>20 or num<1:',op:'if',cond:s=>s.num>20||s.num<1,sub:s=>`${s.num}>20 or ${s.num}<1`},
+      {code:'        print("다시 입력하세요.")',op:'print',f:()=>['다시 입력하세요.']},
+      {code:'    else:',op:'else'},
+      {code:'        if num > a:',op:'if',cond:s=>s.num>s.a,sub:s=>`${s.num} > a`},
+      {code:'            print("더 작은 수 입니다.")',op:'print',f:()=>['더 작은 수 입니다.']},
+      {code:'        elif num <a:',op:'elif',cond:s=>s.num<s.a,sub:s=>`${s.num} < a`},
+      {code:'            print("더 큰 수 입니다.")',op:'print',f:()=>['더 큰 수 입니다.']},
+      {code:'        else:',op:'else'},
+      {code:'            print("정답입니다")',op:'print',f:()=>['정답입니다']},
+      {code:'            break',op:'break'}
+    ]}
+};
+const PAIRS_CONVERT=[
+  {name:'변환 ① 1부터 19까지 출력',no:'변환 ①',title:'1부터 19까지 출력',
+   L:{name:'for문',vars:['i'],lines:[
+     {code:'for i in range({i:1},{c:20}):',op:'for',v:'i',range:[1,20],rtext:'range(1,20)'},
+     {code:'    print(i, end=" ")',op:'print',f:s=>[s.i],end:' '}]},
+   R:{name:'while문',vars:['i'],lines:[
+     {code:'{i:i=1}',op:'set',v:'i',f:()=>1},
+     {code:'while {c:i < 20}:',op:'while',cond:s=>s.i<20,sub:s=>`${s.i} < 20`},
+     {code:'    print(i,end=" ")',op:'print',f:s=>[s.i],end:' '},
+     {code:'    {u:i+=1}',op:'set',v:'i',f:s=>s.i+1,expr:s=>`${s.i} + 1`}]}},
+  {name:'변환 ② 구구단',no:'변환 ②',title:'구구단',
+   L:{name:'for문',vars:['n','i'],lines:[
+     {code:'n = int(input("단?"))',op:'input',v:'n',prompt:'단?'},
+     {code:'for i in range({i:1}, {c:10}):',op:'for',v:'i',range:[1,10],rtext:'range(1, 10)'},
+     {code:'   print(n,"*",i,"=",n*i)',op:'print',f:s=>[s.n,'*',s.i,'=',s.n*s.i]}]},
+   R:{name:'while문',vars:['n','i'],lines:[
+     {code:'n = int(input("단?"))',op:'input',v:'n',prompt:'단?'},
+     {code:'{i:i= 1}',op:'set',v:'i',f:()=>1},
+     {code:'while {c:i < 10}:',op:'while',cond:s=>s.i<10,sub:s=>`${s.i} < 10`},
+     {code:'    print(n,"*",i,"=",n*i)',op:'print',f:s=>[s.n,'*',s.i,'=',s.n*s.i]},
+     {code:'    {u:i += 1}',op:'set',v:'i',f:s=>s.i+1,expr:s=>`${s.i} + 1`}]}}
+];
+const brkLines=kw=>[
+  {code:'for i in range(1, 15):',op:'for',v:'i',range:[1,15],rtext:'range(1, 15)'},
+  {code:'    if i % 3 == 0:',op:'if',cond:s=>s.i%3===0,sub:s=>`${s.i} % 3 == 0`},
+  {code:`        ${kw}`,op:kw},
+  {code:'    print(i, end=" ")',op:'print',f:s=>[s.i],end:' '},
+  {code:'print("끝")',op:'print',f:()=>['끝']}];
+const PAIRS_BRK=[{name:'',no:'예제 1-2 · 1-3',title:'break와 continue',
+  L:{name:'<span class="tag">예제 1-2</span>break',vars:['i'],lines:brkLines('break')},
+  R:{name:'<span class="tag">예제 1-3</span>continue',vars:['i'],lines:brkLines('continue')}}];
+
+// ---------- interpreter ----------
+const LOOP=o=>o==='while'||o==='for',HEAD=o=>LOOP(o)||o==='if'||o==='elif'||o==='else';
+function prepare(p){
+  const lines=p.lines.map(l=>({...l,plain:plain(l.code)})),n=lines.length;
+  lines.forEach(l=>{const sp=l.plain.match(/^ */)[0].length;l.ind=sp});
+  const parent=lines.map((l,k)=>{for(let j=k-1;j>=0;j--)if(lines[j].ind<l.ind&&HEAD(lines[j].op))return j;return -1});
+  const bend=lines.map((l,k)=>{let e=k+1;while(e<n&&lines[e].ind>l.ind)e++;return e});
+  const chainEnd=k=>{let j=bend[k];while(j<n&&lines[j].ind===lines[k].ind&&(lines[j].op==='elif'||lines[j].op==='else'))j=bend[j];return j};
+  // 블록 cur을 끝내고 pos로 넘어갈 때 실제로 갈 곳
+  const fall=(cur,pos)=>{for(;;){const pr=parent[cur];if(pr<0)return pos;if(pos<bend[pr])return pos;
+    if(LOOP(lines[pr].op))return pr;pos=chainEnd(pr);cur=pr;}};
+  lines.forEach((l,k)=>{if(l.op==='while')l.condText=l.plain.trim().replace(/^while\s+/,'').replace(/:$/,'');
+    if(l.op==='if'||l.op==='elif')l.condText=l.plain.trim().replace(/^(if|elif)\s+/,'').replace(/:$/,'');
+    if(l.op==='for')l.condText=`${l.rtext}에 값이 남았나?`});
+  const loopOf=k=>{let j=parent[k];while(j>=0&&!LOOP(lines[j].op))j=parent[j];return j};
+  const first=lines.findIndex(l=>LOOP(l.op));
+  lines.forEach((l,k)=>{l.role=k===first?'cond':k<first?'init':k<bend[first]?'body':'exit'});
+  return{...p,lines,parent,bend,fall,loopOf,chainEnd,n};
+}
+const initState=()=>({pc:0,vars:{},out:'',it:{},iter:0,step:0,done:false,halt:false,info:null});
+function exec(p,s,inp,guess){
+  const ns={...s,vars:{...s.vars},it:JSON.parse(JSON.stringify(s.it)),step:s.step+1};
+  const k=s.pc,L=p.lines[k],info={line:k,node:L.role,changed:[],old:{},outFrom:-1};
+  let next=p.fall(k,k+1);
+  const setv=(v,val)=>{info.old[v]=ns.vars[v];ns.vars[v]=val;info.changed.push(v)};
+  switch(L.op){
+    case 'noop':info.note=L.note;break;
+    case 'set':{const val=L.f(ns.vars);info.note=L.note||(L.expr?`${L.v} = ${L.expr(s.vars)} = ${fmt(val)}`:`${L.v}에 ${fmt(val)} 저장`);setv(L.v,val);break}
+    case 'print':{const t=L.f(ns.vars).map(String).join(' ')+(L.end!==undefined?L.end:'\n');info.outFrom=ns.out.length;ns.out+=t;info.note=`출력: ${t.trim()||'(공백)'}`;break}
+    case 'input':{const val=parseInt(inp,10);info.outFrom=ns.out.length;ns.out+=L.prompt+'\u0001'+val+'\u0002\n';setv(L.v,val);info.note=`입력한 ${val}을(를) ${L.v}에 저장`;break}
+    case 'while':{const r=!!L.cond(ns.vars);info.cond={text:L.condText,sub:L.sub(ns.vars),r};
+      if(r){next=k+1;ns.iter++;info.note='반복 안으로'}else{next=p.fall(k,p.bend[k]);info.note='반복 끝';info.jump='⤵ 반복 끝'}break}
+    case 'for':{const[a,b,c]=L.range;const it=ns.it[k]||{vals:rangeArr(a,b,c),i:0};const rest=it.vals.slice(it.i);
+      if(it.i<it.vals.length){const val=it.vals[it.i++];ns.it[k]=it;setv(L.v,val);ns.iter++;next=k+1;
+        info.cond={text:L.condText,sub:`[${rest.join(', ')}]`,r:true};info.note=`${L.v}에 ${val} 넣고 반복 안으로`}
+      else{delete ns.it[k];info.cond={text:L.condText,sub:'[ ]',r:false};next=p.fall(k,p.bend[k]);info.note='꺼낼 값 없음 → 반복 끝';info.jump='⤵ 반복 끝'}break}
+    case 'if':case 'elif':{const r=!!L.cond(ns.vars);info.cond={text:L.condText,sub:L.sub(ns.vars),r};
+      if(r){next=k+1;info.note='True → 안쪽 실행'}
+      else{const j=p.bend[k];const nx=p.lines[j];
+        if(nx&&nx.ind===L.ind&&nx.op==='elif'){next=j;info.note='False → elif 검사'}
+        else if(nx&&nx.ind===L.ind&&nx.op==='else'){next=j+1;info.note='False → else 쪽 실행'}
+        else{next=p.fall(k,j);info.note='False → 건너뛰기'}
+        info.jump='⤵ 건너뛰기'}break}
+    case 'break':{const lp=p.loopOf(k);delete ns.it[lp];next=p.fall(lp,p.bend[lp]);info.note='break → 반복문을 바로 끝내요';info.jump='⤵ break! 반복 탈출';break}
+    case 'continue':{const lp=p.loopOf(k);next=lp;info.note='continue → 아래는 건너뛰고 반복 처음으로';info.jump='↩ continue! 반복 처음으로';break}
+  }
+  if(guess!==undefined&&info.cond)info.pred={ok:guess===info.cond.r};
+  if(!info.jump&&next<=k&&next>=0&&next<p.n)info.jump='↩ 반복 처음으로 돌아가요';
+  ns.pc=next;ns.info=info;
+  if(next>=p.n)ns.done=true;
+  if(ns.step>500)ns.halt=true;
+  return ns;
+}
+
+// ---------- 흐름도 ----------
+function flowSVG(f){
+  const T=(x,y,txt)=>{const ls=txt.split('\n');return `<text x="${x}" y="${y-(ls.length-1)*9}" class="fl-t" text-anchor="middle" dominant-baseline="middle">${ls.map((l,i)=>`<tspan x="${x}" dy="${i?18:0}">${esc(l)}</tspan>`).join('')}</text>`};
+  return `<svg viewBox="0 0 360 366" class="flow" role="img" aria-label="while문 흐름도">
+  <defs><marker id="ah" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0L10,5L0,10z" class="ah"/></marker>
+  <marker id="ahOn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0,0L10,5L0,10z" class="ah-on"/></marker></defs>
+  <g data-node="init"><rect x="95" y="6" width="170" height="48" rx="8"/>${T(180,30,f.init)}</g>
+  <path class="ar" data-arrow="init" d="M180 54 V82" marker-end="url(#ah)"/>
+  <g data-node="cond"><polygon points="180,84 286,132 180,180 74,132"/>${T(180,132,f.cond)}</g>
+  <path class="ar" data-arrow="true" d="M180 180 V210" marker-end="url(#ah)"/>
+  <text x="188" y="198" class="fl-lab lab-t">True</text>
+  <g data-node="body"><rect x="85" y="212" width="190" height="64" rx="8"/>${T(180,244,f.body)}</g>
+  <path class="ar" data-arrow="back" d="M85 244 H32 V132 H72" marker-end="url(#ah)"/>
+  <path class="ar" data-arrow="false" d="M286 132 H336 V328 H277" marker-end="url(#ah)"/>
+  <text x="292" y="122" class="fl-lab lab-f">False</text>
+  <g data-node="exit"><rect x="85" y="306" width="190" height="46" rx="8"/>${T(180,329,f.exit)}</g>
+  </svg>`;
+}
+const ARROW={'init>cond':'init','cond>body':'true','body>cond':'back','cond>exit':'false'};
+
+// ---------- Runner ----------
+let uid=0;
+class Runner{
+  constructor(el,prog,opt={}){this.el=el;this.opt=opt;this.id=++uid;this.load(prog)}
+  load(prog){this.stopAuto&&this.el.querySelector('[data-a]')&&this.stopAuto();this.p=prepare(prog);this.hist=[initState()];this.asking=false;this.shown={};this.build();this.render()}
+  stopAuto(){if(this.timer){clearTimeout(this.timer);this.timer=null}const b=this.el.querySelector('[data-a="auto"]');if(b)b.textContent='⏵ 자동'}
+  get s(){return this.hist[this.hist.length-1]}
+  get isDone(){return this.s.done||this.s.halt}
+  q(r){return this.el.querySelector(`[data-r="${r}"]`)}
+  build(){
+    const p=this.p;
+    if(this.opt.compact){
+      this.el.innerHTML=`<div class="cmp-head"><b>${p.name}</b><span data-r="count"></span></div>
+      <div class="code${this.opt.marks?' marks-on':''}" data-r="code"></div><div class="jump" data-r="jump"></div>
+      <div class="condcard small" data-r="cond"></div>
+      <div class="cmp-row"><div><div class="pane-h">변수</div><div class="vars" data-r="vars"></div></div>
+      <div><div class="pane-h">출력</div><div class="console" data-r="out"></div></div></div>
+      <div class="mini-ctl"><button data-a="reset">↺ 처음부터</button><button data-a="prev">◀ 이전</button><button data-a="next" class="primary">다음 ▶</button><button data-a="auto">⏵ 자동</button></div>`;
+      const A=a=>this.el.querySelector(`[data-a="${a}"]`);
+      A('reset').onclick=()=>{this.stopAuto();this.reset()};
+      A('prev').onclick=()=>{this.stopAuto();this.prev()};
+      A('next').onclick=()=>this.next();
+      A('auto').onclick=()=>{if(this.timer)return this.stopAuto();if(this.isDone)this.reset();A('auto').textContent='⏸ 멈춤';
+        const t=()=>{const r=this.next();if(r!=='ok'||this.isDone)return this.stopAuto();this.timer=setTimeout(t,800)};this.timer=setTimeout(t,50)};
+    }else{
+      this.el.innerHTML=`<div class="rgrid${p.flow?'':' noflow'}">
+      <section class="pane"><div class="code" data-r="code"></div><div class="jump" data-r="jump"></div></section>
+      <section class="pane"><div class="condcard" data-r="cond"></div>
+        <div class="pane-h">변수</div><div class="vars" data-r="vars"></div>
+        <div class="pane-h">출력</div><div class="console" data-r="out"></div></section>
+      ${p.flow?`<section class="pane flowpane"><div data-r="flow">${flowSVG(p.flow)}</div></section>`:''}
+      </div>
+      <details class="trace"><summary>추적표 보기</summary><div class="tablewrap" data-r="table"></div></details>`;
+    }
+  }
+  next(inp,guess){
+    if(this.isDone)return 'done';
+    const L=this.p.lines[this.s.pc];
+    if(L.op==='input'&&inp===undefined){const i=this.q('inp');i&&i.focus();return 'input'}
+    if(this.opt.predict&&this.opt.predict()&&L.condText&&guess===undefined){this.asking=true;this.render();return 'ask'}
+    this.asking=false;this.hist.push(exec(this.p,this.s,inp,guess));this.render();return 'ok';
+  }
+  prev(){if(this.asking){this.asking=false;this.render();return}if(this.hist.length>1){this.hist.pop();this.render()}}
+  reset(){this.hist=[this.hist[0]];this.asking=false;this.shown={};this.render()}
+  render(){
+    const p=this.p,s=this.s,info=s.info;
+    this.q('code').innerHTML=p.lines.map((l,k)=>`<div class="ln${info&&info.line===k?' done':''}"><span class="no">${k+1}</span><span class="tx">${hl(l.code)}</span></div>`).join('');
+    this.q('jump').textContent=info&&info.jump?info.jump:'';
+    // 상태 카드
+    const c=this.q('cond');let h='';
+    if(this.asking){
+      h=`<div class="ask"><div class="q"><code>${esc(p.lines[s.pc].condText)}</code> 은(는)?</div>
+      <div class="btns"><button class="bt" data-g="1">True</button><button class="bf" data-g="0">False</button></div></div>`;
+    }else if(!info){
+      h=`<div class="note muted">‘다음’을 눌러 시작</div>`;
+    }else{
+      h=`<div class="stepinfo">${s.step}단계 · 반복 ${s.iter}회</div>`;
+      if(info.cond)h+=`<div class="expr"><code>${esc(info.cond.text)}</code><span class="arr">→</span>${info.cond.sub!==info.cond.text?`<code>${esc(info.cond.sub)}</code><span class="arr">→</span>`:''}<span class="badge ${info.cond.r?'T':'F'}">${info.cond.r?'True':'False'}</span></div>`;
+      h+=`<div class="note">${esc(info.note)}</div>`;
+      if(info.pred)h+=info.pred.ok?`<div class="banner ok">✓ 맞았어요</div>`:`<div class="banner bad">✗ 틀렸어요</div>`;
+    }
+    if(s.done)h+=`<div class="banner done">끝 · 반복 ${s.iter}번</div>`;
+    c.innerHTML=h;
+    c.querySelectorAll('[data-g]').forEach(b=>b.onclick=()=>this.next(undefined,b.dataset.g==='1'));
+    // 변수
+    const sec=p.secret||[];
+    this.q('vars').innerHTML=p.vars.map(v=>{
+      const val=s.vars[v],ch=info&&info.changed.includes(v),hide=sec.includes(v)&&val!==undefined&&!this.shown[v]&&!s.done;
+      return `<div class="var${val===undefined?' empty':''}${ch?' changed':''}${hide?' secret':''}" ${hide?`data-show="${v}" title="눌러서 보기"`:''}><span class="vn">${v}</span><span class="vv">${val===undefined?'?':hide?'🔒':esc(val)}</span><span class="vo">${hide?'눌러서 보기':ch&&info.old[v]!==undefined?`← ${esc(info.old[v])}`:''}</span></div>`}).join('');
+    this.q('vars').querySelectorAll('[data-show]').forEach(b=>b.onclick=()=>{this.shown[b.dataset.show]=true;this.render()});
+    // 출력
+    const out=this.q('out');
+    const fmtOut=t=>esc(t).replace(/\u0001([^\u0002]*)\u0002/g,'<span class="inv">$1</span>');
+    let oh=info&&info.outFrom>=0?fmtOut(s.out.slice(0,info.outFrom))+`<span class="newest">${fmtOut(s.out.slice(info.outFrom))}</span>`:fmtOut(s.out);
+    const L=p.lines[s.pc];
+    if(!this.isDone&&L&&L.op==='input'&&!this.asking)
+      oh+=`<div class="inrow"><span>${esc(L.prompt)}</span><input type="number" data-r="inp" id="inp-${this.id}-${s.step}" aria-label="숫자 입력"><button data-r="inbtn">입력</button></div>`;
+    out.innerHTML=oh;out.scrollTop=out.scrollHeight;
+    const inp=this.q('inp');
+    if(inp){const go=()=>{if(inp.value.trim()==='')return inp.focus();this.next(inp.value);this.opt.onStep&&this.opt.onStep()};
+      inp.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();go()}};this.q('inbtn').onclick=go;}
+    if(this.opt.compact)this.q('count').textContent=`${s.step}단계${s.done?' · 끝':''}`;
+    // 흐름도
+    const fl=this.q('flow');
+    if(fl){
+      const prev=this.hist.length>1?this.hist[this.hist.length-2].info:null;
+      let on=info?[info.node]:[],key=info&&prev?ARROW[prev.node+'>'+info.node]:null;
+      if(info&&info.cond&&!info.cond.r&&info.node==='cond'){on=['cond','exit'];key='false'}
+      fl.querySelectorAll('[data-node]').forEach(g=>g.classList.toggle('on',on.includes(g.dataset.node)));
+      fl.querySelectorAll('[data-arrow]').forEach(a=>{const o=a.dataset.arrow===key;a.classList.toggle('on',o);a.setAttribute('marker-end',o?'url(#ahOn)':'url(#ah)')});
+    }
+    // 추적표
+    const tb=this.q('table');
+    if(tb){
+      if(this.hist.length<2)tb.innerHTML='<p style="color:var(--muted)">실행하면 여기에 기록돼요.</p>';
+      else{let t=`<table><thead><tr><th>단계</th><th>줄</th>${p.vars.map(v=>`<th>${v}</th>`).join('')}<th>조건</th><th>한 일</th></tr></thead><tbody>`;
+        this.hist.slice(1).forEach((st,i,arr)=>{const f=st.info;
+          t+=`<tr class="${i===arr.length-1?'cur':''}"><td>${st.step}</td><td>${f.line+1}</td>${p.vars.map(v=>`<td class="m${f.changed.includes(v)?' chg':''}">${st.vars[v]===undefined?'':(sec.includes(v)&&!this.shown[v]&&!s.done?'🔒':esc(st.vars[v]))}</td>`).join('')}<td>${f.cond?`<span class="badge ${f.cond.r?'T':'F'}">${f.cond.r?'True':'False'}</span>`:''}</td><td>${esc(f.note)}</td></tr>`});
+        tb.innerHTML=t+'</tbody></table>';
+        const cur=tb.querySelector('tr.cur');if(cur)tb.scrollTop=cur.offsetTop-tb.clientHeight+cur.offsetHeight+30;}
+    }
+    this.opt.onRender&&this.opt.onRender();
+  }
+}
+
+// ---------- 한 화면 실행기 (1, 4번) ----------
+const $=id=>document.getElementById(id);
+class Main{
+  constructor(root,prog,key,no,title){
+    root.innerHTML=`<div class="exhead"><span class="exno">${no}</span><span class="extitle">${title}</span></div><div class="toolbar">
+      <button data-m="reset">↺ 처음부터</button><button data-m="prev">◀ 이전</button>
+      <button data-m="next" class="primary">다음 단계 ▶</button><button data-m="auto">⏵ 자동 실행</button>
+      <details class="opts"><summary>설정</summary><div class="optbox">
+        <label class="tog"><input type="checkbox" id="pr-${key}" data-m="predict"> 조건 예측 모드</label>
+        ${prog.flow?`<label class="tog"><input type="checkbox" id="mk-${key}" data-m="marks"> 초기값·조건·증감 색칠</label>`:''}
+        <span>자동 속도 <input type="range" id="sp-${key}" data-m="speed" min="200" max="2000" step="100" value="1100" style="direction:rtl;vertical-align:middle" aria-label="자동 실행 속도"></span>
+      </div></details></div><div data-m="runner"></div>`;
+    const g=k=>root.querySelector(`[data-m="${k}"]`);this.g=g;this.auto=null;this.r=null;
+    this.r=new Runner(g('runner'),prog,{predict:()=>g('predict').checked&&!this.auto,
+      onRender:()=>{if(!this.r)return;g('next').disabled=this.r.isDone;g('prev').disabled=this.r.hist.length<2&&!this.r.asking;this.marks()}});
+    g('next').onclick=()=>this.r.next();
+    g('prev').onclick=()=>{this.stop();this.r.prev()};
+    g('reset').onclick=()=>{this.stop();this.r.reset()};
+    g('auto').onclick=()=>{if(this.auto)return this.stop();if(this.r.isDone)this.r.reset();g('auto').textContent='⏸ 멈춤';this.auto=setTimeout(()=>this.tick(),50)};
+    if(g('marks'))g('marks').onchange=()=>this.marks();
+    this.marks();
+  }
+  tick(){const r=this.r.next();if(r!=='ok'||this.r.isDone)return this.stop();this.auto=setTimeout(()=>this.tick(),+this.g('speed').value)}
+  stop(){if(this.auto){clearTimeout(this.auto);this.auto=null}this.g('auto').textContent='⏵ 자동 실행'}
+  marks(){const c=this.g('runner').querySelector('.code'),m=this.g('marks');if(c)c.classList.toggle('marks-on',!!(m&&m.checked))}
+}
+const m1=new Main($('main-s1'),PROGS.ex11,'s1','예제 1-1','while문 기본 형식');
+const m4=new Main($('main-s4'),PROGS.ex14,'s4','예제 1-4','숫자 맞추기 게임');
+
+// ---------- 탭 ②③ : 나란히 실행 ----------
+class Pair{
+  constructor(root,sets,opt={}){
+    this.sets=sets;this.opt=opt;
+    root.innerHTML=`${opt.head?'<div class="exhead"><span class="exno" data-p="no"></span><span class="extitle" data-p="title"></span></div>':''}${sets.length>1?'<div class="chips" data-p="chips"></div>':''}
+      <div class="cmpgrid"><section class="pane" data-p="L"></section><section class="pane" data-p="R"></section></div>`;
+    const g=k=>root.querySelector(`[data-p="${k}"]`);this.g=g;
+    this.cur=sets[0];
+    this.L=new Runner(g('L'),this.cur.L,{compact:true,marks:opt.marks});
+    this.R=new Runner(g('R'),this.cur.R,{compact:true,marks:opt.marks});
+    if(g('chips')){g('chips').onclick=e=>{const b=e.target.closest('button');if(b)this.select(+b.dataset.i)};this.chips()}
+    this.head();
+  }
+  head(){if(this.g('no')){this.g('no').textContent=this.cur.no;this.g('title').textContent=this.cur.title}}
+  chips(){this.g('chips').innerHTML=this.sets.map((x,i)=>`<button class="chip" data-i="${i}" aria-pressed="${x===this.cur}">${esc(x.name)}</button>`).join('')}
+  select(i){if(this.cur===this.sets[i])return;this.cur=this.sets[i];this.L.load(this.cur.L);this.R.load(this.cur.R);this.chips();this.head()}
+  stop(){this.L.stopAuto();this.R.stopAuto()}
+}
+const pConv=new Pair($('pair-convert'),PAIRS_CONVERT,{marks:true,head:true});
+const pBrk=new Pair($('pair-brk'),PAIRS_BRK,{});
+
+// ---------- 탭 전환 / 키보드 / 글자 크기 ----------
+const TABS=['s1','s2','s3','s4'];
+const curTab=()=>TABS.includes(location.hash.slice(1))?location.hash.slice(1):'s1';
+function showTab(){const t=curTab();
+  document.querySelectorAll('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==t);
+  document.querySelectorAll('[data-tab]').forEach(a=>a.setAttribute('aria-selected',a.dataset.tab===t));
+  m1.stop();m4.stop();pConv.stop();pBrk.stop();}
+window.addEventListener('hashchange',showTab);showTab();
+// 예제 선택 메뉴
+const GO={ex11:['s1'],cv0:['s2',0],cv1:['s2',1],ex12:['s3','L'],ex13:['s3','R'],ex14:['s4']};
+$('jm').addEventListener('click',e=>{const b=e.target.closest('[data-go]');if(!b)return;
+  const[t,x]=GO[b.dataset.go];$('jm').open=false;
+  if(location.hash.slice(1)!==t)location.hash=t;else showTab();
+  let el=document.querySelector(`[data-panel="${t}"]`);
+  if(t==='s2'){pConv.select(x);el=pConv.g('L').parentElement}
+  if(t==='s3'){el=pBrk.g(x)}
+  requestAnimationFrame(()=>{el.scrollIntoView({behavior:'smooth',block:'start'});
+    if(t==='s3'){el.classList.remove('flash');void el.offsetWidth;el.classList.add('flash')}});
+});
+document.addEventListener('click',e=>{if(!e.target.closest('#jm'))$('jm').open=false});
+document.addEventListener('keydown',e=>{
+  if(e.target.matches('input,select,textarea'))return;
+  const M=curTab()==='s1'?m1:curTab()==='s4'?m4:null;if(!M)return;
+  if(e.key==='ArrowRight'||e.key===' '){e.preventDefault();M.r.next()}
+  if(e.key==='ArrowLeft'){e.preventDefault();M.stop();M.r.prev()}
+});
+let fs=17;try{fs=+localStorage.getItem('wl-fs')||17}catch(e){}
+const setFs=v=>{fs=Math.min(26,Math.max(13,v));document.documentElement.style.fontSize=fs+'px';try{localStorage.setItem('wl-fs',fs)}catch(e){}};
+setFs(fs);$('fs-up').onclick=()=>setFs(fs+1);$('fs-down').onclick=()=>setFs(fs-1);
+</script>
+</body></html>
