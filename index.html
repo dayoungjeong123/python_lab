@@ -154,7 +154,7 @@ tr.cur td{background:var(--accent-soft)}
 .cmp-head span{color:var(--muted);font-size:.9rem}
 .cmp-row{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:start}
 .cmp-row>div{display:flex;flex-direction:column;gap:6px;min-width:0}
-.mini-ctl{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+.mini-ctl{display:flex;gap:8px;justify-content:flex-start;flex-wrap:wrap}
 .condcard.small .expr{font-size:1rem}
 .condcard.small .note{font-size:1rem}
 .defs{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
@@ -360,11 +360,11 @@ class Runner{
     const p=this.p;
     if(this.opt.compact){
       this.el.innerHTML=`<div class="cmp-head"><b>${p.name}</b><span data-r="count"></span></div>
+      <div class="mini-ctl"><button data-a="reset">↺ 처음부터</button><button data-a="prev">◀ 이전</button><button data-a="next" class="primary">다음 ▶</button><button data-a="auto">⏵ 자동</button></div>
       <div class="code${this.opt.marks?' marks-on':''}" data-r="code"></div><div class="jump" data-r="jump"></div>
       <div class="condcard small" data-r="cond"></div>
       <div class="cmp-row"><div><div class="pane-h">변수</div><div class="vars" data-r="vars"></div></div>
-      <div><div class="pane-h">출력</div><div class="console" data-r="out"></div></div></div>
-      <div class="mini-ctl"><button data-a="reset">↺ 처음부터</button><button data-a="prev">◀ 이전</button><button data-a="next" class="primary">다음 ▶</button><button data-a="auto">⏵ 자동</button></div>`;
+      <div><div class="pane-h">출력</div><div class="console" data-r="out"></div></div></div>`;
       const A=a=>this.el.querySelector(`[data-a="${a}"]`);
       A('reset').onclick=()=>{this.stopAuto();this.reset()};
       A('prev').onclick=()=>{this.stopAuto();this.prev()};
