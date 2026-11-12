@@ -32,13 +32,13 @@ body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:1
 header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
 h1{font-family:var(--font-d);font-weight:400;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
 h1 code{font-family:var(--font-m);font-size:.85em;color:var(--accent)}
-.fontctl{display:flex;gap:6px;align-items:center}
+.fontctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
 .exhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .exno{font-family:var(--font-d);font-size:1.7rem;line-height:1;background:var(--ink);color:var(--bg);border-radius:10px;padding:.25em .6em}
 .extitle{font-family:var(--font-d);font-size:1.5rem}
 .cmp-head b .tag{font-size:.8em;background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:.05em .45em;margin-right:6px}
 details.jump-menu{position:relative}
-details.jump-menu summary{list-style:none;cursor:pointer;font-weight:700;border:1px solid var(--accent);color:var(--accent);background:var(--panel);border-radius:8px;padding:.42em .9em}
+details.jump-menu summary{list-style:none;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid var(--accent);color:var(--accent);background:var(--panel);border-radius:8px;padding:.42em .9em}
 details.jump-menu summary::-webkit-details-marker{display:none}
 details.jump-menu[open] summary{background:var(--accent);color:var(--accent-ink)}
 .jm-list{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:min(310px,90vw);box-shadow:0 10px 30px rgba(0,0,0,.15)}
@@ -183,6 +183,9 @@ tr.cur td{background:var(--accent-soft)}
 .ih-story summary{cursor:pointer;font-weight:700}
 .ih-tree{margin:.5em 0;padding-left:1.4em;line-height:1.8}
 .ih-tree ol{padding-left:1.6em;list-style:disc}
+.theme-btn{white-space:nowrap}
+footer.credit{border-top:1px solid var(--line);padding-top:14px;margin-top:8px;text-align:center;color:var(--muted);font-size:.92rem}
+footer.credit b{color:var(--ink)}
 .nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
 </style></head><body>
@@ -195,7 +198,7 @@ tr.cur td{background:var(--accent-soft)}
       <div class="sec">2) for문 → while문</div><button data-go="cv0"><b>변환 ①</b>1부터 19까지 출력</button><button data-go="cv1"><b>변환 ②</b>구구단</button>
       <div class="sec">3) break와 continue</div><button data-go="ex12"><b>예제 1-2</b>break</button><button data-go="ex13"><b>예제 1-3</b>continue</button>
       <div class="sec">4) 실습</div><button data-go="ex14"><b>예제 1-4</b>숫자 맞추기 게임</button>
-    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button></div>
+    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button><button id="theme-btn" class="theme-btn" aria-label="화면 밝기 바꾸기">🌙 다크</button></div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -218,7 +221,7 @@ tr.cur td{background:var(--accent-soft)}
     <div id="pair-brk" class="panel"></div>
   </section>
 
-  <section data-panel="s4" class="panel"><div class="panel" id="main-s4"></div>
+  <section data-panel="s4" class="panel" id="s4-wrap"><div class="panel" id="main-s4"></div>
     <section class="pane ihelp" id="indent-help" aria-labelledby="ih-title">
       <h2 id="ih-title">📦 들여쓰기 쉽게 보기</h2>
       <p class="ih-lead">들여쓰기는 <b>“이 줄은 위 줄의 상자 안에 들어 있어요”</b>라는 표시예요. 같은 상자 안의 줄들은 함께 실행되거나 함께 건너뛰어요.</p>
@@ -287,6 +290,7 @@ tr.cur td{background:var(--accent-soft)}
       </details>
     </section>
   </section>
+  <footer class="credit">만든 사람: <b>정다영 선생님</b></footer>
 </div>
 
 <script>
@@ -642,5 +646,13 @@ document.addEventListener('keydown',e=>{
 let fs=17;try{fs=+localStorage.getItem('wl-fs')||17}catch(e){}
 const setFs=v=>{fs=Math.min(26,Math.max(13,v));document.documentElement.style.fontSize=fs+'px';try{localStorage.setItem('wl-fs',fs)}catch(e){}};
 setFs(fs);$('fs-up').onclick=()=>setFs(fs+1);$('fs-down').onclick=()=>setFs(fs-1);
+// 다크/라이트 전환 (처음엔 기기 설정을 따르고, 누르면 기억)
+const sysDark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
+const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':sysDark()};
+const paintThemeBtn=()=>{const d=isDark();$('theme-btn').textContent=d?'☀️ 라이트':'🌙 다크';$('theme-btn').setAttribute('aria-label',d?'밝은 화면으로 바꾸기':'어두운 화면으로 바꾸기')};
+try{const t=localStorage.getItem('wl-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}
+$('theme-btn').onclick=()=>{const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('wl-theme',t)}catch(e){}paintThemeBtn()};
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paintThemeBtn);
+paintThemeBtn();
 </script>
 </body></html>
