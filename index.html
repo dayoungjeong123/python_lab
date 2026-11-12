@@ -23,7 +23,7 @@
 *{box-sizing:border-box}
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.55}
-.wrap{max-width:952px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
+.wrap{max-width:1120px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
 .kicker{font-size:.9rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
 h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);line-height:1.1;margin:.15em 0 0;text-wrap:balance}
@@ -41,8 +41,8 @@ h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);li
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
 
 /* 카드뉴스 */
-.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
-@media (max-width:900px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
+@media (max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.cards{grid-template-columns:minmax(0,1fr)}}
 .card{--c:var(--accent);position:relative;display:flex;flex-direction:column;height:100%;border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);
   background:linear-gradient(170deg,color-mix(in srgb,var(--c) 12%,var(--panel)) 0%,var(--panel) 70%);
@@ -57,7 +57,7 @@ a.card:focus-visible{outline:4px solid var(--c);outline-offset:4px}
 .card .big code{font-family:var(--font-m);font-weight:700;color:var(--c);font-size:.82em}
 .card .sub{padding:4px 16px 0;margin:0;font-size:.95rem;font-weight:500}
 .snip{margin:12px 16px 0;margin-top:auto;background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 12px;font-family:var(--font-m);font-size:.8rem;line-height:1.55;white-space:pre;overflow:hidden}
-.snip .k{color:var(--t-kw);font-weight:700}.snip .n{color:var(--t-num)}.snip .s{color:var(--t-str)}
+.snip .k{color:var(--t-kw);font-weight:700}.snip .c{color:#7D879B;font-style:italic}.snip .n{color:var(--t-num)}.snip .s{color:var(--t-str)}
 .tags{display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px 12px;margin:0;list-style:none}
 .tags li{font-size:.74rem;font-weight:500;border-radius:999px;padding:.15em .7em;background:color-mix(in srgb,var(--c) 14%,var(--panel));color:var(--ink)}
 .go{display:flex;justify-content:space-between;align-items:center;padding:12px 16px 14px;font-weight:700;font-size:.92rem;color:var(--c)}
@@ -99,7 +99,10 @@ const LABS=[
    code:'<span class="k">for</span> i <span class="k">in</span> range(<span class="n">3</span>):\n    <span class="k">for</span> j <span class="k">in</span> range(<span class="n">3</span>):\n        print(i, j)'},
   {key:'list',no:'03',title:'리스트',sub:'여러 값을 한 줄로 담아요',href:'',
    tags:['인덱스','append','리스트와 for'],
-   code:'a = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>]\na.append(<span class="n">5</span>)\nprint(a[<span class="n">0</span>])'}
+   code:'a = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>]\na.append(<span class="n">5</span>)\nprint(a[<span class="n">0</span>])'},
+  {key:'mylab',no:'04',title:'내 맘대로',sub:'내가 쓴 코드의 흐름을 따라가요',href:'mylab/index.html',
+   tags:['코드 직접 입력','한 단계씩 실행','변수 · 출력 보기'],
+   code:'<span class="c"># 아무 코드나 써 보세요</span>\nx = <span class="n">3</span>\nprint(x * <span class="n">2</span>)'}
 ];
 document.getElementById('cards').innerHTML=LABS.map(l=>{
   const open=!!l.href,tag=open?'a':'div';
