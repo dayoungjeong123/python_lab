@@ -26,6 +26,7 @@
   html[data-admin] .adm-btn{background:var(--ink);color:var(--bg);border-color:var(--ink);font-weight:700}
   .adm-btn:focus-visible,.adm-pop button:focus-visible,.adm-pop input:focus-visible,.adm-dlg input:focus-visible,.adm-dlg button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
   .adm-pop{position:absolute;right:0;top:calc(100% + 8px);z-index:60;width:min(330px,calc(100vw - 32px));background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 36px rgba(0,0,0,.2);padding:14px;display:flex;flex-direction:column;gap:12px;font-size:.95rem;line-height:1.45}
+  .adm-pop[hidden]{display:none!important}
   .adm-pop h3{margin:0;font-size:1rem}
   .adm-row{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .adm-row small{display:block;color:var(--muted);font-size:.8rem}

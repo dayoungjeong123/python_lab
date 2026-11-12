@@ -220,10 +220,19 @@ tr{cursor:pointer}
 .gmark.ok{color:var(--true)}.gmark.bad{color:var(--false)}
 .gf input.bad,.gf textarea.bad{border-color:var(--false)}
 .blank{display:inline-block;min-width:1.6em;text-align:center;border:2px dashed var(--code-hibar);border-radius:6px;color:var(--code-hibar);font-weight:700;margin:0 .1em}
-.theme-btn{white-space:nowrap}
+.seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--panel)}
+.seg::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.seg[data-on="dark"]::before{transform:translateX(100%)}
+.seg.ready::before{transition:transform .35s cubic-bezier(.65,0,.35,1),background-color .35s}
+.seg button{position:relative;z-index:1;border:none;border-radius:999px;padding:.32em .85em;background:transparent;color:var(--muted);white-space:nowrap;font-weight:500;transition:color .35s}
+.seg button:hover{background:transparent;color:var(--ink)}
+.seg button[aria-checked="true"],.seg button[aria-checked="true"]:hover{color:var(--accent-ink);font-weight:700}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
+@media (prefers-reduced-motion:reduce){.seg.ready::before,.seg button{transition:none}}
 .nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
 </style>
+<script src="../admin.js"></script>
 </head><body>
 
 <div class="wrap">
@@ -236,7 +245,7 @@ tr{cursor:pointer}
       </details>
       <button id="fsDown" aria-label="글자 작게">A−</button>
       <button id="fsUp" aria-label="글자 크게">A+</button>
-      <button id="themeBtn" class="theme-btn">☀️ 라이트</button>
+      <div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span>
     </div>
   </header>
   <nav class="tabs" id="tabs" role="tablist"></nav>
@@ -1090,11 +1099,15 @@ $('#fsDown').onclick=()=>{ fs=Math.max(13,fs-1); saveFs(); applyFs(); };
 $('#fsUp').onclick=()=>{ fs=Math.min(26,fs+1); saveFs(); applyFs(); };
 const mq=window.matchMedia('(prefers-color-scheme: dark)');
 const isDark=()=>{ const t=document.documentElement.dataset.theme; return t?t==='dark':mq.matches; };
-const themeLabel=()=>{ $('#themeBtn').textContent=isDark()?'☀️ 라이트':'🌙 다크'; };
-$('#themeBtn').onclick=()=>{ document.documentElement.dataset.theme=isDark()?'light':'dark'; try{ localStorage.setItem('wl-theme',document.documentElement.dataset.theme); }catch(e){} themeLabel(); };
+const themeLabel=()=>{ const d=isDark(),seg=document.getElementById('theme-seg'); seg.dataset.on=d?'dark':'light'; seg.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.themeSet==='dark')===d))); };
+document.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{ const t=b.dataset.themeSet; if((t==='dark')===isDark()) return;
+  try{ localStorage.setItem('wl-theme',t); }catch(e){}
+  const seg=document.getElementById('theme-seg'); seg.dataset.on=t; seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
+  const apply=()=>{ document.documentElement.dataset.theme=t; };
+  setTimeout(()=>{ if(document.startViewTransition&&!matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(apply); else apply(); },120); });
 let savedTheme=null; try{ savedTheme=localStorage.getItem('wl-theme'); }catch(e){} if(savedTheme) document.documentElement.dataset.theme=savedTheme;
 mq.addEventListener?.('change',themeLabel);
-applyFs(); themeLabel();
+applyFs(); themeLabel(); requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('theme-seg').classList.add('ready')));
 buildTabs(); route();
 window.addEventListener('hashchange',route);
 </script>
