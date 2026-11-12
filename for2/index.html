@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>이중 for문 흐름 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+body{margin:0}
+.titlebox{display:flex;flex-direction:column;gap:4px}
+.home{font-size:.9rem;font-weight:700;color:var(--muted);text-decoration:none;align-self:flex-start;border-radius:6px;padding:.1em .3em;margin-left:-.3em}
+.home:hover{color:var(--accent);background:var(--accent-soft)}
+footer.credit{border-top:1px solid var(--line);padding-top:14px;margin-top:8px;text-align:center;color:var(--muted);font-size:.92rem}
+footer.credit b{color:var(--ink)}
+/* Layout: 학습지 예제 실행기 — 상단 탭, 코드 | 상태 | 흐름도 (python_lab과 같은 디자인) */
+:root{
+  --bg:#EEF2F7; --panel:#FFFFFF; --ink:#152033; --muted:#5A6579; --line:#D6DDE8; --line-strong:#9AA6B8;
+  --accent:#2F6FEB; --accent-ink:#FFFFFF; --accent-soft:#E3ECFD;
+  --code-bg:#18202F; --code-fg:#E4E8F0; --code-dim:#6F7B91; --code-hi:rgba(255,204,77,.22); --code-hibar:#FFCC4D;
+  --t-kw:#8DB8FF; --t-str:#A9D48C; --t-com:#7D879B; --t-num:#F5B97A;
+  --m-init:#4FA3FF; --m-cond:#C08BFF; --m-upd:#FF8A5B;
+  --true:#16915F; --true-soft:#DDF5EA; --false:#D93A40; --false-soft:#FDE4E5;
+  --font-d:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
+  --font-b:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-m:"JetBrains Mono",ui-monospace,Consolas,"D2Coding",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}
+[hidden]{display:none!important}
+html{font-size:17px}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:1rem;line-height:1.55}
+.wrap{max-width:1500px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px;display:flex;flex-direction:column;gap:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--font-d);font-weight:400;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
+h1 code{font-family:var(--font-m);font-size:.85em;color:var(--accent)}
+.fontctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.exhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.exno{font-family:var(--font-d);font-size:1.7rem;line-height:1;background:var(--ink);color:var(--bg);border-radius:10px;padding:.25em .6em;white-space:nowrap}
+.extitle{font-family:var(--font-d);font-size:1.5rem}
+.exdesc{color:var(--muted);font-size:.95rem;flex-basis:100%;margin-top:-4px}
+details.jump-menu{position:relative}
+details.jump-menu summary{list-style:none;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid var(--accent);color:var(--accent);background:var(--panel);border-radius:8px;padding:.42em .9em}
+details.jump-menu summary::-webkit-details-marker{display:none}
+details.jump-menu[open] summary{background:var(--accent);color:var(--accent-ink)}
+.jm-list{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:min(330px,90vw);max-height:70vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.jm-list button{text-align:left;border:none;display:flex;gap:10px;align-items:center;font-size:1rem;white-space:nowrap}
+.jm-list button b{font-family:var(--font-d);font-weight:400;font-size:1.1rem;min-width:5.2em}
+.jm-list .sec{font-size:.75rem;color:var(--muted);font-weight:700;padding:6px 8px 0}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);padding:.42em .9em}
+button:hover{background:var(--accent-soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.primary:hover{filter:brightness(1.08);background:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
+nav.tabs a{font-family:var(--font-d);font-size:1.2rem;padding:.4em 1em;color:var(--muted);text-decoration:none;border-radius:10px 10px 0 0;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
+nav.tabs a[aria-selected="true"]{color:var(--ink);background:var(--panel);border-color:var(--line)}
+.panel{display:flex;flex-direction:column;gap:12px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:.3em .9em;font-size:.95rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+label.tog{display:flex;align-items:center;gap:6px;font-size:.92rem;cursor:pointer}
+details.opts summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:.4em .6em;list-style:none}
+details.opts summary::before{content:"⚙ "}
+.optbox{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:6px 4px;font-size:.9rem;color:var(--muted)}
+
+.rgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,.85fr);gap:14px;align-items:start}
+@media (max-width:1150px){.rgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.flowpane{grid-column:1/-1}}
+@media (max-width:720px){.rgrid{grid-template-columns:minmax(0,1fr)}}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pane-h{font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+
+.code{background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 0;font-family:var(--font-m);font-size:1.12rem;overflow-x:auto}
+.ln{display:flex;white-space:pre;border-left:4px solid transparent;transition:background .2s;align-items:baseline}
+.ln .no{width:2.6em;flex:none;text-align:right;padding-right:.9em;color:var(--code-dim);user-select:none}
+.ln .tx{padding:.18em .6em .18em 0;flex:1}
+.ln .hit{flex:none;font-size:.78rem;color:var(--code-dim);padding-right:.8em;font-weight:700;min-width:3.2em;text-align:right}
+.ln .hit.up{color:var(--code-hibar)}
+.ln.done{background:var(--code-hi);border-left-color:var(--code-hibar)}
+.ln.err{background:rgba(255,107,112,.22);border-left-color:var(--false)}
+.ln.blank .tx{color:var(--code-dim)}
+.t-kw{color:var(--t-kw);font-weight:700}.t-str{color:var(--t-str)}.t-com{color:var(--t-com);font-style:italic}.t-num{color:var(--t-num)}
+.ig{display:inline-block;border-left:2px solid rgba(255,255,255,.12)}
+.ig.l0{border-left-color:color-mix(in srgb,var(--m-init) 70%,transparent)}
+.ig.l1{border-left-color:color-mix(in srgb,var(--m-cond) 70%,transparent)}
+.ig.l2{border-left-color:color-mix(in srgb,var(--m-upd) 70%,transparent)}
+.colors-on .lv0{color:var(--m-init);font-weight:700}
+.colors-on .lv1{color:var(--m-upd);font-weight:700}
+.colors-on .lv2{color:var(--m-cond);font-weight:700}
+.errbox{font-family:var(--font-m);font-size:.95rem;color:var(--false);background:var(--false-soft);border-radius:8px;padding:.5em .8em;white-space:pre-wrap;word-break:break-word}
+
+.condcard{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.stepinfo{font-size:.82rem;color:var(--muted)}
+.note{font-size:1.12rem;font-weight:500}
+.note.muted{color:var(--muted)}
+.note code{font-family:var(--font-m);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:0 .35em}
+.banner{border-radius:8px;padding:.5em .8em;font-weight:500;font-size:.95rem}
+.banner.ok{background:var(--true-soft);color:var(--true)}
+.banner.bad{background:var(--false-soft);color:var(--false)}
+.banner.done{background:var(--accent-soft);color:var(--ink)}
+
+.loops{display:flex;flex-direction:column;gap:6px}
+.loop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92rem}
+.loop .lname{font-weight:700;min-width:5.4em}
+.loop .dots{display:flex;gap:4px;flex-wrap:wrap}
+.loop .dot{width:1.5em;height:1.5em;border-radius:6px;border:2px solid var(--line-strong);font-family:var(--font-m);font-size:.72rem;display:grid;place-items:center;color:var(--muted)}
+.loop .dot.past{background:var(--line);border-color:var(--line)}
+.loop .dot.now{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:700}
+.loop.lv0 .dot.now{border-color:var(--m-init)}
+.loop.lv1 .dot.now{border-color:var(--m-upd)}
+
+.vars{display:flex;flex-wrap:wrap;gap:10px}
+.var{border:2px solid var(--line-strong);border-radius:10px;min-width:88px;padding:6px 12px 8px;display:flex;flex-direction:column;align-items:center;background:var(--panel)}
+.var .vn{font-family:var(--font-m);font-size:.9rem;color:var(--muted)}
+.var .vv{font-family:var(--font-m);font-size:2rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.var .vv.s{font-size:1.4rem}
+.var.empty .vv{color:var(--line-strong)}
+.var.changed{border-color:var(--accent)}
+.var.changed .vv{animation:pop .35s ease}
+.colors-on .var.lv0{border-color:var(--m-init)}
+.colors-on .var.lv1{border-color:var(--m-upd)}
+.var.list{align-items:flex-start;max-width:100%}
+.cells{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:2px}
+.cell .box{min-width:2.6em;padding:.15em .4em;border:2px solid var(--line-strong);border-radius:6px;font-family:var(--font-m);font-weight:700;font-size:1.15rem;text-align:center;background:var(--bg);white-space:nowrap}
+.cell .ix{font-family:var(--font-m);font-size:.72rem;color:var(--muted);line-height:1.15;text-align:center}
+.cell .ix .neg{color:var(--false);opacity:.8}
+.cell.r .box{border-color:var(--accent);background:var(--accent-soft)}
+.cell.w .box{border-color:var(--m-upd);background:color-mix(in srgb,var(--m-upd) 20%,var(--panel));animation:pop .35s ease}
+.cell.a .box{border-color:var(--true);background:var(--true-soft);animation:pop .35s ease}
+.cell.s .box{border-color:var(--m-cond);background:color-mix(in srgb,var(--m-cond) 18%,var(--panel))}
+@keyframes pop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.var.changed .vv,.cell .box{animation:none!important}}
+
+.console{background:var(--code-bg);color:var(--code-fg);font-family:var(--font-m);border-radius:10px;padding:10px 12px;height:9em;overflow:auto;font-size:1rem;white-space:pre-wrap;word-break:break-all}
+.console .newest{color:#FFFFFF;font-weight:700;background:rgba(255,204,77,.28);border-radius:3px}
+.console .nl{color:var(--code-dim)}
+
+svg.flow{width:100%;height:auto;max-width:420px;display:block;margin:0 auto}
+svg.flow rect,svg.flow polygon.nd{fill:var(--panel);stroke:var(--line-strong);stroke-width:2;transition:fill .2s,stroke .2s}
+svg.flow g.on rect,svg.flow g.on polygon.nd{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3.5}
+svg.flow .fl-t{font-family:var(--font-m);font-size:12.5px;fill:var(--ink)}
+svg.flow .fl-lab{font-family:var(--font-b);font-size:11px;fill:var(--muted)}
+svg.flow path.ar{fill:none;stroke:var(--line-strong);stroke-width:2}
+svg.flow path.ar.on{stroke:var(--accent);stroke-width:4}
+svg.flow .ah{fill:var(--line-strong)}
+svg.flow .lab-t{fill:var(--true);font-weight:700;font-size:12px;font-family:var(--font-m)}
+svg.flow .lab-f{fill:var(--false);font-weight:700;font-size:12px;font-family:var(--font-m)}
+svg.flow .lab-on{font-size:15px}
+.flowscroll{overflow:auto;max-height:34em}
+
+.predict{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.predict .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.predict .ph b{font-family:var(--font-d);font-weight:400;font-size:1.3rem}
+.predict .ph span{color:var(--muted);font-size:.92rem}
+.predict textarea{font-family:var(--font-m);font-size:1rem;width:100%;box-sizing:border-box;min-height:5.5em;border:2px solid var(--line-strong);border-radius:10px;background:var(--bg);color:var(--ink);padding:8px 10px;resize:vertical}
+.cmp{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:2px 10px;font-family:var(--font-m);font-size:.95rem;align-items:center}
+.cmp .h{font-family:var(--font-b);font-size:.78rem;color:var(--muted);font-weight:700}
+.cmp .o{color:var(--true);font-weight:700}.cmp .x{color:var(--false);font-weight:700}
+.cmp div{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+
+details.trace{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+details.trace summary{cursor:pointer;font-weight:700}
+.tablewrap{overflow:auto;max-height:22em;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:.35em .6em;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);font-size:.8rem;color:var(--muted)}
+td.m{font-family:var(--font-m)}
+td.chg{color:var(--accent);font-weight:700}
+tr.cur td{background:var(--accent-soft)}
+tr{cursor:pointer}
+
+.lead{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.lead b{color:var(--accent)}
+.labgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.labgrid{grid-template-columns:minmax(0,1fr)}}
+.lrow{display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:1.1rem;white-space:pre}
+.lrow .lno{color:var(--code-dim);width:1.6em;text-align:right;flex:none}
+.lrow .ctl{display:flex;gap:4px;flex:none;width:9.4em;align-items:center}
+.lrow .ctl button{padding:.1em .5em;font-size:.95rem}
+.lrow .ctl .sp{font-family:var(--font-b);font-size:.8rem;color:var(--muted);width:3em;text-align:center}
+.lrow .lcode{color:var(--code-fg)}
+.lrow .dotsp{color:var(--code-dim)}
+.labcode{background:var(--code-bg);border-radius:10px;padding:10px 8px;display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+.counts{display:flex;gap:10px;flex-wrap:wrap}
+.cnt{border:2px solid var(--line-strong);border-radius:10px;padding:6px 14px;display:flex;flex-direction:column;align-items:center;min-width:5em}
+.cnt b{font-family:var(--font-m);font-size:1.6rem}
+.cnt span{font-size:.85rem;color:var(--muted)}
+.mission{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.mission li{display:flex;gap:8px;align-items:baseline}
+.mission li .ck{font-weight:700;color:var(--line-strong);width:1.2em}
+.mission li.ok .ck{color:var(--true)}
+.mission li.ok{color:var(--true)}
+.ib{--c:var(--m-init);border:2px solid var(--c);border-left-width:8px;border-radius:10px;background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:4px 6px 8px;display:flex;flex-direction:column;gap:4px}
+.ib.lv1{--c:var(--m-upd)}
+.ib.lv2{--c:var(--m-cond)}
+.ib-h{font-family:var(--font-m);font-weight:700;padding:.2em .5em;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ib-tag{font-family:var(--font-b);font-size:.82rem;font-weight:500;background:color-mix(in srgb,var(--c) 22%,var(--panel));border-radius:999px;padding:.05em .7em}
+.ib-b{display:flex;flex-direction:column;gap:4px;margin-left:clamp(10px,3vw,24px)}
+.ib-s{font-family:var(--font-m);padding:.2em .5em;border-radius:6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ib-s .times{font-family:var(--font-b);font-size:.82rem;color:var(--muted)}
+.boxes{display:flex;flex-direction:column;gap:6px}
+
+.locked{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--panel);border:2px dashed var(--line-strong);border-radius:12px;padding:16px}
+.lrow.errrow{background:rgba(255,107,112,.22);border-radius:6px}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.gate{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.gate{grid-template-columns:minmax(0,1fr)}}
+.gateform{display:flex;flex-direction:column;gap:10px}
+.gf{display:flex;flex-direction:column;gap:4px;font-weight:700}
+.gf input,.gf textarea{font-family:var(--font-m);font-size:1.1rem;border:2px solid var(--line-strong);border-radius:8px;background:var(--bg);color:var(--ink);padding:.35em .6em;box-sizing:border-box;width:100%}
+.gmark{font-size:.85rem;font-weight:700;margin-left:.3em}
+.gmark.ok{color:var(--true)}.gmark.bad{color:var(--false)}
+.gf input.bad,.gf textarea.bad{border-color:var(--false)}
+.blank{display:inline-block;min-width:1.6em;text-align:center;border:2px dashed var(--code-hibar);border-radius:6px;color:var(--code-hibar);font-weight:700;margin:0 .1em}
+.theme-btn{white-space:nowrap}
+.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
+</style>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="titlebox"><a class="home" href="../index.html">← 실험실 목록</a><h1>이중 <code>for</code>문 흐름 실험실</h1></div>
+    <div class="fontctl">
+      <details class="jump-menu" id="jump">
+        <summary>📋 예제 선택 ▾</summary>
+        <div class="jm-list" id="jmList"></div>
+      </details>
+      <button id="fsDown" aria-label="글자 작게">A−</button>
+      <button id="fsUp" aria-label="글자 크게">A+</button>
+      <button id="themeBtn" class="theme-btn">☀️ 라이트</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <main id="main" class="panel"></main>
+  <footer class="credit">© <b>JeongDayoung</b></footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/*ENGINE-START*/
+class PyErr extends Error{}
+class Halt extends Error{}
+const LIMIT = 900;
+
+function stripComment(s){
+  let q=null;
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(q){ if(c==='\\'){i++;continue;} if(c===q) q=null; }
+    else if(c==="'"||c==='"') q=c;
+    else if(c==='#') return s.slice(0,i);
+  }
+  return s;
+}
+function tokenize(src){
+  const toks=[]; let i=0;
+  while(i<src.length){
+    const c=src[i];
+    if(c===' '||c==='\t'){i++;continue;}
+    if(c==='#') break;
+    if(c==="'"||c==='"'){
+      let j=i+1, s='';
+      while(j<src.length && src[j]!==c){ if(src[j]==='\\'&&j+1<src.length){s+=src[j+1];j+=2;continue;} s+=src[j]; j++; }
+      if(j>=src.length) throw new PyErr('SyntaxError: unterminated string literal');
+      toks.push({t:'str',v:s}); i=j+1; continue;
+    }
+    if(/[0-9]/.test(c)){ let j=i; while(j<src.length&&/[0-9]/.test(src[j]))j++; toks.push({t:'num',v:+src.slice(i,j)}); i=j; continue; }
+    if(/[A-Za-z_가-힣]/.test(c)){ let j=i; while(j<src.length&&/[\w가-힣]/.test(src[j]))j++; toks.push({t:'name',v:src.slice(i,j)}); i=j; continue; }
+    const two=src.slice(i,i+2);
+    if(['+=','-=','==','!=','<=','>=','//'].includes(two)){toks.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%()[],:=.<>'.includes(c)){toks.push({t:'op',v:c});i++;continue;}
+    throw new PyErr('SyntaxError: invalid syntax');
+  }
+  return toks;
+}
+function parseTokens(toks){
+  let p=0;
+  const isOp=v=>toks[p]&&toks[p].t==='op'&&toks[p].v===v;
+  const eat=v=>{ if(!isOp(v)) throw new PyErr('SyntaxError: invalid syntax'); p++; };
+  const expr=()=>add();
+  function add(){ let a=mul(); while(isOp('+')||isOp('-')){const op=toks[p++].v; a={t:'bin',op,a,b:mul()};} return a; }
+  function mul(){ let a=unary(); while(isOp('*')||isOp('/')||isOp('//')||isOp('%')){const op=toks[p++].v; a={t:'bin',op,a,b:unary()};} return a; }
+  function unary(){ if(isOp('-')){p++; return {t:'neg',a:unary()};} return post(); }
+  function post(){
+    let a=prim();
+    for(;;){
+      if(isOp('(')){
+        p++; const args=[],kw={};
+        while(!isOp(')')){
+          if(toks[p]&&toks[p].t==='name'&&toks[p+1]&&toks[p+1].t==='op'&&toks[p+1].v==='='){const k=toks[p].v;p+=2;kw[k]=expr();}
+          else args.push(expr());
+          if(isOp(','))p++; else break;
+        }
+        eat(')'); a={t:'call',f:a,args,kw};
+      } else if(isOp('[')){
+        p++; let lo=null,hi=null;
+        if(!isOp(':')) lo=expr();
+        if(isOp(':')){ p++; if(!isOp(']')) hi=expr(); eat(']'); a={t:'slice',obj:a,lo,hi}; }
+        else { eat(']'); a={t:'idx',obj:a,i:lo}; }
+      } else if(isOp('.')){
+        p++; const n=toks[p++]; if(!n||n.t!=='name') throw new PyErr('SyntaxError: invalid syntax'); a={t:'attr',obj:a,n:n.v};
+      } else break;
+    }
+    return a;
+  }
+  function prim(){
+    const k=toks[p]; if(!k) throw new PyErr('SyntaxError: invalid syntax');
+    if(k.t==='num'){p++;return {t:'num',v:k.v};}
+    if(k.t==='str'){p++;return {t:'str',v:k.v};}
+    if(k.t==='name'){p++;return {t:'name',n:k.v};}
+    if(isOp('[')){ p++; const items=[]; while(!isOp(']')){ items.push(expr()); if(isOp(','))p++; else break; } eat(']'); return {t:'list',items}; }
+    if(isOp('(')){ p++; const e=expr(); eat(')'); return e; }
+    throw new PyErr('SyntaxError: invalid syntax');
+  }
+  if(!toks.length) throw new PyErr('SyntaxError: invalid syntax');
+  const e=expr(); if(p!==toks.length) throw new PyErr('SyntaxError: invalid syntax'); return e;
+}
+function parseStmt(text){
+  const m=text.match(/^for\s+([A-Za-z_]\w*)\s+in\s+(.+?)\s*:$/);
+  if(m) return {k:'for', v:m[1], it:parseTokens(tokenize(m[2])), itText:m[2].trim()};
+  if(/^for\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
+  const toks=tokenize(text);
+  const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='));
+  if(ai>0) return {k:'aug', op:toks[ai].v[0], target:parseTokens(toks.slice(0,ai)), e:parseTokens(toks.slice(ai+1))};
+  let depth=0, ei=-1;
+  toks.forEach((t,ix)=>{ if(t.t==='op'){ if('(['.includes(t.v))depth++; else if(')]'.includes(t.v))depth--; else if(t.v==='='&&depth===0&&ei<0) ei=ix; }});
+  if(ei>0){
+    const target=parseTokens(toks.slice(0,ei));
+    if(target.t!=='name'&&target.t!=='idx') throw new PyErr('SyntaxError: cannot assign to expression');
+    return {k:'assign', target, e:parseTokens(toks.slice(ei+1))};
+  }
+  return {k:'expr', e:parseTokens(toks)};
+}
+function analyze(code){
+  const lines=code.replace(/\t/g,'    ').split('\n').map((r,ix)=>({no:ix+1, raw:r, ind:r.match(/^ */)[0].length, text:stripComment(r).trim()}));
+  const real=lines.filter(l=>l.text!=='');
+  const stack=[0]; let prevColon=null;
+  for(const l of real){
+    const cur=stack[stack.length-1];
+    if(prevColon){
+      if(l.ind<=cur) return {lines, err:{line:l.no, msg:`IndentationError: expected an indented block after 'for' statement on line ${prevColon.no}`}};
+      stack.push(l.ind);
+    } else if(l.ind>cur) return {lines, err:{line:l.no, msg:'IndentationError: unexpected indent'}};
+    else if(l.ind<cur){
+      while(stack.length>1&&stack[stack.length-1]>l.ind) stack.pop();
+      if(stack[stack.length-1]!==l.ind) return {lines, err:{line:l.no, msg:'IndentationError: unindent does not match any outer indentation level'}};
+    }
+    prevColon=/:$/.test(l.text)?l:null;
+  }
+  if(prevColon) return {lines, err:{line:prevColon.no, msg:`IndentationError: expected an indented block after 'for' statement on line ${prevColon.no}`}};
+  let k=0;
+  function block(ind, depth){
+    const out=[];
+    while(k<real.length && real[k].ind===ind){
+      const l=real[k++]; let st;
+      try{ st=parseStmt(l.text); }catch(e){ e.line=l.no; throw e; }
+      const node={line:l.no, text:l.text, depth, ...st};
+      if(st.k==='for') node.body=block(real[k].ind, depth+1);
+      out.push(node);
+    }
+    return out;
+  }
+  try{ return {lines, tree:block(0,0)}; }
+  catch(e){ if(e instanceof PyErr) return {lines, err:{line:e.line, msg:e.message}}; throw e; }
+}
+function repr(v){
+  if(typeof v==='string') return (v.includes("'")&&!v.includes('"'))?'"'+v+'"':"'"+v.replace(/'/g,"\\'")+"'";
+  if(Array.isArray(v)) return '['+v.map(repr).join(', ')+']';
+  if(v===null||v===undefined) return 'None';
+  return String(v);
+}
+function pstr(v){ return typeof v==='string'?v:repr(v); }
+function tname(v){ return typeof v==='string'?'str':Array.isArray(v)?'list':typeof v==='number'?'int':'NoneType'; }
+function binop(op,a,b){
+  const ta=tname(a), tb=tname(b);
+  if(op==='+'){ if(ta==='int'&&tb==='int') return a+b; if(ta==='str'&&tb==='str') return a+b; if(ta==='list'&&tb==='list') return a.concat(b);
+    throw new PyErr(ta==='str'?`TypeError: can only concatenate str (not "${tb}") to str`:`TypeError: unsupported operand type(s) for +: '${ta}' and '${tb}'`); }
+  if(op==='*'){ if(ta==='int'&&tb==='int') return a*b; if(ta==='str'&&tb==='int') return a.repeat(Math.max(0,b)); if(ta==='int'&&tb==='str') return b.repeat(Math.max(0,a));
+    throw new PyErr(`TypeError: unsupported operand type(s) for *: '${ta}' and '${tb}'`); }
+  if(ta!=='int'||tb!=='int') throw new PyErr(`TypeError: unsupported operand type(s) for ${op}: '${ta}' and '${tb}'`);
+  if(op==='-') return a-b;
+  if(op==='//'){ if(b===0) throw new PyErr('ZeroDivisionError: integer division or modulo by zero'); return Math.floor(a/b); }
+  if(op==='%'){ if(b===0) throw new PyErr('ZeroDivisionError: integer modulo by zero'); return ((a%b)+b)%b; }
+  if(op==='/'){ if(b===0) throw new PyErr('ZeroDivisionError: division by zero'); return a/b; }
+}
+function ev(n,S){
+  switch(n.t){
+    case 'num': return n.v;
+    case 'str': return n.v;
+    case 'name': if(!(n.n in S.vars)) throw new PyErr(`NameError: name '${n.n}' is not defined`); return S.vars[n.n];
+    case 'list': return n.items.map(x=>ev(x,S));
+    case 'neg': { const v=ev(n.a,S); if(typeof v!=='number') throw new PyErr("TypeError: bad operand type for unary -"); return -v; }
+    case 'bin': return binop(n.op, ev(n.a,S), ev(n.b,S));
+    case 'idx': {
+      const o=ev(n.obj,S), i=ev(n.i,S);
+      if(!Array.isArray(o)&&typeof o!=='string') throw new PyErr(`TypeError: '${tname(o)}' object is not subscriptable`);
+      if(typeof i!=='number') throw new PyErr(`TypeError: list indices must be integers, not ${tname(i)}`);
+      const j=i<0?o.length+i:i;
+      if(j<0||j>=o.length) throw new PyErr(`IndexError: ${Array.isArray(o)?'list':'string'} index out of range`);
+      if(n.obj.t==='name') S.acc.push({n:n.obj.n,i:j,k:'r'});
+      return o[j];
+    }
+    case 'slice': {
+      const o=ev(n.obj,S); const L=o.length;
+      let lo=n.lo?ev(n.lo,S):0, hi=n.hi?ev(n.hi,S):L;
+      if(lo<0) lo=Math.max(0,L+lo); if(hi<0) hi=Math.max(0,L+hi); lo=Math.min(lo,L); hi=Math.min(hi,L);
+      if(n.obj.t==='name') for(let q=lo;q<hi;q++) S.acc.push({n:n.obj.n,i:q,k:'s'});
+      return o.slice(lo,hi);
+    }
+    case 'attr': throw new PyErr(`AttributeError: '${tname(ev(n.obj,S))}' object has no attribute '${n.n}'`);
+    case 'call': return call(n,S);
+  }
+}
+function call(n,S){
+  if(n.f.t==='attr'){
+    const o=ev(n.f.obj,S);
+    if(n.f.n==='append'&&Array.isArray(o)){
+      if(n.args.length!==1) throw new PyErr(`TypeError: list.append() takes exactly one argument (${n.args.length} given)`);
+      const v=ev(n.args[0],S); o.push(v);
+      if(n.f.obj.t==='name') S.acc.push({n:n.f.obj.n,i:o.length-1,k:'a'});
+      S.note={kind:'append', name:n.f.obj.t==='name'?n.f.obj.n:'리스트', v, arr:o};
+      return null;
+    }
+    throw new PyErr(`AttributeError: '${tname(o)}' object has no attribute '${n.f.n}'`);
+  }
+  if(n.f.t!=='name') throw new PyErr('TypeError: object is not callable');
+  const fn=n.f.n;
+  if(fn in S.vars) throw new PyErr(`TypeError: '${tname(S.vars[fn])}' object is not callable`);
+  const args=n.args.map(a=>ev(a,S));
+  if(fn==='len'){
+    if(args.length!==1) throw new PyErr(`TypeError: len() takes exactly one argument (${args.length} given)`);
+    if(typeof args[0]!=='string'&&!Array.isArray(args[0])) throw new PyErr(`TypeError: object of type '${tname(args[0])}' has no len()`);
+    return args[0].length;
+  }
+  if(fn==='range'){
+    let [a,b,c]=args; if(args.length===1){b=a;a=0;} c=c===undefined?1:c;
+    if([a,b,c].some(x=>typeof x!=='number')) throw new PyErr("TypeError: 'str' object cannot be interpreted as an integer");
+    if(c===0) throw new PyErr('ValueError: range() arg 3 must not be zero');
+    const r=[]; for(let x=a; c>0?x<b:x>b; x+=c){ r.push(x); if(r.length>5000) break; } return r;
+  }
+  if(fn==='print'){
+    const end='end' in n.kw?ev(n.kw.end,S):'\n', sep='sep' in n.kw?ev(n.kw.sep,S):' ';
+    S.print=args.map(pstr).join(sep)+end; return null;
+  }
+  throw new PyErr(`NameError: name '${fn}' is not defined`);
+}
+function treeDepth(nodes){ let m=0; for(const n of nodes) if(n.k==='for') m=Math.max(m,1+treeDepth(n.body)); return m; }
+function showPrint(t){
+  if(t==='\n') return '빈 줄(줄바꿈)만 출력';
+  if(t.endsWith('\n')) return `출력: ${t.slice(0,-1)}`;
+  if(t.endsWith(' ')) return `출력: ${t.trimEnd()} (뒤에 공백, 줄 안 바꿈)`;
+  return `출력: ${t} (줄 안 바꿈)`;
+}
+function run(tree){
+  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null};
+  const maxD=treeDepth(tree);
+  const snap=o=>{
+    if(S.steps.length>LIMIT) throw new Halt('limit');
+    S.steps.push(Object.assign({acc:[],changed:[],newOut:''},o,{vars:JSON.parse(JSON.stringify(S.vars)), out:S.out, hits:{...S.hits}, loops:S.loops.map(x=>({...x}))}));
+  };
+  const fail=(e,n)=>{ snap({line:n.line, kind:'error', msg:e.message}); throw new Halt('error'); };
+  function exec(nodes,d){
+    for(const n of nodes){
+      S.acc=[]; S.print=null; S.note=null;
+      if(n.k==='for'){
+        let it; try{ it=ev(n.it,S); }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
+        if(!Array.isArray(it)&&typeof it!=='string') fail(new PyErr(`TypeError: '${tname(it)}' object is not iterable`),n);
+        const items=typeof it==='string'?[...it]:it.slice();
+        const role=maxD>1?(d===0?'바깥 for':(d===1?'안쪽 for':'가장 안쪽 for')):'for';
+        const L={line:n.line, v:n.v, k:0, n:items.length, role, d};
+        S.loops.push(L);
+        const src=n.it.t==='name'?n.it.n:null;
+        for(let q=0;q<items.length;q++){
+          S.hits[n.line]=(S.hits[n.line]||0)+1;
+          L.k=q+1; S.vars[n.v]=items[q];
+          snap({line:n.line, kind:'iter', d, msg:`${role}: <code>${n.v} = ${esc(repr(items[q]))}</code>${src?` (${src}의 ${q}번 값)`:''} → ${q+1}번째 반복`, acc:src?[{n:src,i:q,k:'r'}]:[], changed:[n.v]});
+          exec(n.body,d+1);
+        }
+        L.k=items.length+1;
+        snap({line:n.line, kind:'exit', d, msg: items.length===0?`${role}: 꺼낼 값이 없어서 한 번도 반복하지 않아요`:(d>0?`${role} 끝! 남은 값이 없어요 → 바깥 for로 돌아가요`:`${role} 끝! 남은 값이 없어요 → 반복 끝`)});
+        S.loops.pop();
+      } else {
+        S.hits[n.line]=(S.hits[n.line]||0)+1;
+        let msg='', changed=[];
+        try{
+          if(n.k==='expr'){
+            ev(n.e,S);
+            if(S.print!==null){ S.out+=S.print; msg=esc(showPrint(S.print)); }
+            else if(S.note&&S.note.kind==='append'){ msg=`<code>${esc(S.note.name)}</code> 맨 뒤에 ${esc(repr(S.note.v))} 추가 → <code>${esc(repr(S.note.arr))}</code>`; changed=[S.note.name]; }
+            else msg='실행';
+          } else if(n.k==='assign'){
+            const v=ev(n.e,S);
+            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`; }
+            else {
+              const o=ev(n.target.obj,S), i=ev(n.target.i,S);
+              if(!Array.isArray(o)) throw new PyErr(`TypeError: '${tname(o)}' object does not support item assignment`);
+              const j=i<0?o.length+i:i; if(j<0||j>=o.length) throw new PyErr('IndexError: list assignment index out of range');
+              const old=o[j]; o[j]=v; const nm=n.target.obj.t==='name'?n.target.obj.n:'리스트';
+              S.acc=S.acc.filter(a=>!(a.n===nm&&a.i===j&&a.k==='r')); S.acc.push({n:nm,i:j,k:'w'}); changed=[nm];
+              msg=`<code>${nm}[${i}]</code>의 값을 ${esc(repr(old))} → ${esc(repr(v))}(으)로 바꿔요`;
+            }
+          } else if(n.k==='aug'){
+            const cur=ev(n.target,S), add=ev(n.e,S), nv=binop(n.op,cur,add);
+            if(n.target.t==='name'){ S.vars[n.target.n]=nv; changed=[n.target.n]; msg=`<code>${n.target.n} ${n.op}= ${esc(repr(add))}</code> → ${n.target.n} = ${esc(repr(cur))} ${n.op} ${esc(repr(add))} = <b>${esc(repr(nv))}</b>`; }
+            else { const o=ev(n.target.obj,S), i=ev(n.target.i,S), j=i<0?o.length+i:i; o[j]=nv; changed=[n.target.obj.n]; msg=`값을 ${esc(repr(nv))}(으)로 바꿔요`; }
+          }
+        }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
+        snap({line:n.line, kind:S.print!==null?'print':'stmt', d, msg, acc:S.acc, changed, newOut:S.print||''});
+      }
+    }
+  }
+  try{
+    snap({line:null, kind:'start', msg:'‘다음 단계’를 눌러 시작해요'});
+    exec(tree,0);
+    snap({line:null, kind:'end', msg:'프로그램 끝! 출력 결과를 확인해 보세요'});
+  }catch(e){
+    if(!(e instanceof Halt)) throw e;
+    if(e.message==='limit') S.steps.push({...S.steps[S.steps.length-1], kind:'error', msg:'단계가 너무 많아서 여기서 멈췄어요'});
+  }
+  return S.steps;
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/*ENGINE-END*/
+
+/* ───────── 예제 데이터 (프린트와 같은 번호) ───────── */
+const EX = {
+  e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
+`s = [90, 85, 77, 100, 68]
+print(s[0], s[-1])
+s[1] = 95
+print(s)`},
+  e12:{no:'예제 1-2', title:'리스트 활용 3총사', desc:'len(개수), append(맨 뒤에 추가), 슬라이싱 s[a:b](a부터 b-1까지)', code:
+`s = [90, 85, 77]
+print(len(s))
+s.append(60)
+print(s)
+print(s[0:2])`},
+  e13a:{no:'예제 1-3 ①', title:'리스트 + for: 값을 바로 꺼내 더하기', desc:'for x in s: → x에 리스트 값이 하나씩 들어가요', code:
+`s = [90, 85, 77]
+total = 0
+for x in s:              # x = 값
+    total += x
+print(total)`},
+  e13b:{no:'예제 1-3 ②', title:'리스트 + for: 인덱스로 꺼내 더하기', desc:'for i in range(len(s)): → i에 자리 번호가 들어가요', code:
+`s = [90, 85, 77]
+total = 0
+for i in range(len(s)):      # i = 자리 번호
+    total += s[i]
+print(total)`},
+  e21:{no:'예제 2-1', title:'이중 for문 실행 순서', desc:'시계처럼! i = 시침, j = 분침. 바깥 for가 1번 돌 때 안쪽 for는 끝까지 돌아요', code:
+`for i in range(3):
+    for j in range(2):
+        print(i, j)`},
+  e22:{no:'예제 2-2', title:'별찍기', desc:"end='' → 줄을 바꾸지 않고 옆으로 출력. 안쪽 for가 끝나면 print()로 줄바꿈", code:
+`for i in range(3):
+    for j in range(5):
+        print('*', end='')
+    print()`},
+  e23:{no:'예제 2-3', title:'들여쓰기 = 상자', desc:'print 위치(들여쓰기 칸 수)에 따라 실행 횟수가 달라져요. 오른쪽 숫자가 실행 횟수예요', code:
+`for i in range(2):
+    for j in range(3):
+        print('A')
+    print('B')
+print('C')`},
+  e24:{no:'예제 2-4', title:'리스트 + 이중 for', desc:'a[j]로 리스트 값을 하나씩 꺼내요. i가 커질수록 안쪽 반복 횟수도 1 → 2 → 3번', code:
+`a = [2, 4, 6]
+for i in range(3):
+    for j in range(i + 1):
+        print(a[j], end=' ')
+    print()`},
+  q1:{no:'문제 1', title:'빈칸 채우기 확인', desc:'결과가 5 / 6 15가 되도록 채운 빈칸이 맞는지 실행해서 확인해요', quiz:true, code:
+`a = [3, 6, 9, 12]
+a.append(15)
+print(len(a))
+print(a[1], a[-1])`},
+  q2:{no:'문제 2', title:'실행 결과 쓰기', desc:'프린트에 먼저 결과를 쓰고, 실행해서 확인해요', quiz:true, code:
+`for i in range(2, 4):
+    for j in range(1, 3):
+        print(i + j, end=' ')
+    print()`},
+  q3:{no:'문제 3', title:'분식집 세트 메뉴', desc:'세트는 몇 개? 첫 줄과 마지막 줄은? 예측하고 확인해요', quiz:true, code:
+`menu = ['떡볶이', '김밥']
+drink = ['콜라', '사이다', '물']
+for m in menu:
+    for d in drink:
+        print(m, d)`},
+  q5:{no:'문제 5', title:'실행되지 않는 코드 고치기', desc:'몇 번째 줄을 몇 칸으로 들여쓰면 될까요? 프린트에 먼저 답을 쓰고 확인해요', quiz:true, code:
+`for i in range(2):
+    for j in range(3):
+    print(i, j)`, fix:
+`for i in range(2):
+    for j in range(3):
+        print(i, j)`},
+  q6:{no:'문제 6', title:'별 계단 빈칸 확인', desc:'결과가 별 계단(* / ** / *** / ****)이 되도록 빈칸 ①②③을 채워요', quiz:true, code:
+`# 1층부터 4층까지 별 계단 쌓기
+# 각 층에는 층 번호만큼 별을 출력
+for i in range(1, 5):
+    for j in range(i):
+        print('*', end='')
+    print()`},
+  qc:{no:'도전과제', title:'2단~9단 구구단 표', desc:'바깥 for : 단(2~9), 안쪽 for : 곱하는 수(1~9)', quiz:true, locked:true, code:
+`for dan in range(2, 10):
+    for i in range(1, 10):
+        print(dan, 'x', i, '=', dan * i)
+    print()`},
+};
+const APP='nested';
+const SECTIONS = APP==='list' ? [
+  {id:'basic', name:'1) 리스트 기본', exs:['e11']},
+  {id:'func', name:'2) 활용 3총사', exs:['e12']},
+  {id:'loop', name:'3) 리스트 + for', exs:['e13a','e13b']},
+] : [
+  {id:'order', name:'1) 이중 for 순서', exs:['e21','e22']},
+  {id:'box', name:'2) 들여쓰기 = 상자', exs:['e23']},
+  {id:'indent', name:'3) 들여쓰기 실험'},
+  {id:'listfor', name:'4) 리스트 + 이중 for', exs:['e24']},
+  {id:'quiz', name:'5) 문제 확인', exs:['q1','q2','q3','q5','q6','qc']},
+];
+
+/* ───────── 공통 상태 ───────── */
+const store={get(k,d){try{const v=localStorage.getItem('lfl-'+APP+'-'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('lfl-'+APP+'-'+k,JSON.stringify(v));}catch(e){}}};
+const G={ colors:store.get('colors',true), hits:store.get('hits',true), speed:store.get('speed',800), predicts:{}, cur:{}, unlocked:{} };
+const $=(s,r=document)=>r.querySelector(s);
+const h=(tag,attrs={},...kids)=>{ const e=document.createElement(tag); for(const [k,v] of Object.entries(attrs)){ if(k==='class') e.className=v; else if(k==='html') e.innerHTML=v; else if(k.startsWith('on')) e.addEventListener(k.slice(2),v); else if(v!==false&&v!=null) e.setAttribute(k,v===true?'':v); } for(const c of kids.flat()) if(c!=null&&c!==false) e.append(c.nodeType?c:document.createTextNode(c)); return e; };
+let toastT=null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
+
+/* 코드 강조 */
+const KW=new Set(['for','in','print','range','len','append']);
+function hlLine(raw, loopVars){
+  const ind=raw.match(/^ */)[0].length;
+  let guides='';
+  for(let k=0;k<Math.floor(ind/4);k++) guides+=`<span class="ig l${k}">    </span>`;
+  guides+=' '.repeat(ind%4);
+  const body=raw.slice(ind);
+  const re=/(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|(\b\d+\b)|([A-Za-z_가-힣][\w가-힣]*)|([^#'"\w가-힣]+)/g;
+  let out='', m;
+  while((m=re.exec(body))){
+    if(m[1]) out+=`<span class="t-com">${esc(m[1])}</span>`;
+    else if(m[2]) out+=`<span class="t-str">${esc(m[2])}</span>`;
+    else if(m[3]) out+=`<span class="t-num">${m[3]}</span>`;
+    else if(m[4]){ const w=m[4]; if(w in loopVars) out+=`<span class="lv${loopVars[w]}">${w}</span>`; else if(KW.has(w)) out+=`<span class="t-kw">${w}</span>`; else out+=esc(w); }
+    else out+=esc(m[5]);
+  }
+  return guides+out;
+}
+function loopVarsOf(tree){ const r={}; (function w(ns){ for(const n of ns) if(n.k==='for'){ if(!(n.v in r)) r[n.v]=n.depth; w(n.body);} })(tree||[]); return r; }
+
+/* ───────── 순서도 ───────── */
+function buildFlow(tree){
+  const BW=184, BH=34, HW=196, HH=40, GAP=22;
+  const D=treeDepth(tree);
+  const lane=d=>HW/2+16+(D-1-d)*16;
+  const CX=Math.max(lane(0)+24, 130);
+  const W=CX*2;
+  const shapes=[], paths=[], labs=[];
+  const short=t=>t.length>22?t.slice(0,21)+'…':t;
+  function seq(nodes, y, from){
+    for(const n of nodes){
+      paths.push({d:`M${CX},${from} L${CX},${y}`, ah:[CX,y], to:n.line});
+      if(n.k==='for'){
+        shapes.push({line:n.line, kind:'for', x:CX-HW/2, y, w:HW, h:HH, text:`${n.v} in ${n.itText}`});
+        const yb=seq(n.body, y+HH+GAP, y+HH);
+        labs.push({x:CX+6, y:y+HH+14, t:'True', c:'lab-t', line:n.line, k:'iter'});
+        const L=lane(n.depth);
+        paths.push({d:`M${CX},${yb} L${CX},${yb+10} L${CX-L},${yb+10} L${CX-L},${y+HH/2} L${CX-HW/2},${y+HH/2}`, ah:[CX-HW/2,y+HH/2,'r'], back:n.line});
+        paths.push({d:`M${CX+HW/2},${y+HH/2} L${CX+L},${y+HH/2} L${CX+L},${yb+26} L${CX},${yb+26}`, exit:n.line});
+        labs.push({x:CX+HW/2+4, y:y+HH/2-6, t:'False', c:'lab-f', line:n.line, k:'exit'});
+        from=yb+26; y=yb+26+GAP;
+      } else {
+        shapes.push({line:n.line, kind:'box', x:CX-BW/2, y, w:BW, h:BH, text:short(n.text)});
+        from=y+BH; y=y+BH+GAP;
+      }
+    }
+    return from;
+  }
+  const end=seq(tree, 14, 0);
+  paths[0].d=paths[0].d.replace(`M${CX},0`,`M${CX},0`);
+  const ey=end+GAP;
+  paths.push({d:`M${CX},${end} L${CX},${ey}`, ah:[CX,ey]});
+  shapes.push({line:'end', kind:'end', x:CX-60, y:ey, w:120, h:30, text:'끝'});
+  const H=ey+44;
+  let svg=`<svg class="flow" viewBox="0 0 ${W} ${H}" role="img" aria-label="순서도">`;
+  paths.forEach((p,ix)=>{ if(ix===0) return; svg+=`<path class="ar" data-back="${p.back||''}" data-to="${p.to||''}" d="${p.d}"/>`; if(p.ah){ const [x,y,dir]=p.ah; svg+= dir==='r'?`<polygon class="ah" points="${x},${y} ${x-9},${y-5} ${x-9},${y+5}"/>`:`<polygon class="ah" points="${x},${y} ${x-5},${y-9} ${x+5},${y-9}"/>`; } });
+  for(const s of shapes){
+    if(s.kind==='for'){ const {x,y,w,h:hh}=s; svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+14},${y} ${x+w-14},${y} ${x+w},${y+hh/2} ${x+w-14},${y+hh} ${x+14},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(s.text.length>24?s.text.slice(0,23)+'…':s.text)}</text></g>`; }
+    else svg+=`<g data-line="${s.line}"><rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${s.kind==='end'?15:6}"/><text class="fl-t" x="${s.x+s.w/2}" y="${s.y+s.h/2+4}" text-anchor="middle">${esc(s.text)}</text></g>`;
+  }
+  for(const l of labs) svg+=`<text class="${l.c}" data-lab="${l.line}-${l.k}" x="${l.x}" y="${l.y}">${l.t}</text>`;
+  svg+='</svg>';
+  return svg;
+}
+
+/* ───────── 실행기 ───────── */
+class Sim{
+  constructor(root, ex, opt={}){ this.root=root; this.ex=ex; this.opt=opt; this.code=ex.code; this.idx=0; this.timer=null; this.load(this.code); }
+  load(code){
+    this.code=code; this.stop();
+    this.an=analyze(code);
+    this.steps=this.an.err?[]:run(this.an.tree);
+    this.idx=0; this.lv=loopVarsOf(this.an.tree);
+    this.render();
+  }
+  stop(){ if(this.timer){ clearInterval(this.timer); this.timer=null; } }
+  go(i){ if(!this.steps.length) return; this.idx=Math.max(0,Math.min(this.steps.length-1,i)); this.update(); if(this.idx===this.steps.length-1){ this.stop(); this.updateAuto(); this.onEnd(); } }
+  toggleAuto(){ if(this.timer){ this.stop(); } else { if(this.idx>=this.steps.length-1) this.idx=0; this.timer=setInterval(()=>this.go(this.idx+1), G.speed); } this.updateAuto(); }
+  updateAuto(){ const b=this.el.auto; if(b) b.textContent=this.timer?'⏸ 멈춤':'⏵ 자동 실행'; }
+  key(e){
+    if(!this.root.isConnected||this.root.closest('[hidden]')) return;
+    if(['TEXTAREA','INPUT'].includes(document.activeElement.tagName)) return;
+    if(e.key==='ArrowRight'){ this.stop(); this.updateAuto(); this.go(this.idx+1); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'){ this.stop(); this.updateAuto(); this.go(this.idx-1); e.preventDefault(); }
+    else if(e.key===' '){ this.toggleAuto(); e.preventDefault(); }
+  }
+  render(){
+    const ex=this.ex, err=this.an.err;
+    this.root.innerHTML=''; this.el={};
+    const ctl=h('div',{class:'toolbar'},
+      this.el.reset=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(0);}},'↺ 처음부터'),
+      this.el.prev=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(this.idx-1);}},'◀ 이전'),
+      this.el.next=h('button',{class:'primary',onclick:()=>{this.stop();this.updateAuto();this.go(this.idx+1);}},'다음 단계 ▶'),
+      this.el.auto=h('button',{onclick:()=>this.toggleAuto()},'⏵ 자동 실행'),
+      this.el.last=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(this.steps.length-1);}},'⏭ 끝까지'),
+      this.optsEl()
+    );
+    if(err) [this.el.reset,this.el.prev,this.el.next,this.el.auto,this.el.last].forEach(b=>b.disabled=true);
+    const codeEl=h('div',{class:'code nocopy'+(G.colors?' colors-on':''), 'aria-label':'코드'});
+    this.an.lines.forEach(l=>{
+      const row=h('div',{class:'ln'+(l.text===''?' blank':''), 'data-line':l.no},
+        h('span',{class:'no'},String(l.no)), h('span',{class:'tx',html:hlLine(l.raw,this.lv)||' '}), h('span',{class:'hit'}));
+      codeEl.append(row);
+    });
+    this.el.code=codeEl;
+    const codePane=h('section',{class:'pane'}, h('div',{class:'pane-h'},'코드'), codeEl,
+      h('div',{class:'pane-h'},'출력'), this.el.out=h('div',{class:'console nocopy', 'aria-live':'polite'}));
+    if(err){
+      codeEl.querySelector(`[data-line="${err.line}"]`)?.classList.add('err');
+      codePane.append(h('div',{class:'errbox'},`Traceback (most recent call last):\n  line ${err.line}\n${err.msg}`));
+    }
+    if(ex.fix){
+      const fixed=this.code===ex.fix;
+      codePane.append(h('div',{class:'toolbar'}, h('button',{onclick:()=>this.load(fixed?ex.code:ex.fix)}, fixed?'↩ 처음 코드로':'✔ 고친 코드로 실행해 보기')));
+    }
+    const state=h('section',{class:'pane'},
+      this.el.card=h('div',{class:'condcard'}, this.el.info=h('div',{class:'stepinfo'}), this.el.note=h('div',{class:'note'})),
+      this.el.loopsWrap=h('div',{}, h('div',{class:'pane-h'},'반복 위치'), this.el.loops=h('div',{class:'loops'})),
+      h('div',{class:'pane-h'},'변수'), this.el.vars=h('div',{class:'vars'})
+    );
+    const flow=h('section',{class:'pane flowpane'}, h('div',{class:'pane-h'},'순서도'), this.el.flow=h('div',{class:'flowscroll', html: err?'':buildFlow(this.an.tree)}));
+    if(err) this.el.flow.append(h('div',{class:'note muted'},'들여쓰기 오류가 있어서 실행할 수 없어요. 오류가 난 줄을 고쳐 보세요.'));
+    const grid=h('div',{class:'rgrid'}, codePane, state, flow);
+    this.root.append(ctl, grid, this.traceEl());
+    this.update();
+  }
+  optsEl(){
+    const d=h('details',{class:'opts'}, h('summary',{},'설정'));
+    const box=h('div',{class:'optbox'},
+      h('label',{class:'tog'}, h('input',{type:'checkbox',id:'opt-colors-'+this.opt.key, checked:G.colors, onchange:e=>{G.colors=e.target.checked;store.set('colors',G.colors);this.el.code.classList.toggle('colors-on',G.colors);this.el.vars.classList.toggle('colors-on',G.colors);this.el.loops.classList.toggle('colors-on',G.colors);}}),'반복 변수 색칠 (i·j)'),
+      h('label',{class:'tog'}, h('input',{type:'checkbox',id:'opt-hits-'+this.opt.key, checked:G.hits, onchange:e=>{G.hits=e.target.checked;store.set('hits',G.hits);this.update();}}),'줄마다 실행 횟수'),
+      h('label',{class:'tog'},'자동 속도', h('input',{type:'range',id:'opt-speed-'+this.opt.key,min:150,max:1500,step:50,value:1650-G.speed, oninput:e=>{G.speed=1650-(+e.target.value);store.set('speed',G.speed);if(this.timer){this.stop();this.toggleAuto();}}}))
+    );
+    d.append(box); return d;
+  }
+  predictEl(){
+    const key=this.opt.key;
+    const ta=h('textarea',{id:'pred-'+key, placeholder:'실행하기 전에, 화면에 출력될 결과를 줄마다 그대로 써 보세요.', spellcheck:'false'});
+    ta.value=G.predicts[key]||'';
+    ta.addEventListener('input',()=>{ G.predicts[key]=ta.value; this.el.cmp.innerHTML=''; });
+    this.el.ta=ta;
+    this.el.cmp=h('div',{});
+    return h('section',{class:'predict'},
+      h('div',{class:'ph'}, h('b',{},'✍ 내 예측'), h('span',{},'먼저 예측을 쓰고 → 실행해서 → 맞았는지 비교해요')),
+      ta,
+      h('div',{class:'toolbar'}, h('button',{onclick:()=>{ if(!this.steps.length) return; this.go(this.steps.length-1); }},'⏭ 끝까지 실행하고 비교'), h('button',{onclick:()=>this.compare(true)},'지금 출력과 비교')),
+      this.el.cmp);
+  }
+  traceEl(){
+    const d=h('details',{class:'trace'}, h('summary',{},'추적표 보기'));
+    this.el.tw=h('div',{class:'tablewrap'});
+    d.append(this.el.tw);
+    d.addEventListener('toggle',()=>{ if(d.open) this.drawTrace(); });
+    this.el.traceD=d; return d;
+  }
+  drawTrace(){
+    if(!this.el.traceD.open) return;
+    const names=[]; this.steps.forEach(s=>Object.keys(s.vars).forEach(k=>{ if(!names.includes(k)) names.push(k); }));
+    const strip=s=>s.replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    let html='<table><thead><tr><th>단계</th><th>줄</th>'+names.map(n=>`<th>${esc(n)}</th>`).join('')+'<th>한 일</th></tr></thead><tbody>';
+    this.steps.forEach((s,ix)=>{
+      html+=`<tr data-i="${ix}" class="${ix===this.idx?'cur':''}"><td>${ix}</td><td>${s.line??''}</td>`+names.map(n=>`<td class="m ${s.changed.includes(n)?'chg':''}">${n in s.vars?esc(repr(s.vars[n])):''}</td>`).join('')+`<td>${esc(strip(s.msg))}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    this.el.tw.innerHTML=html;
+    this.el.tw.querySelectorAll('tr[data-i]').forEach(tr=>tr.addEventListener('click',()=>{this.stop();this.updateAuto();this.go(+tr.dataset.i);}));
+    const cur=this.el.tw.querySelector('tr.cur'); if(cur) cur.scrollIntoView({block:'nearest'});
+  }
+  update(){
+    const err=this.an.err;
+    if(err){
+      this.el.info.textContent='실행 전 검사';
+      this.el.note.innerHTML=`<span style="color:var(--false)">${esc(err.msg)}</span>`;
+      this.el.card.lastChild && null;
+      this.el.loopsWrap.hidden=true; this.el.vars.innerHTML=''; this.el.out.textContent='';
+      return;
+    }
+    const s=this.steps[this.idx], prev=this.steps[this.idx-1];
+    this.el.prev.disabled=this.idx===0; this.el.reset.disabled=this.idx===0;
+    this.el.next.disabled=this.el.last.disabled=this.idx>=this.steps.length-1;
+    // 코드 줄
+    this.el.code.querySelectorAll('.ln').forEach(r=>{
+      const no=+r.dataset.line; r.classList.toggle('done', s.line===no);
+      if(s.kind==='error') r.classList.toggle('err', s.line===no);
+      const hit=r.querySelector('.hit'); const c=s.hits[no]||0;
+      hit.textContent=G.hits&&c?`×${c}`:''; hit.classList.toggle('up', !!(prev&&c!==(prev.hits[no]||0)));
+    });
+    // 안내
+    const loopInfo=s.loops.map(L=>`${L.role} ${Math.min(L.k,L.n)}/${L.n}`).join(' · ');
+    this.el.info.textContent=`${this.idx}단계${s.line?` · ${s.line}번 줄`:''}${loopInfo?' · '+loopInfo:''}`;
+    this.el.note.innerHTML=s.kind==='error'?`<span style="color:var(--false)">${esc(s.msg)}</span>`:s.msg;
+    this.el.note.classList.toggle('muted', s.kind==='start');
+    // 반복 위치
+    this.el.loopsWrap.hidden=!s.loops.length;
+    this.el.loops.className='loops'+(G.colors?' colors-on':'');
+    this.el.loops.innerHTML='';
+    for(const L of s.loops){
+      const dots=h('div',{class:'dots'});
+      const vals=[]; // 표시할 값
+      for(let q=1;q<=L.n;q++) dots.append(h('span',{class:'dot'+(q<L.k?' past':'')+(q===L.k?' now':'')},String(q)));
+      this.el.loops.append(h('div',{class:'loop lv'+L.d}, h('span',{class:'lname'},`${L.role} ${L.v}`), dots, h('span',{class:'stepinfo'}, L.k>L.n?'끝':`${L.k}번째`)));
+    }
+    // 변수
+    this.el.vars.className='vars'+(G.colors?' colors-on':'');
+    this.el.vars.innerHTML='';
+    const names=Object.keys(s.vars);
+    if(!names.length) this.el.vars.append(h('div',{class:'var empty'}, h('span',{class:'vn'},'변수'), h('span',{class:'vv'},'?')));
+    for(const n of names){
+      const v=s.vars[n], ch=s.changed.includes(n), lvc=(n in this.lv)?' lv'+this.lv[n]:'';
+      if(Array.isArray(v)){
+        const cells=h('div',{class:'cells'});
+        v.forEach((x,i)=>{
+          const a=s.acc.filter(q=>q.n===n&&q.i===i).map(q=>q.k);
+          const k=a.includes('w')?'w':a.includes('a')?'a':a.includes('r')?'r':a.includes('s')?'s':'';
+          cells.append(h('div',{class:'cell '+k}, h('div',{class:'box'},repr(x)), h('div',{class:'ix',html:`${i}<br><span class="neg">${i-v.length}</span>`})));
+        });
+        this.el.vars.append(h('div',{class:'var list'+(ch?' changed':'')}, h('span',{class:'vn'},`${n}  (길이 ${v.length})`), cells));
+      } else {
+        const txt=repr(v);
+        this.el.vars.append(h('div',{class:'var'+(ch?' changed':'')+lvc}, h('span',{class:'vn'},n), h('span',{class:'vv'+(txt.length>4?' s':'')},txt)));
+      }
+    }
+    // 출력
+    const out=s.out, nw=s.newOut||'';
+    const before=out.slice(0,out.length-nw.length);
+    this.el.out.innerHTML=esc(before)+(nw?`<span class="newest">${esc(nw.replace(/\n$/,''))||'↵'}</span>${nw.endsWith('\n')?'\n':''}`:'');
+    this.el.out.scrollTop=this.el.out.scrollHeight;
+    // 순서도
+    const svg=this.el.flow.querySelector('svg');
+    if(svg){
+      svg.querySelectorAll('g[data-line]').forEach(g=>g.classList.toggle('on', String(s.line)===g.dataset.line || (s.kind==='end'&&g.dataset.line==='end')));
+      svg.querySelectorAll('text[data-lab]').forEach(t=>t.classList.toggle('lab-on', t.dataset.lab===`${s.line}-${s.kind}`));
+      svg.querySelectorAll('path.ar').forEach(p=>p.classList.remove('on'));
+      if(s.line&&s.kind!=='error'){ const p=svg.querySelector(`path.ar[data-to="${s.line}"]`); if(p&&s.kind!=='exit'&&(!prev||prev.line!==s.line)) p.classList.add('on'); }
+      const on=svg.querySelector('g.on'); if(on&&this.el.flow.scrollHeight>this.el.flow.clientHeight){ const r=on.getBoundingClientRect(), c=this.el.flow.getBoundingClientRect(); if(r.top<c.top||r.bottom>c.bottom) this.el.flow.scrollTop+=r.top-c.top-c.height/3; }
+    }
+    this.drawTrace();
+    if(this.opt.onStep) this.opt.onStep(s);
+  }
+  onEnd(){ if(this.el.ta && this.el.ta.value.trim()) this.compare(false); }
+  compare(manual){
+    const pred=(this.el.ta.value||'').replace(/\r/g,'');
+    const s=this.steps[this.idx]; if(!s) return;
+    if(!pred.trim()){ this.el.cmp.innerHTML=''; if(manual) toast('먼저 예측을 써 주세요'); return; }
+    const norm=t=>t.split('\n').map(x=>x.replace(/\s+/g,' ').trim());
+    let A=norm(s.out.replace(/\n$/,'')), P=norm(pred.replace(/\n+$/,''));
+    const n=Math.max(A.length,P.length); let ok=0;
+    const g=h('div',{class:'cmp'}, h('div',{class:'h'},''), h('div',{class:'h'},'내 예측'), h('div',{class:'h'},s.kind==='end'?'실제 출력':'지금까지 출력'));
+    for(let i=0;i<n;i++){ const a=A[i]??'', p=P[i]??''; const same=a===p; if(same) ok++; g.append(h('div',{class:same?'o':'x'},same?'○':'✕'), h('div',{},p||' '), h('div',{},a||' ')); }
+    this.el.cmp.innerHTML=''; this.el.cmp.append(g);
+    const all=ok===n&&s.kind==='end';
+    this.el.cmp.append(h('div',{class:'banner '+(all?'ok':(s.kind==='end'?'bad':'done'))}, all?`모두 맞혔어요! (${ok}/${n}줄)`:`${ok}/${n}줄 맞았어요.`+(s.kind==='end'?' 다른 줄은 단계별로 다시 따라가 보세요.':' 끝까지 실행하면 전체를 비교해요.')));
+    if(all) toast('예측 성공! 🎉');
+  }
+}
+
+/* ───────── 들여쓰기 실험실 ───────── */
+const LAB={ lines:[ {t:"for i in range(2):",ind:0,fix:true}, {t:"for j in range(3):",ind:4,fix:true}, {t:"print('A')",ind:8}, {t:"print('B')",ind:4}, {t:"print('C')",ind:0} ] };
+const MISSIONS=[
+  {t:'B가 6번 출력되게 만들어 보세요', ok:r=>r.c&&r.c.B===6},
+  {t:'C가 2번 출력되게 만들어 보세요', ok:r=>r.c&&r.c.C===2},
+  {t:'A, B, C가 모두 6번씩 출력되게 만들어 보세요', ok:r=>r.c&&r.c.A===6&&r.c.B===6&&r.c.C===6},
+  {t:'A는 6번, B와 C는 2번씩 출력되게 만들어 보세요', ok:r=>r.c&&r.c.A===6&&r.c.B===2&&r.c.C===2},
+  {t:'IndentationError가 나게 만들어 보세요', ok:r=>r.err&&/IndentationError/.test(r.err)},
+];
+const labDone=new Set();
+function labCode(){ return LAB.lines.map(l=>' '.repeat(l.ind)+l.t).join('\n'); }
+function labResult(){
+  const an=analyze(labCode());
+  if(an.err) return {err:an.err.msg, line:an.err.line, an};
+  const st=run(an.tree), out=st[st.length-1].out.split('\n').filter(Boolean);
+  return {c:{A:out.filter(x=>x==='A').length,B:out.filter(x=>x==='B').length,C:out.filter(x=>x==='C').length}, an};
+}
+function renderLab(root){
+  root.innerHTML='';
+  root.append(h('div',{class:'exhead'}, h('span',{class:'exno'},'실험'), h('span',{class:'extitle'},'들여쓰기를 옮기면 실행 횟수가 바뀔까?'), h('div',{class:'exdesc'},'예제 2-3 코드예요. ◀ ▶로 print 줄의 들여쓰기를 0칸 · 4칸 · 8칸으로 옮겨 보고, 미션을 해결해 보세요.')));
+  const grid=h('div',{class:'labgrid'});
+  const left=h('section',{class:'pane'}), right=h('section',{class:'pane'});
+  grid.append(left,right);
+  const simRoot=h('div',{class:'panel'});
+  root.append(grid, h('div',{class:'pane-h'},'↓ 지금 코드를 한 단계씩 실행해 보기'), simRoot);
+  let sim=null;
+  function draw(){
+    const r=labResult();
+    left.innerHTML='';
+    left.append(h('div',{class:'pane-h'},'코드 (◀ ▶로 들여쓰기 옮기기)'));
+    const lc=h('div',{class:'labcode nocopy'});
+    LAB.lines.forEach((l,ix)=>{
+      const ctl=h('span',{class:'ctl'});
+      if(l.fix) ctl.append(h('span',{class:'sp'},`${l.ind}칸`));
+      else ctl.append(
+        h('button',{'aria-label':`${ix+1}번 줄 왼쪽으로`, disabled:l.ind===0, onclick:()=>{l.ind-=4; draw();}},'◀'),
+        h('span',{class:'sp'},`${l.ind}칸`),
+        h('button',{'aria-label':`${ix+1}번 줄 오른쪽으로`, disabled:l.ind>=12, onclick:()=>{l.ind+=4; draw();}},'▶'));
+      lc.append(h('div',{class:'lrow'+(r.line===ix+1?' errrow':'')}, h('span',{class:'lno'},String(ix+1)), ctl,
+        h('span',{class:'dotsp'},'·'.repeat(l.ind)), h('span',{class:'lcode',html:hlLine(l.t,{i:0,j:1})})));
+    });
+    left.append(lc);
+    if(r.err) left.append(h('div',{class:'errbox'},`${r.line}번 줄 → ${r.err}`));
+    else left.append(h('div',{class:'counts'}, ...['A','B','C'].map(k=>h('div',{class:'cnt'}, h('b',{},String(r.c[k])), h('span',{},`${k} 출력 횟수`)))));
+    left.append(h('div',{class:'toolbar'}, h('button',{onclick:()=>{ LAB.lines[2].ind=8; LAB.lines[3].ind=4; LAB.lines[4].ind=0; draw(); }},'↺ 처음 코드로')));
+    // 오른쪽: 상자 + 미션
+    right.innerHTML='';
+    right.append(h('div',{class:'pane-h'},'들여쓰기 = 상자'));
+    if(r.err) right.append(h('div',{class:'note muted'},'오류가 있으면 상자를 만들 수 없어요.'));
+    else right.append(boxView(r.an.tree));
+    right.append(h('div',{class:'pane-h'},'미션'));
+    const ul=h('ul',{class:'mission'});
+    MISSIONS.forEach((m,ix)=>{ if(m.ok(r)) labDone.add(ix); ul.append(h('li',{class:labDone.has(ix)?'ok':''}, h('span',{class:'ck'},labDone.has(ix)?'✔':'○'), m.t)); });
+    right.append(ul, h('div',{class:'stepinfo'},`해결한 미션 ${labDone.size} / ${MISSIONS.length}`));
+    if(sim) sim.stop();
+    sim=new Sim(simRoot,{no:'',title:'',code:labCode()},{key:'lab'});
+    LAB.sim=sim;
+  }
+  draw();
+}
+function boxView(tree){
+  const st=run(tree), hits=st[st.length-1].hits;
+  function nodes(ns){
+    const wrap=h('div',{class:'boxes'});
+    for(const n of ns){
+      if(n.k==='for'){
+        const b=h('div',{class:'ib lv'+Math.min(n.depth,2)}, h('div',{class:'ib-h'}, h('span',{},n.text), h('span',{class:'ib-tag'},`${hits[n.line]||0}번 반복하는 상자`)));
+        b.append(h('div',{class:'ib-b'}, nodes(n.body))); wrap.append(b);
+      } else wrap.append(h('div',{class:'ib-s'}, h('span',{},n.text), h('span',{class:'times'},`→ ${hits[n.line]||0}번 실행`)));
+    }
+    return wrap;
+  }
+  return nodes(tree);
+}
+
+/* ───────── 문제 잠금: 내 답을 먼저 입력해야 열림 ───────── */
+const digits=v=>{ const m=String(v).match(/-?\d+/); return m?m[0]:''; };
+const nospace=v=>String(v).replace(/\s+/g,'');
+const outLines=v=>String(v).replace(/\r/g,'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+const ASK={
+  q1:{blank:"a = [3, 6, 9, 12]\na.append(15)\nprint(len(a))\nprint(a[ ① ], a[ ② ])",
+      fields:[{id:'b1',label:'빈칸 ①',ans:'1 (또는 -4)',ok:v=>['1','-4'].includes(digits(v))&&nospace(v).length<=3},
+              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3}]},
+  q2:{fields:[{id:'out',label:'실행 결과',multi:true,ans:'3 4\n4 5',ok:v=>outLines(v).join('|')==='3 4|4 5'}]},
+  q3:{fields:[{id:'n',label:'세트 수',ans:'6개',ok:v=>digits(v)==='6'},
+              {id:'f',label:'첫 줄',ans:'떡볶이 콜라',ok:v=>nospace(v)==='떡볶이콜라'},
+              {id:'l',label:'마지막 줄',ans:'김밥 물',ok:v=>nospace(v)==='김밥물'}]},
+  q5:{fields:[{id:'ln',label:'몇 번째 줄을',ans:'3번째 줄',ok:v=>digits(v)==='3'},
+              {id:'sp',label:'몇 칸으로 들여쓸까',ans:'8칸',ok:v=>digits(v)==='8'}]},
+  q6:{blank:"# 1층부터 4층까지 별 계단 쌓기\n# 각 층에는 층 번호만큼 별을 출력\nfor i in range(1, 5):\n    for j in range( ① ):\n        print('*', ②='')\n    ③",
+      fields:[{id:'b1',label:'빈칸 ①',ans:'i',ok:v=>nospace(v)==='i'},
+              {id:'b2',label:'빈칸 ②',ans:'end',ok:v=>nospace(v)==='end'},
+              {id:'b3',label:'빈칸 ③',ans:'print()',ok:v=>nospace(v)==='print()'}]},
+};
+G.answers={};
+function gateView(sec,key){
+  const ex=EX[key], A=ASK[key];
+  const code=A.blank||ex.code;
+  const codeEl=h('div',{class:'code nocopy'});
+  code.split('\n').forEach((raw,ix)=>codeEl.append(h('div',{class:'ln'}, h('span',{class:'no'},String(ix+1)), h('span',{class:'tx',html:(hlLine(raw,{})||' ').replace(/[①②③]/g,m=>`<span class="blank">${m}</span>`)}))));
+  const inputs={}, marks={};
+  let tries=0;
+  const form=h('form',{class:'gateform'});
+  const fb=h('div',{class:'banner bad','aria-live':'polite',hidden:true});
+  A.fields.forEach(f=>{
+    const inp=f.multi?h('textarea',{id:`ans-${key}-${f.id}`,rows:3,spellcheck:'false',autocomplete:'off'}):h('input',{id:`ans-${key}-${f.id}`,type:'text',autocomplete:'off',spellcheck:'false'});
+    inputs[f.id]=inp;
+    const mark=h('span',{class:'gmark'});
+    marks[f.id]=mark;
+    inp.addEventListener('input',()=>{ mark.textContent=''; mark.className='gmark'; inp.classList.remove('bad'); });
+    form.append(h('label',{class:'gf','for':`ans-${key}-${f.id}`}, h('span',{},f.label,' ',mark), inp));
+  });
+  const btn=h('button',{class:'primary',type:'submit',disabled:true},'답 제출하고 실행해 보기 ▶');
+  const check=()=>{ btn.disabled=A.fields.some(f=>!inputs[f.id].value.trim()); };
+  Object.values(inputs).forEach(i=>i.addEventListener('input',check));
+  form.append(h('div',{class:'toolbar'},btn, h('span',{class:'stepinfo'},'모든 칸이 맞아야 실행 화면이 열려요')), fb);
+  form.addEventListener('submit',e=>{
+    e.preventDefault(); if(btn.disabled) return;
+    tries++;
+    const R=A.fields.map(f=>({label:f.label, v:inputs[f.id].value, ok:f.ok(inputs[f.id].value)}));
+    R.forEach((r,ix)=>{ const f=A.fields[ix]; marks[f.id].textContent=r.ok?'○ 맞았어요':'✕ 다시 생각해 봐요'; marks[f.id].className='gmark '+(r.ok?'ok':'bad'); inputs[f.id].classList.toggle('bad',!r.ok); });
+    if(R.every(r=>r.ok)){ G.answers[key]={tries}; G.unlocked[key]=true; toast('정답! 실행 화면이 열렸어요 🎉'); showEx(sec,key); return; }
+    const bad=R.filter(r=>!r.ok).length;
+    fb.hidden=false;
+    fb.textContent=`${bad}칸이 아직 틀렸어요. ✕ 표시된 칸을 고쳐서 다시 제출해요. (${tries}번째 시도)`+(tries>=3?' 힌트: 코드를 한 줄씩 손으로 따라가 보세요!':'');
+    const first=A.fields.find((f,ix)=>!R[ix].ok); if(first) inputs[first.id].focus();
+  });
+  return h('div',{class:'gate'},
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'문제 코드'), codeEl),
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'🔒 내 답 입력'), h('div',{class:'stepinfo'},'프린트에 쓴 내 답을 그대로 입력해요. 제출하면 맞았는지 알려 주고, 코드를 한 단계씩 실행해 볼 수 있어요.'), form));
+}
+function resultView(sec,key){
+  const R=G.answers[key]; if(!R) return null;
+  return h('section',{class:'predict'},
+    h('div',{class:'ph'}, h('b',{},'🎉 정답!'), h('span',{},`${R.tries}번 만에 맞혔어요. 아래에서 한 단계씩 실행하며 왜 그런지 확인해 보세요.`)),
+    h('div',{class:'toolbar'}, h('button',{onclick:()=>{ G.unlocked[key]=false; delete G.answers[key]; showEx(sec,key); }},'↺ 다시 풀기')));
+  const n=R.filter(r=>r.ok).length, all=n===R.length;
+  const grid=h('div',{class:'cmp'}, h('div',{class:'h'},''), h('div',{class:'h'},'내 답'), h('div',{class:'h'},'정답'));
+  R.forEach(r=>grid.append(h('div',{class:r.ok?'o':'x'},r.ok?'○':'✕'), h('div',{},`${r.label}: ${r.v.trim().replace(/\n/g,' / ')}`), h('div',{},r.ok?'':r.ans.replace(/\n/g,' / '))));
+  return h('section',{class:'predict'},
+    h('div',{class:'ph'}, h('b',{},all?'🎉 모두 맞았어요!':`${n} / ${R.length} 맞았어요`), h('span',{},all?'아래에서 실행 과정을 확인해 보세요':'틀린 곳은 아래에서 한 단계씩 실행하며 이유를 찾아보세요')),
+    grid, h('div',{class:'toolbar'}, h('button',{onclick:()=>{ G.unlocked[key]=false; delete G.answers[key]; showEx(sec,key); }},'↺ 다시 풀기')));
+}
+
+/* ───────── 화면 구성 ───────── */
+let sims={};
+function showEx(sec, key, flash){
+  G.cur[sec]=key;
+  const panel=$(`#panel-${sec}`);
+  panel.innerHTML='';
+  const S=SECTIONS.find(x=>x.id===sec);
+  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, `${EX[k].no} ${EX[k].title}`)));
+  if(S.exs.length>1) panel.append(chips);
+  const ex=EX[key];
+  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), h('div',{class:'exdesc'},ex.desc)));
+  if(ex.quiz&&!ex.locked) panel.append(h('div',{class:'lead'}, h('span',{},'📝'), h('span',{html:'<b>먼저 프린트에 직접 풀어요.</b> 내 답을 입력해야 실행 화면이 열려요.'})));
+  if(ex.locked&&!G.unlocked[key]){
+    panel.append(h('div',{class:'locked'}, h('b',{},'먼저 프린트에 직접 코드를 써 보세요!'), h('span',{class:'stepinfo'},'다 썼으면 아래 버튼을 눌러 정답 코드와 실행 과정을 확인해요.'), h('button',{class:'primary',onclick:()=>{G.unlocked[key]=true; showEx(sec,key);}},'정답 코드 보기')));
+    return;
+  }
+  if(ASK[key]&&!G.unlocked[key]){ if(sims[sec]) sims[sec].stop(); panel.append(gateView(sec,key)); return; }
+  if(ASK[key]) panel.append(resultView(sec,key));
+  const root=h('div',{class:'panel'}); panel.append(root);
+  if(sims[sec]) sims[sec].stop();
+  sims[sec]=new Sim(root, ex, {key});
+  if(flash){ root.classList.add('flash'); }
+}
+function buildTabs(){
+  const nav=$('#tabs'), main=$('#main');
+  SECTIONS.forEach(S=>{
+    nav.append(h('a',{href:'#'+S.id, role:'tab', id:'tab-'+S.id, 'aria-controls':'panel-'+S.id}, S.name));
+    main.append(h('section',{class:'panel', id:'panel-'+S.id, role:'tabpanel', hidden:true}));
+  });
+  // 예제 선택 메뉴
+  const jm=$('#jmList');
+  SECTIONS.forEach(S=>{
+    jm.append(h('div',{class:'sec'},S.name));
+    if(!S.exs) jm.append(h('button',{onclick:()=>{ $('#jump').open=false; location.hash=S.id; }}, h('b',{},'실험'), '들여쓰기 옮기기'));
+    else S.exs.forEach(k=>jm.append(h('button',{onclick:()=>{ $('#jump').open=false; if(location.hash!=='#'+S.id) location.hash=S.id; showEx(S.id,k,true); }}, h('b',{},EX[k].no), EX[k].title)));
+  });
+}
+function route(){
+  const id=location.hash.slice(1);
+  const S=SECTIONS.find(x=>x.id===id)||SECTIONS[0];
+  SECTIONS.forEach(x=>{ $('#panel-'+x.id).hidden=x.id!==S.id; $('#tab-'+x.id).setAttribute('aria-selected',String(x.id===S.id)); if(x.id!==S.id&&sims[x.id]) sims[x.id].stop(); });
+  const p=$('#panel-'+S.id);
+  if(!p.childElementCount){ if(S.exs) showEx(S.id,G.cur[S.id]||S.exs[0]); else renderLab(p); }
+}
+document.addEventListener('keydown',e=>{ const id=(SECTIONS.find(x=>x.id===location.hash.slice(1))||SECTIONS[0]).id; const s=id==='indent'?LAB.sim:sims[id]; if(s) s.key(e); });
+document.addEventListener('click',e=>{ const j=$('#jump'); if(j.open&&!j.contains(e.target)) j.open=false; });
+
+/* 글자 크기 · 테마 */
+let fs=17; try{ fs=+localStorage.getItem('wl-fs')||17; }catch(e){}
+const applyFs=()=>{ document.documentElement.style.fontSize=fs+'px'; };
+const saveFs=()=>{ try{ localStorage.setItem('wl-fs',fs); }catch(e){} };
+$('#fsDown').onclick=()=>{ fs=Math.max(13,fs-1); saveFs(); applyFs(); };
+$('#fsUp').onclick=()=>{ fs=Math.min(26,fs+1); saveFs(); applyFs(); };
+const mq=window.matchMedia('(prefers-color-scheme: dark)');
+const isDark=()=>{ const t=document.documentElement.dataset.theme; return t?t==='dark':mq.matches; };
+const themeLabel=()=>{ $('#themeBtn').textContent=isDark()?'☀️ 라이트':'🌙 다크'; };
+$('#themeBtn').onclick=()=>{ document.documentElement.dataset.theme=isDark()?'light':'dark'; try{ localStorage.setItem('wl-theme',document.documentElement.dataset.theme); }catch(e){} themeLabel(); };
+let savedTheme=null; try{ savedTheme=localStorage.getItem('wl-theme'); }catch(e){} if(savedTheme) document.documentElement.dataset.theme=savedTheme;
+mq.addEventListener?.('change',themeLabel);
+applyFs(); themeLabel();
+buildTabs(); route();
+window.addEventListener('hashchange',route);
+</script>
+
+</body></html>
