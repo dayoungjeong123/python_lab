@@ -183,7 +183,10 @@ tr.cur td{background:var(--accent-soft)}
 .ih-story summary{cursor:pointer;font-weight:700}
 .ih-tree{margin:.5em 0;padding-left:1.4em;line-height:1.8}
 .ih-tree ol{padding-left:1.6em;list-style:disc}
-.theme-btn{white-space:nowrap}
+.seg{display:inline-flex;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--panel);gap:2px}
+.seg button{border:none;border-radius:999px;padding:.32em .85em;background:transparent;color:var(--muted);white-space:nowrap;font-weight:500}
+.seg button:hover{background:var(--accent-soft);color:var(--ink)}
+.seg button[aria-checked="true"]{background:var(--accent);color:var(--accent-ink);font-weight:700}
 footer.credit{border-top:1px solid var(--line);padding-top:14px;margin-top:8px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
 .nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -198,7 +201,7 @@ footer.credit b{color:var(--ink)}
       <div class="sec">2) for문 → while문</div><button data-go="cv0"><b>변환 ①</b>1부터 19까지 출력</button><button data-go="cv1"><b>변환 ②</b>구구단</button>
       <div class="sec">3) break와 continue</div><button data-go="ex12"><b>예제 1-2</b>break</button><button data-go="ex13"><b>예제 1-3</b>continue</button>
       <div class="sec">4) 실습</div><button data-go="ex14"><b>예제 1-4</b>숫자 맞추기 게임</button>
-    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button><button id="theme-btn" class="theme-btn" aria-label="화면 밝기 바꾸기">🌙 다크</button></div>
+    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div></div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -649,9 +652,9 @@ setFs(fs);$('fs-up').onclick=()=>setFs(fs+1);$('fs-down').onclick=()=>setFs(fs-1
 // 다크/라이트 전환 (처음엔 기기 설정을 따르고, 누르면 기억)
 const sysDark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':sysDark()};
-const paintThemeBtn=()=>{const d=isDark();$('theme-btn').textContent=d?'☀️ 라이트':'🌙 다크';$('theme-btn').setAttribute('aria-label',d?'밝은 화면으로 바꾸기':'어두운 화면으로 바꾸기')};
+const paintThemeBtn=()=>{const d=isDark();document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.themeSet==='dark')===d)))};
 try{const t=localStorage.getItem('wl-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}
-$('theme-btn').onclick=()=>{const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('wl-theme',t)}catch(e){}paintThemeBtn()};
+document.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{const t=b.dataset.themeSet;document.documentElement.dataset.theme=t;try{localStorage.setItem('wl-theme',t)}catch(e){}paintThemeBtn()});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paintThemeBtn);
 paintThemeBtn();
 </script>
