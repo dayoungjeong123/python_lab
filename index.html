@@ -183,7 +183,15 @@ tr.cur td{background:var(--accent-soft)}
 .ih-story summary{cursor:pointer;font-weight:700}
 .ih-tree{margin:.5em 0;padding-left:1.4em;line-height:1.8}
 .ih-tree ol{padding-left:1.6em;list-style:disc}
-.theme-btn{white-space:nowrap}
+.seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--panel)}
+.seg::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.18);transform:translateX(0)}
+.seg[data-on="dark"]::before{transform:translateX(100%)}
+.seg.ready::before{transition:transform .35s cubic-bezier(.65,0,.35,1),background-color .35s}
+.seg button{position:relative;z-index:1;border:none;border-radius:999px;padding:.32em .85em;background:transparent;color:var(--muted);white-space:nowrap;font-weight:500;transition:color .35s}
+.seg button:hover{background:transparent;color:var(--ink)}
+.seg button[aria-checked="true"],.seg button[aria-checked="true"]:hover{color:var(--accent-ink);font-weight:700}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
+@media (prefers-reduced-motion:reduce){.seg.ready::before,.seg button{transition:none}}
 footer.credit{border-top:1px solid var(--line);padding-top:14px;margin-top:8px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
 .nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
@@ -198,7 +206,7 @@ footer.credit b{color:var(--ink)}
       <div class="sec">2) for문 → while문</div><button data-go="cv0"><b>변환 ①</b>1부터 19까지 출력</button><button data-go="cv1"><b>변환 ②</b>구구단</button>
       <div class="sec">3) break와 continue</div><button data-go="ex12"><b>예제 1-2</b>break</button><button data-go="ex13"><b>예제 1-3</b>continue</button>
       <div class="sec">4) 실습</div><button data-go="ex14"><b>예제 1-4</b>숫자 맞추기 게임</button>
-    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button><button id="theme-btn" class="theme-btn" aria-label="화면 밝기 바꾸기">🌙 다크</button></div>
+    </div></details><button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div></div>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -649,10 +657,17 @@ setFs(fs);$('fs-up').onclick=()=>setFs(fs+1);$('fs-down').onclick=()=>setFs(fs-1
 // 다크/라이트 전환 (처음엔 기기 설정을 따르고, 누르면 기억)
 const sysDark=()=>matchMedia('(prefers-color-scheme: dark)').matches;
 const isDark=()=>{const t=document.documentElement.dataset.theme;return t?t==='dark':sysDark()};
-const paintThemeBtn=()=>{const d=isDark();$('theme-btn').textContent=d?'☀️ 라이트':'🌙 다크';$('theme-btn').setAttribute('aria-label',d?'밝은 화면으로 바꾸기':'어두운 화면으로 바꾸기')};
+const paintThemeBtn=()=>{const d=isDark();$('theme-seg').dataset.on=d?'dark':'light';document.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.themeSet==='dark')===d)))};
 try{const t=localStorage.getItem('wl-theme');if(t==='dark'||t==='light')document.documentElement.dataset.theme=t}catch(e){}
-$('theme-btn').onclick=()=>{const t=isDark()?'light':'dark';document.documentElement.dataset.theme=t;try{localStorage.setItem('wl-theme',t)}catch(e){}paintThemeBtn()};
+document.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{const t=b.dataset.themeSet;if((t==='dark')===isDark())return;
+  try{localStorage.setItem('wl-theme',t)}catch(e){}
+  $('theme-seg').dataset.on=t;
+  b.parentNode.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
+  const apply=()=>{document.documentElement.dataset.theme=t};
+  // 스위치가 먼저 미끄러지고, 화면은 부드럽게 바뀜
+  setTimeout(()=>{if(document.startViewTransition&&!matchMedia('(prefers-reduced-motion: reduce)').matches)document.startViewTransition(apply);else apply()},120)});
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',paintThemeBtn);
 paintThemeBtn();
+requestAnimationFrame(()=>requestAnimationFrame(()=>{$('theme-seg').classList.add('ready')}));
 </script>
 </body></html>
