@@ -147,13 +147,14 @@ tr.cur td{background:var(--accent-soft)}
 
 footer.credit{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
-</style></head><body>
+</style>
+<script src="../admin.js"></script></head><body>
 <div class="wrap">
   <header class="top">
     <div class="titlebox"><a class="home" href="../index.html">← 실험실 목록</a><h1>내 맘대로 실험실</h1></div>
     <div class="hctl"><span class="pychip" id="pychip" role="status">🐍 파이썬 준비 중…</span>
       <button id="fs-down" aria-label="글자 작게">A−</button><button id="fs-up" aria-label="글자 크게">A+</button>
-      <div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div></div>
+      <div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span></div>
   </header>
   <p class="intro">파이썬 코드를 직접 쓰고 <b>▶ 실행해서 흐름 보기</b>를 누르세요. <b>다음 ▶</b>을 누를 때마다 한 줄씩 실행되면서 변수와 출력이 어떻게 바뀌는지 보여요.</p>
 
