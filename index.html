@@ -70,6 +70,15 @@ a.card:hover .go .arr{transform:translateX(4px)}
 .card.locked .no{color:var(--muted)}
 @media (prefers-reduced-motion:reduce){.card,.go .arr,.seg.ready::before,.seg button{transition:none}a.card:hover{transform:none}}
 
+li.wide{grid-column:1/-1}
+.card.wide{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"body emo" "go go";align-items:center}
+.card.wide .wbody{grid-area:body;padding-bottom:12px}.card.wide .go{grid-area:go;border-top:1px solid var(--line)}
+.card.wide .sub{max-width:44em}
+.wemo{grid-area:emo;display:flex;gap:.3em;font-size:2.6rem;padding:0 22px}
+.wemo span{display:inline-block;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@media (max-width:600px){.card.wide{grid-template-columns:minmax(0,1fr);grid-template-areas:"emo" "body" "go"}.wemo{padding:16px 16px 0;font-size:2.2rem}}
+@media (prefers-reduced-motion:reduce){.wemo span{animation:none}}
 footer.credit{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
 .hctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
@@ -105,10 +114,12 @@ const LABS=[
    code:'a = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>]\na.append(<span class="n">5</span>)\nprint(a[<span class="n">0</span>])'},
   {key:'mylab',no:'04',title:'내 맘대로',sub:'내가 쓴 코드의 흐름을 따라가요',href:'mylab/index.html',
    tags:['코드 직접 입력','한 단계씩 실행','변수 · 출력 보기'],
-   code:'<span class="c"># 아무 코드나 써 보세요</span>\nx = <span class="n">3</span>\nprint(x * <span class="n">2</span>)'}
+   code:'<span class="c"># 아무 코드나 써 보세요</span>\nx = <span class="n">3</span>\nprint(x * <span class="n">2</span>)'},
+  {key:'game',no:'05',wide:true,title:'🎮 코드 게임랜드',sub:'빈칸을 채워 코드를 완성하면 친구들이 코드대로 움직여요. 게임하면서 while · 이중 for · 리스트를 익혀요!',href:'games/index.html',
+   tags:['🐱 고양이 길찾기','🌸 꽃밭 심기','🍩 도넛 가게','🐣 몇 번 돌까? 퀴즈'],code:'🐱 🌸 🍩 🐣'}
 ];
 // 카드 열림/잠김은 labs.json에서 읽어요 (관리자 패널에서 바꾸고 GitHub에 붙여 넣으면 학생 화면에 반영)
-const DEFAULT_OPEN={while:true,for:true,list:true,mylab:true};
+const DEFAULT_OPEN={while:true,for:true,list:true,mylab:true,game:true};
 let published={...DEFAULT_OPEN},draft=null;
 const EDIT_URL='https://github.com/dayoungjeong123/python_lab/edit/main/labs.json';
 const openState=()=>draft||published;
@@ -116,6 +127,11 @@ function renderCards(){const st=openState(),adm=window.PL&&PL.admin;
   document.getElementById('cards').innerHTML=LABS.map(l=>{
     const made=!!l.href,open=made&&!!st[l.key],peek=made&&!open&&adm,link=open||peek,tag=link?'a':'div';
     const badge=open?'<span class="badge">열림</span>':peek?'<span class="badge admin">잠김 · 미리보기</span>':`<span class="badge soon">${made?'잠김':'준비 중'}</span>`;
+    if(l.wide)return `<li class="wide"><${tag} class="card wide ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
+    <div class="wbody"><div class="top"><span class="no">${l.no}</span>${badge}</div><h2 class="big">${l.title}</h2><p class="sub">${l.sub}</p><ul class="tags">${l.tags.map(t=>`<li>${t}</li>`).join('')}</ul></div>
+    <div class="wemo" aria-hidden="true">${l.code.split(' ').map((e,k)=>`<span style="animation-delay:${k*.25}s">${e}</span>`).join('')}</div>
+    <div class="go"><span>${open?'게임하러 가기':peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
+  </${tag}></li>`;
     return `<li><${tag} class="card ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
     <div class="top"><span class="no">${l.no}</span>${badge}</div>
     <h2 class="big">${l.title}</h2><p class="sub">${l.sub}</p>
