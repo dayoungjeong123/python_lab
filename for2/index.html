@@ -678,10 +678,10 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 /* ───────── 예제 데이터 (프린트와 같은 번호) ───────── */
 const EX = {
   e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
-`s = [90, 85, 77, 100, 68]
-print(s[0], s[-1])
-s[1] = 95
-print(s)`},
+`list1 = ["실드", "투시경", "물약"]
+print(list1[0], list1[-1])
+list1[1] = "바늘"
+print(list1)`},
   e12:{no:'예제 1-2', title:'리스트 활용 3총사', desc:'len(개수), append(맨 뒤에 추가), 슬라이싱 s[a:b](a부터 b-1까지)', code:
 `s = [90, 85, 77]
 print(len(s))
@@ -700,19 +700,14 @@ total = 0
 for i in range(len(s)):      # i = 자리 번호
     total += s[i]
 print(total)`},
-  e21:{no:'예제 2-1', title:'for 안에 if: 80점 이상 개수 · 최댓값', desc:'for로 점수를 하나씩 꺼내고, if로 조건에 맞을 때만 실행해요. mx에는 지금까지 본 점수 중 가장 큰 값이 남아요', code:
+  e31:{no:'예제 3-1', title:'① for 안에 if - 조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
 `s = [90, 85, 77, 100, 68]
 cnt = 0
 for x in s:
     if x >= 80:
         cnt += 1
-print(cnt)
-mx = s[0]
-for x in s:
-    if x > mx:
-        mx = x
-print(mx)`},
-  e22:{no:'예제 2-2', title:'while 안에 if: 0을 입력할 때까지 짝수만 더하기', desc:'n이 0이 아니면 계속 반복해요. 짝수(n % 2 == 0)일 때만 total에 더해요. 위의 ⌨ 입력값을 바꿔서도 실행해 보세요!', inputs:['3','4','5','6','0'], code:
+print(cnt)`},
+  e32:{no:'예제 3-2', title:'② while 안에 if - 0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
 `total = 0
 n = int(input())
 while n != 0:
@@ -720,39 +715,31 @@ while n != 0:
         total += n
     n = int(input())
 print(total)`},
-  e23:{no:'예제 2-3', title:'for 안에 for (맛보기): 별찍기', desc:"바깥 for가 1번 돌 때 안쪽 for는 끝까지 돌아요. end='' → 옆으로 출력, print() → 줄바꿈", code:
+  e33:{no:'예제 3-3', title:'③ for 안에 for - 별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
 `for i in range(3):
     for j in range(5):
         print('*', end='')
     print()`},
-  q1:{no:'문제 1', title:'빈칸 채우기 (리스트)', desc:'결과가 5 / 6 15가 되도록 빈칸 ①②에 들어갈 인덱스를 채워요', quiz:true, code:
-`a = [3, 6, 9, 12]
-a.append(15)
-print(len(a))
-print(a[1], a[-1])`},
-  q2:{no:'문제 2', title:'빈칸 채우기 (for 안에 if - 짝수만 출력)', desc:'결과가 8 12 6이 되도록 빈칸 ①②를 채워요', quiz:true, code:
+  q1:{no:'문제 1', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오.', desc:'결과: 4 8 / [9, 4, 1, 3, 8, 6] 6', quiz:true, code:
+`a = [9, 4, 1, 3, 8]
+print(a[1], a[-1])
+a.append(6)
+print(a, len(a))`},
+  q2:{no:'문제 2', title:"'★'은 몇 번 출력될까?", desc:'★ : (   ) 번', quiz:true, code:
+`for i in range(3):
+    for j in range(4):
+        print('★')`},
+  q3:{no:'문제 3', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오. (짝수만 출력)', desc:'결과: 8 12 6', quiz:true, code:
 `nums = [3, 8, 5, 12, 7, 6]
 for x in nums:
     if x % 2 == 0:
         print(x, end=' ')`},
-  q3:{no:'문제 3', title:'실행 결과 쓰기 (값일까? 인덱스일까?)', desc:'print(i)는 자리 번호(인덱스)를 출력해요. 값 s[i]와 헷갈리지 않게!', quiz:true, code:
+  q4:{no:'문제 4', title:'실행 결과를 쓰시오. (값일까? 인덱스일까?)', desc:'', quiz:true, code:
 `s = [6, 3, 8, 5, 2]
 for i in range(len(s)):
     if s[i] > 4:
         print(i, end=' ')`},
-  q4:{no:'문제 4', title:"'★'은 몇 번 출력될까? (for 안에 for)", desc:'안쪽 명령의 실행 횟수 = 바깥 반복 횟수 × 안쪽 반복 횟수', quiz:true, code:
-`for i in range(3):
-    for j in range(4):
-        print('★')`},
-  q5:{no:'문제 5', title:'빈칸 채우기 (while 안에 if - 3의 배수 개수 세기)', desc:'입력이 3 5 9 12 0일 때 결과가 3이 되도록 빈칸 ①②를 채워요', quiz:true, inputs:['3','5','9','12','0'], code:
-`cnt = 0
-n = int(input())
-while n != 0:
-    if n % 3 == 0:
-        cnt += 1
-    n = int(input())
-print(cnt)`},
-  qc:{no:'도전과제', title:'평균과 평균 이상인 점수 개수', desc:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력해요 (결과: 84.0 / 3)', quiz:true, locked:true, code:
+  q5:{no:'(도전)문제 5', title:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력하시오.', desc:'결과: 84.0 / 3', quiz:true, locked:true, code:
 `s = [90, 85, 77, 100, 68]
 total = 0
 for x in s:
@@ -771,11 +758,10 @@ const SECTIONS = APP==='list' ? [
   {id:'func', name:'2) 활용 3총사', exs:['e12']},
   {id:'loop', name:'3) 리스트 + for', exs:['e13a','e13b']},
 ] : [
-  {id:'forif', name:'1) for 안에 if', exs:['e21']},
-  {id:'whileif', name:'2) while 안에 if', exs:['e22']},
-  {id:'forfor', name:'3) for 안에 for', exs:['e23']},
-  {id:'indent', name:'+ 들여쓰기 실험'},
-  {id:'quiz', name:'4) 문제 확인', exs:['q1','q2','q3','q4','q5','qc']},
+  {id:'forif', name:'① for 안에 if', exs:['e31']},
+  {id:'whileif', name:'② while 안에 if', exs:['e32']},
+  {id:'forfor', name:'③ for 안에 for', exs:['e33']},
+  {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
 ];
 
 /* ───────── 공통 상태 ───────── */
@@ -1168,17 +1154,15 @@ const digits=v=>{ const m=String(v).match(/-?\d+/); return m?m[0]:''; };
 const nospace=v=>String(v).replace(/\s+/g,'');
 const outLines=v=>String(v).replace(/\r/g,'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
 const ASK={
-  q1:{blank:"a = [3, 6, 9, 12]\na.append(15)\nprint(len(a))\nprint(a[ ① ], a[ ② ])", goal:'5\n6 15',
+  q1:{blank:"a = [9, 4, 1, 3, 8]\nprint(a[ ① ], a[ ② ])\na.append( ③ )\nprint(a, len(a))", goal:'4 8\n[9, 4, 1, 3, 8, 6] 6',
       fields:[{id:'b1',label:'빈칸 ①',ans:'1 (또는 -4)',ok:v=>['1','-4'].includes(digits(v))&&nospace(v).length<=3},
-              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3}]},
-  q2:{blank:"nums = [3, 8, 5, 12, 7, 6]\nfor x in ①:\n    if x % 2 == ②:\n        print(x, end=' ')", goal:'8 12 6',
+              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3},
+              {id:'b3',label:'빈칸 ③',ans:'6',ok:v=>nospace(v)==='6'}]},
+  q2:{fields:[{id:'n',label:"'★' 출력 횟수",ans:'12번',ok:v=>digits(v)==='12'}]},
+  q3:{blank:"nums = [3, 8, 5, 12, 7, 6]\nfor x in ①:\n    if x % 2 == ②:\n        print(x, end=' ')", goal:'8 12 6',
       fields:[{id:'b1',label:'빈칸 ①',ans:'nums',ok:v=>nospace(v)==='nums'},
               {id:'b2',label:'빈칸 ②',ans:'0',ok:v=>nospace(v)==='0'}]},
-  q3:{fields:[{id:'out',label:'실행 결과',ans:'0 2 3',ok:v=>outLines(v).join(' ')==='0 2 3'}]},
-  q4:{fields:[{id:'n',label:"'★' 출력 횟수",ans:'12번',ok:v=>digits(v)==='12'}]},
-  q5:{blank:"cnt = 0\nn = int(input())\nwhile n != ①:\n    if n % 3 == ②:\n        cnt += 1\n    n = int(input())\nprint(cnt)", goal:'3',
-      fields:[{id:'b1',label:'빈칸 ①',ans:'0',ok:v=>nospace(v)==='0'},
-              {id:'b2',label:'빈칸 ②',ans:'0',ok:v=>nospace(v)==='0'}]},
+  q4:{fields:[{id:'out',label:'실행 결과',ans:'0 2 3',ok:v=>outLines(v).join(' ')==='0 2 3'}]},
 };
 G.answers={};
 function gateView(sec,key){
@@ -1242,7 +1226,7 @@ function showEx(sec, key, flash){
   const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, `${EX[k].no} ${EX[k].title}`)));
   if(S.exs.length>1) panel.append(chips);
   const ex=EX[key];
-  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), h('div',{class:'exdesc'},ex.desc)));
+  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), ex.desc?h('div',{class:'exdesc'},ex.desc):null));
   if(ex.quiz&&!ex.locked) panel.append(h('div',{class:'lead'}, h('span',{},'📝'), h('span',{html:'<b>먼저 프린트에 직접 풀어요.</b> 내 답을 입력해야 실행 화면이 열려요.'})));
   if(ex.locked&&!G.unlocked[key]){
     panel.append(h('div',{class:'locked'}, h('b',{},'먼저 프린트에 직접 코드를 써 보세요!'), h('span',{class:'stepinfo'},'다 썼으면 아래 버튼을 눌러 정답 코드와 실행 과정을 확인해요.'), h('button',{class:'primary',onclick:()=>{G.unlocked[key]=true; showEx(sec,key);}},'정답 코드 보기')));
