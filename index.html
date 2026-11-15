@@ -9,6 +9,7 @@
 :root{
   --bg:#EEF2F7; --panel:#FFFFFF; --ink:#152033; --muted:#5A6579; --line:#D6DDE8; --line-strong:#9AA6B8;
   --accent:#2F6FEB; --accent-ink:#FFFFFF; --accent-soft:#E3ECFD;
+  --c-extra:#7A4FD6;
   --code-bg:#18202F; --code-fg:#E4E8F0; --t-kw:#8DB8FF; --t-num:#FFCC4D; --t-str:#A9D48C;
     --font-d:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
   --font-b:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -16,10 +17,10 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
-  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; color-scheme:dark}}
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; --c-extra:#B597FF; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
-  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; color-scheme:dark}
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; --c-extra:#B597FF; color-scheme:dark}
 *{box-sizing:border-box}
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.55}
@@ -49,6 +50,7 @@ h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);li
   border:1px solid var(--line);box-shadow:0 2px 8px rgba(20,30,50,.06);transition:transform .25s,box-shadow .25s,border-color .25s}
 a.card:hover{transform:translateY(-4px);box-shadow:0 10px 24px color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}
 a.card:focus-visible{outline:4px solid var(--c);outline-offset:4px}
+.card.mylab,.card.game{--c:var(--c-extra)}
 .card .top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}
 .no{font-family:var(--font-d);font-size:1rem;color:var(--c)}
 .badge{font-size:.75rem;font-weight:700;border-radius:999px;padding:.2em .8em;background:var(--c);color:var(--panel)}
