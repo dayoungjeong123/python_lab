@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>이중 for문 흐름 실험실</title>
+<title>중첩 제어구조 흐름 실험실</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
@@ -230,6 +230,15 @@ tr{cursor:pointer}
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
 @media (prefers-reduced-motion:reduce){.seg.ready::before,.seg button{transition:none}}
 .nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.inbar{display:inline-flex;align-items:center;gap:6px;font-size:.92rem;flex-wrap:wrap}
+.inbar label{font-weight:700}
+.inbar input{font-family:var(--font-m);width:10em;padding:.32em .55em;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink)}
+.inq{display:flex;gap:6px;flex-wrap:wrap}
+.iq{font-family:var(--font-m);font-weight:700;border:2px solid var(--line-strong);border-radius:8px;padding:.08em .6em;background:var(--panel)}
+.iq.used{opacity:.45;text-decoration:line-through}
+.iq.now{border-color:var(--accent);background:var(--accent-soft)}
+.note .tt{color:var(--true)}.note .ff{color:var(--false)}
+.goalbox{font-family:var(--font-m);background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:8px 12px;white-space:pre-wrap}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
 </style>
 <script src="../admin.js"></script>
@@ -237,7 +246,7 @@ tr{cursor:pointer}
 
 <div class="wrap">
   <header class="top">
-    <div class="titlebox"><a class="home" href="../index.html">← 실험실 목록</a><h1>이중 <code>for</code>문 흐름 실험실</h1></div>
+    <div class="titlebox"><a class="home" href="../index.html">← 실험실 목록</a><h1>중첩 제어구조 흐름 실험실</h1></div>
     <div class="fontctl">
       <details class="jump-menu" id="jump">
         <summary>📋 예제 선택 ▾</summary>
@@ -282,20 +291,29 @@ function tokenize(src){
       if(j>=src.length) throw new PyErr('SyntaxError: unterminated string literal');
       toks.push({t:'str',v:s}); i=j+1; continue;
     }
-    if(/[0-9]/.test(c)){ let j=i; while(j<src.length&&/[0-9]/.test(src[j]))j++; toks.push({t:'num',v:+src.slice(i,j)}); i=j; continue; }
+    if(/[0-9]/.test(c)){ let j=i; while(j<src.length&&/[0-9]/.test(src[j]))j++;
+      if(src[j]==='.'&&/[0-9]/.test(src[j+1]||'')){ j++; while(j<src.length&&/[0-9]/.test(src[j]))j++; toks.push({t:'num',v:mkF(+src.slice(i,j))}); }
+      else toks.push({t:'num',v:+src.slice(i,j)});
+      i=j; continue; }
     if(/[A-Za-z_가-힣]/.test(c)){ let j=i; while(j<src.length&&/[\w가-힣]/.test(src[j]))j++; toks.push({t:'name',v:src.slice(i,j)}); i=j; continue; }
     const two=src.slice(i,i+2);
-    if(['+=','-=','==','!=','<=','>=','//'].includes(two)){toks.push({t:'op',v:two});i+=2;continue;}
+    if(['+=','-=','*=','==','!=','<=','>=','//'].includes(two)){toks.push({t:'op',v:two});i+=2;continue;}
     if('+-*/%()[],:=.<>'.includes(c)){toks.push({t:'op',v:c});i++;continue;}
     throw new PyErr('SyntaxError: invalid syntax');
   }
   return toks;
 }
+const CMP=['<','>','<=','>=','==','!='];
 function parseTokens(toks){
   let p=0;
   const isOp=v=>toks[p]&&toks[p].t==='op'&&toks[p].v===v;
+  const isKw=v=>toks[p]&&toks[p].t==='name'&&toks[p].v===v;
   const eat=v=>{ if(!isOp(v)) throw new PyErr('SyntaxError: invalid syntax'); p++; };
-  const expr=()=>add();
+  const expr=()=>or();
+  function or(){ let a=and(); while(isKw('or')){p++; a={t:'bool_op',op:'or',a,b:and()};} return a; }
+  function and(){ let a=not(); while(isKw('and')){p++; a={t:'bool_op',op:'and',a,b:not()};} return a; }
+  function not(){ if(isKw('not')){p++; return {t:'not',a:not()};} return cmp(); }
+  function cmp(){ let a=add(); if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)){ const op=toks[p++].v; a={t:'cmp',op,a,b:add()}; if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)) throw new PyErr('SyntaxError: 비교를 이어서 쓰는 건 이 실험실에서 지원하지 않아요'); } else if(isOp('=')) throw new PyErr("SyntaxError: invalid syntax. Maybe you meant '==' instead of '='?"); return a; }
   function add(){ let a=mul(); while(isOp('+')||isOp('-')){const op=toks[p++].v; a={t:'bin',op,a,b:mul()};} return a; }
   function mul(){ let a=unary(); while(isOp('*')||isOp('/')||isOp('//')||isOp('%')){const op=toks[p++].v; a={t:'bin',op,a,b:unary()};} return a; }
   function unary(){ if(isOp('-')){p++; return {t:'neg',a:unary()};} return post(); }
@@ -325,7 +343,12 @@ function parseTokens(toks){
     const k=toks[p]; if(!k) throw new PyErr('SyntaxError: invalid syntax');
     if(k.t==='num'){p++;return {t:'num',v:k.v};}
     if(k.t==='str'){p++;return {t:'str',v:k.v};}
-    if(k.t==='name'){p++;return {t:'name',n:k.v};}
+    if(k.t==='name'){
+      if(k.v==='True'||k.v==='False'){p++;return {t:'const',v:k.v==='True'};}
+      if(k.v==='None'){p++;return {t:'const',v:null};}
+      if(['and','or','not','if','in','for','while','else','elif'].includes(k.v)) throw new PyErr('SyntaxError: invalid syntax');
+      p++;return {t:'name',n:k.v};
+    }
     if(isOp('[')){ p++; const items=[]; while(!isOp(']')){ items.push(expr()); if(isOp(','))p++; else break; } eat(']'); return {t:'list',items}; }
     if(isOp('(')){ p++; const e=expr(); eat(')'); return e; }
     throw new PyErr('SyntaxError: invalid syntax');
@@ -333,12 +356,18 @@ function parseTokens(toks){
   if(!toks.length) throw new PyErr('SyntaxError: invalid syntax');
   const e=expr(); if(p!==toks.length) throw new PyErr('SyntaxError: invalid syntax'); return e;
 }
+const pe=t=>parseTokens(tokenize(t));
 function parseStmt(text){
-  const m=text.match(/^for\s+([A-Za-z_]\w*)\s+in\s+(.+?)\s*:$/);
-  if(m) return {k:'for', v:m[1], it:parseTokens(tokenize(m[2])), itText:m[2].trim()};
-  if(/^for\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
+  let m=text.match(/^for\s+([A-Za-z_]\w*)\s+in\s+(.+?)\s*:$/);
+  if(m) return {k:'for', v:m[1], it:pe(m[2]), itText:m[2].trim()};
+  if(m=text.match(/^while\s+(.+?)\s*:$/)) return {k:'while', cond:pe(m[1]), condText:m[1].trim()};
+  if(m=text.match(/^if\s+(.+?)\s*:$/)) return {k:'if', cond:pe(m[1]), condText:m[1].trim()};
+  if(m=text.match(/^elif\s+(.+?)\s*:$/)) return {k:'elif', cond:pe(m[1]), condText:m[1].trim()};
+  if(/^else\s*:$/.test(text)) return {k:'else'};
+  if(/^(for|while|if|elif|else)\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
+  if(text==='break'||text==='continue'||text==='pass') return {k:text};
   const toks=tokenize(text);
-  const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='));
+  const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='||t.v==='*='));
   if(ai>0) return {k:'aug', op:toks[ai].v[0], target:parseTokens(toks.slice(0,ai)), e:parseTokens(toks.slice(ai+1))};
   let depth=0, ei=-1;
   toks.forEach((t,ix)=>{ if(t.t==='op'){ if('(['.includes(t.v))depth++; else if(')]'.includes(t.v))depth--; else if(t.v==='='&&depth===0&&ei<0) ei=ix; }});
@@ -349,14 +378,17 @@ function parseStmt(text){
   }
   return {k:'expr', e:parseTokens(toks)};
 }
+const HASBODY=new Set(['for','while','if','elif','else']);
 function analyze(code){
   const lines=code.replace(/\t/g,'    ').split('\n').map((r,ix)=>({no:ix+1, raw:r, ind:r.match(/^ */)[0].length, text:stripComment(r).trim()}));
   const real=lines.filter(l=>l.text!=='');
   const stack=[0]; let prevColon=null;
+  const kwOf=l=>(l.text.match(/^(\w+)/)||[])[1]||'for';
+  for(const l of real) if(/^(for|while|if|elif|else)\b/.test(l.text)&&!/:$/.test(l.text)) return {lines, err:{line:l.no, msg:"SyntaxError: expected ':'"}};
   for(const l of real){
     const cur=stack[stack.length-1];
     if(prevColon){
-      if(l.ind<=cur) return {lines, err:{line:l.no, msg:`IndentationError: expected an indented block after 'for' statement on line ${prevColon.no}`}};
+      if(l.ind<=cur) return {lines, err:{line:l.no, msg:`IndentationError: expected an indented block after '${kwOf(prevColon)}' statement on line ${prevColon.no}`}};
       stack.push(l.ind);
     } else if(l.ind>cur) return {lines, err:{line:l.no, msg:'IndentationError: unexpected indent'}};
     else if(l.ind<cur){
@@ -365,50 +397,81 @@ function analyze(code){
     }
     prevColon=/:$/.test(l.text)?l:null;
   }
-  if(prevColon) return {lines, err:{line:prevColon.no, msg:`IndentationError: expected an indented block after 'for' statement on line ${prevColon.no}`}};
+  if(prevColon) return {lines, err:{line:prevColon.no, msg:`IndentationError: expected an indented block after '${kwOf(prevColon)}' statement on line ${prevColon.no}`}};
   let k=0;
-  function block(ind, depth){
+  function block(ind, depth, cd, inLoop){
     const out=[];
     while(k<real.length && real[k].ind===ind){
       const l=real[k++]; let st;
       try{ st=parseStmt(l.text); }catch(e){ e.line=l.no; throw e; }
-      const node={line:l.no, text:l.text, depth, ...st};
-      if(st.k==='for') node.body=block(real[k].ind, depth+1);
+      if((st.k==='break'||st.k==='continue')&&!inLoop){ const e=new PyErr(`SyntaxError: '${st.k}' outside loop`); e.line=l.no; throw e; }
+      const node={line:l.no, text:l.text, depth, cd, ...st};
+      if(HASBODY.has(st.k)) node.body=block(real[k].ind, st.k==='for'?depth+1:depth, cd+1, inLoop||st.k==='for'||st.k==='while');
+      if(st.k==='elif'||st.k==='else'){
+        const prev=out[out.length-1];
+        if(!prev||prev.k!=='if'||prev.orelse){ const e=new PyErr('SyntaxError: invalid syntax'); e.line=l.no; throw e; }
+        if(st.k==='elif') (prev.elifs=prev.elifs||[]).push(node); else prev.orelse=node;
+        continue;
+      }
       out.push(node);
     }
     return out;
   }
-  try{ return {lines, tree:block(0,0)}; }
+  try{ return {lines, tree:block(0,0,0,false)}; }
   catch(e){ if(e instanceof PyErr) return {lines, err:{line:e.line, msg:e.message}}; throw e; }
 }
+/* 값: int = number, float = {__f:number}, bool = boolean, str, list, None = null */
+const mkF=v=>({__f:v});
+const isF=x=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&'__f' in x;
+const isNum=x=>typeof x==='number'||isF(x)||typeof x==='boolean';
+const nv=x=>isF(x)?x.__f:+x;
 function repr(v){
   if(typeof v==='string') return (v.includes("'")&&!v.includes('"'))?'"'+v+'"':"'"+v.replace(/'/g,"\\'")+"'";
   if(Array.isArray(v)) return '['+v.map(repr).join(', ')+']';
   if(v===null||v===undefined) return 'None';
+  if(typeof v==='boolean') return v?'True':'False';
+  if(isF(v)){ const f=v.__f; if(!isFinite(f)) return f>0?'inf':'-inf'; return Number.isInteger(f)?f.toFixed(1):String(f); }
   return String(v);
 }
 function pstr(v){ return typeof v==='string'?v:repr(v); }
-function tname(v){ return typeof v==='string'?'str':Array.isArray(v)?'list':typeof v==='number'?'int':'NoneType'; }
+function tname(v){ return typeof v==='string'?'str':Array.isArray(v)?'list':typeof v==='boolean'?'bool':isF(v)?'float':typeof v==='number'?'int':'NoneType'; }
+function truthy(v){ if(Array.isArray(v)||typeof v==='string') return v.length>0; if(v===null||v===undefined) return false; return nv(v)!==0; }
 function binop(op,a,b){
   const ta=tname(a), tb=tname(b);
-  if(op==='+'){ if(ta==='int'&&tb==='int') return a+b; if(ta==='str'&&tb==='str') return a+b; if(ta==='list'&&tb==='list') return a.concat(b);
-    throw new PyErr(ta==='str'?`TypeError: can only concatenate str (not "${tb}") to str`:`TypeError: unsupported operand type(s) for +: '${ta}' and '${tb}'`); }
-  if(op==='*'){ if(ta==='int'&&tb==='int') return a*b; if(ta==='str'&&tb==='int') return a.repeat(Math.max(0,b)); if(ta==='int'&&tb==='str') return b.repeat(Math.max(0,a));
-    throw new PyErr(`TypeError: unsupported operand type(s) for *: '${ta}' and '${tb}'`); }
-  if(ta!=='int'||tb!=='int') throw new PyErr(`TypeError: unsupported operand type(s) for ${op}: '${ta}' and '${tb}'`);
-  if(op==='-') return a-b;
-  if(op==='//'){ if(b===0) throw new PyErr('ZeroDivisionError: integer division or modulo by zero'); return Math.floor(a/b); }
-  if(op==='%'){ if(b===0) throw new PyErr('ZeroDivisionError: integer modulo by zero'); return ((a%b)+b)%b; }
-  if(op==='/'){ if(b===0) throw new PyErr('ZeroDivisionError: division by zero'); return a/b; }
+  if(op==='+'){ if(ta==='str'&&tb==='str') return a+b; if(ta==='list'&&tb==='list') return a.concat(b);
+    if(!(isNum(a)&&isNum(b))) throw new PyErr(ta==='str'?`TypeError: can only concatenate str (not "${tb}") to str`:`TypeError: unsupported operand type(s) for +: '${ta}' and '${tb}'`); }
+  if(op==='*'){ if(ta==='str'&&tb==='int') return a.repeat(Math.max(0,b)); if(ta==='int'&&tb==='str') return b.repeat(Math.max(0,a));
+    if(ta==='list'&&tb==='int'){ let r=[]; for(let q=0;q<b;q++) r=r.concat(a); return r; }
+    if(!(isNum(a)&&isNum(b))) throw new PyErr(`TypeError: unsupported operand type(s) for *: '${ta}' and '${tb}'`); }
+  if(!(isNum(a)&&isNum(b))) throw new PyErr(`TypeError: unsupported operand type(s) for ${op}: '${ta}' and '${tb}'`);
+  const x=nv(a), y=nv(b), fl=isF(a)||isF(b)||op==='/';
+  let r;
+  if(op==='+') r=x+y; else if(op==='-') r=x-y; else if(op==='*') r=x*y;
+  else if(op==='/'){ if(y===0) throw new PyErr('ZeroDivisionError: division by zero'); r=x/y; }
+  else if(op==='//'){ if(y===0) throw new PyErr('ZeroDivisionError: integer division or modulo by zero'); r=Math.floor(x/y); }
+  else if(op==='%'){ if(y===0) throw new PyErr('ZeroDivisionError: integer modulo by zero'); r=((x%y)+y)%y; }
+  return fl?mkF(r):r;
+}
+function compare(op,a,b){
+  if(op==='=='||op==='!='){ const eq=isNum(a)&&isNum(b)?nv(a)===nv(b):JSON.stringify(a)===JSON.stringify(b); return op==='=='?eq:!eq; }
+  let x,y;
+  if(isNum(a)&&isNum(b)){ x=nv(a); y=nv(b); }
+  else if(typeof a==='string'&&typeof b==='string'){ x=a; y=b; }
+  else throw new PyErr(`TypeError: '${op}' not supported between instances of '${tname(a)}' and '${tname(b)}'`);
+  return op==='<'?x<y:op==='>'?x>y:op==='<='?x<=y:x>=y;
 }
 function ev(n,S){
   switch(n.t){
     case 'num': return n.v;
     case 'str': return n.v;
+    case 'const': return n.v;
     case 'name': if(!(n.n in S.vars)) throw new PyErr(`NameError: name '${n.n}' is not defined`); return S.vars[n.n];
     case 'list': return n.items.map(x=>ev(x,S));
-    case 'neg': { const v=ev(n.a,S); if(typeof v!=='number') throw new PyErr("TypeError: bad operand type for unary -"); return -v; }
+    case 'neg': { const v=ev(n.a,S); if(!isNum(v)) throw new PyErr(`TypeError: bad operand type for unary -: '${tname(v)}'`); return isF(v)?mkF(-v.__f):-v; }
     case 'bin': return binop(n.op, ev(n.a,S), ev(n.b,S));
+    case 'cmp': return compare(n.op, ev(n.a,S), ev(n.b,S));
+    case 'not': return !truthy(ev(n.a,S));
+    case 'bool_op': { const a=ev(n.a,S); if(n.op==='and') return truthy(a)?ev(n.b,S):a; return truthy(a)?a:ev(n.b,S); }
     case 'idx': {
       const o=ev(n.obj,S), i=ev(n.i,S);
       if(!Array.isArray(o)&&typeof o!=='string') throw new PyErr(`TypeError: '${tname(o)}' object is not subscriptable`);
@@ -429,6 +492,19 @@ function ev(n,S){
     case 'call': return call(n,S);
   }
 }
+/* 조건식을 값으로 바꿔 보여 주기: x >= 80 → 90 >= 80 */
+function showExpr(n,S){
+  const P=x=>showExpr(x,S);
+  switch(n.t){
+    case 'num': return repr(n.v);
+    case 'str': return repr(n.v);
+    case 'const': return repr(n.v);
+    case 'cmp': case 'bin': return `${P(n.a)} ${n.op} ${P(n.b)}`;
+    case 'bool_op': return `${P(n.a)} ${n.op} ${P(n.b)}`;
+    case 'not': return `not ${P(n.a)}`;
+    default: { const save=S.acc.length; try{ return repr(ev(n,S)); }catch(e){ return '?'; } finally{ S.acc.length=save; } }
+  }
+}
 function call(n,S){
   if(n.f.t==='attr'){
     const o=ev(n.f.obj,S);
@@ -445,60 +521,118 @@ function call(n,S){
   const fn=n.f.n;
   if(fn in S.vars) throw new PyErr(`TypeError: '${tname(S.vars[fn])}' object is not callable`);
   const args=n.args.map(a=>ev(a,S));
+  const one=name=>{ if(args.length!==1) throw new PyErr(`TypeError: ${name}() takes exactly one argument (${args.length} given)`); return args[0]; };
   if(fn==='len'){
-    if(args.length!==1) throw new PyErr(`TypeError: len() takes exactly one argument (${args.length} given)`);
-    if(typeof args[0]!=='string'&&!Array.isArray(args[0])) throw new PyErr(`TypeError: object of type '${tname(args[0])}' has no len()`);
-    return args[0].length;
+    const a=one('len');
+    if(typeof a!=='string'&&!Array.isArray(a)) throw new PyErr(`TypeError: object of type '${tname(a)}' has no len()`);
+    return a.length;
   }
   if(fn==='range'){
     let [a,b,c]=args; if(args.length===1){b=a;a=0;} c=c===undefined?1:c;
-    if([a,b,c].some(x=>typeof x!=='number')) throw new PyErr("TypeError: 'str' object cannot be interpreted as an integer");
+    if([a,b,c].some(x=>typeof x!=='number')) throw new PyErr(`TypeError: '${tname([a,b,c].find(x=>typeof x!=='number'))}' object cannot be interpreted as an integer`);
     if(c===0) throw new PyErr('ValueError: range() arg 3 must not be zero');
     const r=[]; for(let x=a; c>0?x<b:x>b; x+=c){ r.push(x); if(r.length>5000) break; } return r;
   }
   if(fn==='print'){
     const end='end' in n.kw?ev(n.kw.end,S):'\n', sep='sep' in n.kw?ev(n.kw.sep,S):' ';
-    S.print=args.map(pstr).join(sep)+end; return null;
+    S.print=(S.print||'')+args.map(pstr).join(sep)+end; return null;
+  }
+  if(fn==='input'){
+    if(args.length) S.out+=pstr(args[0]);
+    if(S.inIdx>=S.inq.length) throw new PyErr('EOFError: 입력값이 더 없어요 (위의 입력값 칸에 값을 더 넣어 보세요)');
+    const v=S.inq[S.inIdx++]; S.inNote=v; return v;
+  }
+  if(fn==='int'){
+    const a=one('int');
+    if(typeof a==='string'){ if(!/^\s*[+-]?\d+\s*$/.test(a)) throw new PyErr(`ValueError: invalid literal for int() with base 10: ${repr(a)}`); return parseInt(a,10); }
+    if(isNum(a)) return Math.trunc(nv(a));
+    throw new PyErr(`TypeError: int() argument must be a string or a number, not '${tname(a)}'`);
+  }
+  if(fn==='float'){
+    const a=one('float');
+    if(typeof a==='string'){ const t=a.trim(); if(!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(t)) throw new PyErr(`ValueError: could not convert string to float: ${repr(a)}`); return mkF(+t); }
+    if(isNum(a)) return mkF(nv(a));
+    throw new PyErr(`TypeError: float() argument must be a string or a real number, not '${tname(a)}'`);
+  }
+  if(fn==='str') return pstr(one('str'));
+  if(fn==='abs'){ const a=one('abs'); if(!isNum(a)) throw new PyErr(`TypeError: bad operand type for abs(): '${tname(a)}'`); return isF(a)?mkF(Math.abs(a.__f)):Math.abs(+a); }
+  if(fn==='sum'){ const a=one('sum'); if(!Array.isArray(a)) throw new PyErr(`TypeError: '${tname(a)}' object is not iterable`); return a.reduce((s,x)=>binop('+',s,x),0); }
+  if(fn==='max'||fn==='min'){
+    const arr=args.length===1&&Array.isArray(args[0])?args[0]:args;
+    if(!arr.length) throw new PyErr(`ValueError: ${fn}() arg is an empty sequence`);
+    return arr.reduce((m,x)=>compare(fn==='max'?'>':'<',x,m)?x:m);
   }
   throw new PyErr(`NameError: name '${fn}' is not defined`);
 }
-function treeDepth(nodes){ let m=0; for(const n of nodes) if(n.k==='for') m=Math.max(m,1+treeDepth(n.body)); return m; }
+function treeDepth(nodes){ let m=0; for(const n of nodes||[]){ const kids=[n.body,...(n.elifs||[]).map(e=>e.body),n.orelse&&n.orelse.body].filter(Boolean); for(const b of kids) m=Math.max(m,(n.k==='for'?1:0)+treeDepth(b)); if(n.k==='for'&&!n.body.length) m=Math.max(m,1); } return m; }
+function ctrlDepth(nodes){ let m=0; for(const n of nodes||[]){ if(n.body){ m=Math.max(m,1+ctrlDepth(n.body)); for(const e of n.elifs||[]) m=Math.max(m,1+ctrlDepth(e.body)); if(n.orelse) m=Math.max(m,1+ctrlDepth(n.orelse.body)); } } return m; }
 function showPrint(t){
   if(t==='\n') return '빈 줄(줄바꿈)만 출력';
   if(t.endsWith('\n')) return `출력: ${t.slice(0,-1)}`;
   if(t.endsWith(' ')) return `출력: ${t.trimEnd()} (뒤에 공백, 줄 안 바꿈)`;
   return `출력: ${t} (줄 안 바꿈)`;
 }
-function run(tree){
-  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null};
+class BreakSig{} class ContSig{}
+function run(tree, inputs){
+  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null};
   const maxD=treeDepth(tree);
   const snap=o=>{
     if(S.steps.length>LIMIT) throw new Halt('limit');
-    S.steps.push(Object.assign({acc:[],changed:[],newOut:''},o,{vars:JSON.parse(JSON.stringify(S.vars)), out:S.out, hits:{...S.hits}, loops:S.loops.map(x=>({...x}))}));
+    S.steps.push(Object.assign({acc:[],changed:[],newOut:''},o,{vars:JSON.parse(JSON.stringify(S.vars)), out:S.out, hits:{...S.hits}, loops:S.loops.map(x=>({...x})), inIdx:S.inIdx}));
   };
   const fail=(e,n)=>{ snap({line:n.line, kind:'error', msg:e.message}); throw new Halt('error'); };
+  const hit=n=>{ S.hits[n.line]=(S.hits[n.line]||0)+1; };
+  const test=(n,cond)=>{ S.acc=[]; let shown, v; try{ shown=showExpr(cond,S); S.acc=[]; v=truthy(ev(cond,S)); }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; } return {v, shown, acc:S.acc}; };
+  const condMsg=(n,r,yes,no)=>`조건 <code>${esc(n.condText)}</code>${r.shown!==n.condText?` → <code>${esc(r.shown)}</code>`:''} → <b class="${r.v?'tt':'ff'}">${r.v?'True':'False'}</b> → ${r.v?yes:no}`;
   function exec(nodes,d){
     for(const n of nodes){
-      S.acc=[]; S.print=null; S.note=null;
+      S.acc=[]; S.print=null; S.note=null; S.inNote=null;
       if(n.k==='for'){
         let it; try{ it=ev(n.it,S); }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
         if(!Array.isArray(it)&&typeof it!=='string') fail(new PyErr(`TypeError: '${tname(it)}' object is not iterable`),n);
         const items=typeof it==='string'?[...it]:it.slice();
-        const role=maxD>1?(d===0?'바깥 for':(d===1?'안쪽 for':'가장 안쪽 for')):'for';
-        const L={line:n.line, v:n.v, k:0, n:items.length, role, d};
+        const role=maxD>1?(n.depth===0?'바깥 for':(n.depth===1?'안쪽 for':'가장 안쪽 for')):'for';
+        const L={line:n.line, v:n.v, k:0, n:items.length, role, d:n.depth};
         S.loops.push(L);
         const src=n.it.t==='name'?n.it.n:null;
+        let broke=false;
         for(let q=0;q<items.length;q++){
-          S.hits[n.line]=(S.hits[n.line]||0)+1;
+          hit(n);
           L.k=q+1; S.vars[n.v]=items[q];
           snap({line:n.line, kind:'iter', d, msg:`${role}: <code>${n.v} = ${esc(repr(items[q]))}</code>${src?` (${src}의 ${q}번 값)`:''} → ${q+1}번째 반복`, acc:src?[{n:src,i:q,k:'r'}]:[], changed:[n.v]});
-          exec(n.body,d+1);
+          try{ exec(n.body,d+1); }catch(e){ if(e instanceof BreakSig){ broke=true; break; } if(!(e instanceof ContSig)) throw e; }
         }
-        L.k=items.length+1;
-        snap({line:n.line, kind:'exit', d, msg: items.length===0?`${role}: 꺼낼 값이 없어서 한 번도 반복하지 않아요`:(d>0?`${role} 끝! 남은 값이 없어요 → 바깥 for로 돌아가요`:`${role} 끝! 남은 값이 없어요 → 반복 끝`)});
+        if(!broke){ L.k=items.length+1;
+          snap({line:n.line, kind:'exit', d, msg: items.length===0?`${role}: 꺼낼 값이 없어서 한 번도 반복하지 않아요`:(n.depth>0?`${role} 끝! 남은 값이 없어요 → 바깥 for로 돌아가요`:`${role} 끝! 남은 값이 없어요 → 반복 끝`)}); }
         S.loops.pop();
-      } else {
-        S.hits[n.line]=(S.hits[n.line]||0)+1;
+      } else if(n.k==='while'){
+        const L={line:n.line, v:'', k:0, n:null, role:'while', d:n.depth, w:true};
+        S.loops.push(L);
+        for(;;){
+          hit(n); S.acc=[];
+          const r=test(n,n.cond);
+          if(!r.v){ snap({line:n.line, kind:'exit', d, msg:condMsg(n,r,'','반복 끝!'), acc:r.acc}); break; }
+          L.k++;
+          snap({line:n.line, kind:'iter', d, msg:condMsg(n,r,`while 안으로 (${L.k}번째 반복)`,''), acc:r.acc});
+          try{ exec(n.body,d+1); }catch(e){ if(e instanceof BreakSig) break; if(!(e instanceof ContSig)) throw e; }
+        }
+        S.loops.pop();
+      } else if(n.k==='if'){
+        const chain=[n,...(n.elifs||[])];
+        let done=false;
+        for(const c of chain){
+          hit(c); S.acc=[];
+          const r=test(c,c.cond);
+          const kw=c.k==='if'?'if':'elif';
+          snap({line:c.line, kind:'if', lab:r.v?'T':'F', d, msg:condMsg(c,r,`${kw} 안쪽을 실행해요`, c===chain[chain.length-1]&&!n.orelse?`${kw} 안쪽을 건너뛰어요`:'다음 조건으로'), acc:r.acc});
+          if(r.v){ exec(c.body,d+1); done=true; break; }
+        }
+        if(!done&&n.orelse){ hit(n.orelse); snap({line:n.orelse.line, kind:'stmt', d, msg:'위 조건이 모두 False → <b>else</b> 안쪽을 실행해요'}); exec(n.orelse.body,d+1); }
+      } else if(n.k==='break'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>break</b> → 반복을 바로 끝내요'}); throw new BreakSig(); }
+      else if(n.k==='continue'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>continue</b> → 아래는 건너뛰고 반복 처음으로'}); throw new ContSig(); }
+      else if(n.k==='pass'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'pass → 아무것도 하지 않아요'}); }
+      else {
+        hit(n);
         let msg='', changed=[];
         try{
           if(n.k==='expr'){
@@ -518,12 +652,13 @@ function run(tree){
               msg=`<code>${nm}[${i}]</code>의 값을 ${esc(repr(old))} → ${esc(repr(v))}(으)로 바꿔요`;
             }
           } else if(n.k==='aug'){
-            const cur=ev(n.target,S), add=ev(n.e,S), nv=binop(n.op,cur,add);
-            if(n.target.t==='name'){ S.vars[n.target.n]=nv; changed=[n.target.n]; msg=`<code>${n.target.n} ${n.op}= ${esc(repr(add))}</code> → ${n.target.n} = ${esc(repr(cur))} ${n.op} ${esc(repr(add))} = <b>${esc(repr(nv))}</b>`; }
-            else { const o=ev(n.target.obj,S), i=ev(n.target.i,S), j=i<0?o.length+i:i; o[j]=nv; changed=[n.target.obj.n]; msg=`값을 ${esc(repr(nv))}(으)로 바꿔요`; }
+            const cur=ev(n.target,S), add=ev(n.e,S), nv2=binop(n.op,cur,add);
+            if(n.target.t==='name'){ S.vars[n.target.n]=nv2; changed=[n.target.n]; msg=`<code>${n.target.n} ${n.op}= ${esc(repr(add))}</code> → ${n.target.n} = ${esc(repr(cur))} ${n.op} ${esc(repr(add))} = <b>${esc(repr(nv2))}</b>`; }
+            else { const o=ev(n.target.obj,S), i=ev(n.target.i,S), j=i<0?o.length+i:i; o[j]=nv2; changed=[n.target.obj.n]; msg=`값을 ${esc(repr(nv2))}(으)로 바꿔요`; }
           }
+          if(S.inNote!==null) msg=`⌨ 입력값 <b>${esc(S.inNote)}</b>을(를) 받았어요 → `+msg;
         }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
-        snap({line:n.line, kind:S.print!==null?'print':'stmt', d, msg, acc:S.acc, changed, newOut:S.print||''});
+        snap({line:n.line, kind:S.print!==null?'print':'stmt', d, msg, acc:S.acc, changed, newOut:S.print||'', inUsed:S.inNote!==null});
       }
     }
   }
@@ -533,7 +668,7 @@ function run(tree){
     snap({line:null, kind:'end', msg:'프로그램 끝! 출력 결과를 확인해 보세요'});
   }catch(e){
     if(!(e instanceof Halt)) throw e;
-    if(e.message==='limit') S.steps.push({...S.steps[S.steps.length-1], kind:'error', msg:'단계가 너무 많아서 여기서 멈췄어요'});
+    if(e.message==='limit') S.steps.push({...S.steps[S.steps.length-1], kind:'error', msg:'단계가 너무 많아서 여기서 멈췄어요 (끝나지 않는 반복인지 확인해 보세요)'});
   }
   return S.steps;
 }
@@ -543,10 +678,10 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 /* ───────── 예제 데이터 (프린트와 같은 번호) ───────── */
 const EX = {
   e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
-`s = [90, 85, 77, 100, 68]
-print(s[0], s[-1])
-s[1] = 95
-print(s)`},
+`list1 = ["실드", "투시경", "물약"]
+print(list1[0], list1[-1])
+list1[1] = "바늘"
+print(list1)`},
   e12:{no:'예제 1-2', title:'리스트 활용 3총사', desc:'len(개수), append(맨 뒤에 추가), 슬라이싱 s[a:b](a부터 b-1까지)', code:
 `s = [90, 85, 77]
 print(len(s))
@@ -565,62 +700,57 @@ total = 0
 for i in range(len(s)):      # i = 자리 번호
     total += s[i]
 print(total)`},
-  e21:{no:'예제 2-1', title:'이중 for문 실행 순서', desc:'시계처럼! i = 시침, j = 분침. 바깥 for가 1번 돌 때 안쪽 for는 끝까지 돌아요', code:
-`for i in range(3):
-    for j in range(2):
-        print(i, j)`},
-  e22:{no:'예제 2-2', title:'별찍기', desc:"end='' → 줄을 바꾸지 않고 옆으로 출력. 안쪽 for가 끝나면 print()로 줄바꿈", code:
+  e31:{no:'예제 3-1', title:'① for 안에 if - 조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
+`s = [90, 85, 77, 100, 68]
+cnt = 0
+for x in s:
+    if x >= 80:
+        cnt += 1
+print(cnt)`},
+  e32:{no:'예제 3-2', title:'② while 안에 if - 0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
+`total = 0
+n = int(input())
+while n != 0:
+    if n % 2 == 0:
+        total += n
+    n = int(input())
+print(total)`},
+  e33:{no:'예제 3-3', title:'③ for 안에 for - 별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
 `for i in range(3):
     for j in range(5):
         print('*', end='')
     print()`},
-  e23:{no:'예제 2-3', title:'들여쓰기 = 상자', desc:'print 위치(들여쓰기 칸 수)에 따라 실행 횟수가 달라져요. 오른쪽 숫자가 실행 횟수예요', code:
-`for i in range(2):
-    for j in range(3):
-        print('A')
-    print('B')
-print('C')`},
-  e24:{no:'예제 2-4', title:'리스트 + 이중 for', desc:'a[j]로 리스트 값을 하나씩 꺼내요. i가 커질수록 안쪽 반복 횟수도 1 → 2 → 3번', code:
-`a = [2, 4, 6]
-for i in range(3):
-    for j in range(i + 1):
-        print(a[j], end=' ')
-    print()`},
-  q1:{no:'문제 1', title:'빈칸 채우기 확인', desc:'결과가 5 / 6 15가 되도록 채운 빈칸이 맞는지 실행해서 확인해요', quiz:true, code:
-`a = [3, 6, 9, 12]
-a.append(15)
-print(len(a))
-print(a[1], a[-1])`},
-  q2:{no:'문제 2', title:'실행 결과 쓰기', desc:'프린트에 먼저 결과를 쓰고, 실행해서 확인해요', quiz:true, code:
-`for i in range(2, 4):
-    for j in range(1, 3):
-        print(i + j, end=' ')
-    print()`},
-  q3:{no:'문제 3', title:'분식집 세트 메뉴', desc:'세트는 몇 개? 첫 줄과 마지막 줄은? 예측하고 확인해요', quiz:true, code:
-`menu = ['떡볶이', '김밥']
-drink = ['콜라', '사이다', '물']
-for m in menu:
-    for d in drink:
-        print(m, d)`},
-  q5:{no:'문제 5', title:'실행되지 않는 코드 고치기', desc:'몇 번째 줄을 몇 칸으로 들여쓰면 될까요? 프린트에 먼저 답을 쓰고 확인해요', quiz:true, code:
-`for i in range(2):
-    for j in range(3):
-    print(i, j)`, fix:
-`for i in range(2):
-    for j in range(3):
-        print(i, j)`},
-  q6:{no:'문제 6', title:'별 계단 빈칸 확인', desc:'결과가 별 계단(* / ** / *** / ****)이 되도록 빈칸 ①②③을 채워요', quiz:true, code:
-`# 1층부터 4층까지 별 계단 쌓기
-# 각 층에는 층 번호만큼 별을 출력
-for i in range(1, 5):
-    for j in range(i):
-        print('*', end='')
-    print()`},
-  qc:{no:'도전과제', title:'2단~9단 구구단 표', desc:'바깥 for : 단(2~9), 안쪽 for : 곱하는 수(1~9)', quiz:true, locked:true, code:
-`for dan in range(2, 10):
-    for i in range(1, 10):
-        print(dan, 'x', i, '=', dan * i)
-    print()`},
+  q1:{no:'문제 1', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오.', desc:'결과: 4 8 / [9, 4, 1, 3, 8, 6] 6', quiz:true, code:
+`a = [9, 4, 1, 3, 8]
+print(a[1], a[-1])
+a.append(6)
+print(a, len(a))`},
+  q2:{no:'문제 2', title:"'★'은 몇 번 출력될까?", desc:'★ : (   ) 번', quiz:true, code:
+`for i in range(3):
+    for j in range(4):
+        print('★')`},
+  q3:{no:'문제 3', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오. (짝수만 출력)', desc:'결과: 8 12 6', quiz:true, code:
+`nums = [3, 8, 5, 12, 7, 6]
+for x in nums:
+    if x % 2 == 0:
+        print(x, end=' ')`},
+  q4:{no:'문제 4', title:'실행 결과를 쓰시오. (값일까? 인덱스일까?)', desc:'', quiz:true, code:
+`s = [6, 3, 8, 5, 2]
+for i in range(len(s)):
+    if s[i] > 4:
+        print(i, end=' ')`},
+  q5:{no:'(도전)문제 5', title:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력하시오.', desc:'결과: 84.0 / 3', quiz:true, locked:true, code:
+`s = [90, 85, 77, 100, 68]
+total = 0
+for x in s:
+    total += x
+avg = total / len(s)
+print(avg)
+cnt = 0
+for x in s:
+    if x >= avg:
+        cnt += 1
+print(cnt)`},
 };
 const APP='nested';
 const SECTIONS = APP==='list' ? [
@@ -628,11 +758,10 @@ const SECTIONS = APP==='list' ? [
   {id:'func', name:'2) 활용 3총사', exs:['e12']},
   {id:'loop', name:'3) 리스트 + for', exs:['e13a','e13b']},
 ] : [
-  {id:'order', name:'1) 이중 for 순서', exs:['e21','e22']},
-  {id:'box', name:'2) 들여쓰기 = 상자', exs:['e23']},
-  {id:'indent', name:'3) 들여쓰기 실험'},
-  {id:'listfor', name:'4) 리스트 + 이중 for', exs:['e24']},
-  {id:'quiz', name:'5) 문제 확인', exs:['q1','q2','q3','q5','q6','qc']},
+  {id:'forif', name:'① for 안에 if', exs:['e31']},
+  {id:'whileif', name:'② while 안에 if', exs:['e32']},
+  {id:'forfor', name:'③ for 안에 for', exs:['e33']},
+  {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
 ];
 
 /* ───────── 공통 상태 ───────── */
@@ -644,7 +773,7 @@ let toastT=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
 
 /* 코드 강조 */
-const KW=new Set(['for','in','print','range','len','append']);
+const KW=new Set(['for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
 function hlLine(raw, loopVars){
   const ind=raw.match(/^ */)[0].length;
   let guides='';
@@ -662,29 +791,58 @@ function hlLine(raw, loopVars){
   }
   return guides+out;
 }
-function loopVarsOf(tree){ const r={}; (function w(ns){ for(const n of ns) if(n.k==='for'){ if(!(n.v in r)) r[n.v]=n.depth; w(n.body);} })(tree||[]); return r; }
+function loopVarsOf(tree){ const r={}; (function w(ns){ for(const n of ns){ if(n.k==='for'&&!(n.v in r)) r[n.v]=n.depth; if(n.body) w(n.body); (n.elifs||[]).forEach(e=>w(e.body)); if(n.orelse) w(n.orelse.body); } })(tree||[]); return r; }
 
 /* ───────── 순서도 ───────── */
 function buildFlow(tree){
-  const BW=184, BH=34, HW=196, HH=40, GAP=22;
-  const D=treeDepth(tree);
-  const lane=d=>HW/2+16+(D-1-d)*16;
+  const BW=184, BH=34, HW=196, HH=40, DW=204, DH=52, GAP=22;
+  const D=Math.max(1,ctrlDepth(tree));
+  const lane=cd=>Math.max(HW,DW)/2+16+(D-1-cd)*16;
   const CX=Math.max(lane(0)+24, 130);
   const W=CX*2;
   const shapes=[], paths=[], labs=[];
-  const short=t=>t.length>22?t.slice(0,21)+'…':t;
+  const short=(t,n=22)=>t.length>n?t.slice(0,n-1)+'…':t;
+  const down=(x,y)=>[x,y];
   function seq(nodes, y, from){
     for(const n of nodes){
-      paths.push({d:`M${CX},${from} L${CX},${y}`, ah:[CX,y], to:n.line});
-      if(n.k==='for'){
-        shapes.push({line:n.line, kind:'for', x:CX-HW/2, y, w:HW, h:HH, text:`${n.v} in ${n.itText}`});
-        const yb=seq(n.body, y+HH+GAP, y+HH);
-        labs.push({x:CX+6, y:y+HH+14, t:'True', c:'lab-t', line:n.line, k:'iter'});
-        const L=lane(n.depth);
-        paths.push({d:`M${CX},${yb} L${CX},${yb+10} L${CX-L},${yb+10} L${CX-L},${y+HH/2} L${CX-HW/2},${y+HH/2}`, ah:[CX-HW/2,y+HH/2,'r'], back:n.line});
-        paths.push({d:`M${CX+HW/2},${y+HH/2} L${CX+L},${y+HH/2} L${CX+L},${yb+26} L${CX},${yb+26}`, exit:n.line});
-        labs.push({x:CX+HW/2+4, y:y+HH/2-6, t:'False', c:'lab-f', line:n.line, k:'exit'});
+      paths.push({d:`M${CX},${from} L${CX},${y}`, ah:down(CX,y), to:n.line});
+      if(n.k==='for'||n.k==='while'){
+        const isW=n.k==='while', w=isW?DW:HW, hh=isW?DH:HH;
+        shapes.push({line:n.line, kind:isW?'dia':'for', x:CX-w/2, y, w, h:hh, text:isW?n.condText:`${n.v} in ${n.itText}`});
+        const yb=seq(n.body, y+hh+GAP, y+hh);
+        labs.push({x:CX+6, y:y+hh+14, t:'True', c:'lab-t', line:n.line, k:'iter'});
+        const L=lane(n.cd);
+        paths.push({d:`M${CX},${yb} L${CX},${yb+10} L${CX-L},${yb+10} L${CX-L},${y+hh/2} L${CX-w/2},${y+hh/2}`, ah:[CX-w/2,y+hh/2,'r'], back:n.line});
+        paths.push({d:`M${CX+w/2},${y+hh/2} L${CX+L},${y+hh/2} L${CX+L},${yb+26} L${CX},${yb+26}`, exit:n.line});
+        labs.push({x:CX+w/2+4, y:y+hh/2-6, t:'False', c:'lab-f', line:n.line, k:'exit'});
         from=yb+26; y=yb+26+GAP;
+      } else if(n.k==='if'){
+        const parts=[n,...(n.elifs||[])], L=lane(n.cd), ends=[];
+        let cy=y, pendingFalse=null;
+        parts.forEach((c,ix)=>{
+          if(pendingFalse){ const [fx,fy]=pendingFalse; paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${cy-10} L${CX},${cy-10} L${CX},${cy}`, ah:down(CX,cy), to:c.line}); }
+          shapes.push({line:c.line, kind:'dia', x:CX-DW/2, y:cy, w:DW, h:DH, text:(c.k==='elif'?'elif ':'')+c.condText});
+          labs.push({x:CX+6, y:cy+DH+14, t:'True', c:'lab-t', line:c.line, k:'T'});
+          labs.push({x:CX+DW/2+4, y:cy+DH/2-6, t:'False', c:'lab-f', line:c.line, k:'F'});
+          const yb=seq(c.body, cy+DH+GAP, cy+DH);
+          ends.push(yb); pendingFalse=[CX+DW/2, cy+DH/2];
+          cy=yb+30;
+        });
+        let elseEnd=null;
+        if(n.orelse){
+          const [fx,fy]=pendingFalse; const ey=cy;
+          shapes.push({line:n.orelse.line, kind:'tag', x:CX-30, y:ey, w:60, h:22, text:'else'});
+          paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${ey-10} L${CX},${ey-10} L${CX},${ey}`, ah:down(CX,ey), to:n.orelse.line});
+          elseEnd=seq(n.orelse.body, ey+22+GAP, ey+22); pendingFalse=null;
+        }
+        const last=elseEnd??ends[ends.length-1];
+        const yM=last+16;
+        ends.forEach((e,ix)=>{ const isLast=elseEnd===null&&ix===ends.length-1;
+          if(isLast) paths.push({d:`M${CX},${e} L${CX},${yM}`});
+          else paths.push({d:`M${CX},${e} L${CX},${e+10} L${CX-L},${e+10} L${CX-L},${yM} L${CX},${yM}`}); });
+        if(elseEnd!==null) paths.push({d:`M${CX},${elseEnd} L${CX},${yM}`});
+        if(pendingFalse){ const [fx,fy]=pendingFalse; paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${yM} L${CX},${yM}`, exit:n.line}); }
+        from=yM; y=yM+GAP;
       } else {
         shapes.push({line:n.line, kind:'box', x:CX-BW/2, y, w:BW, h:BH, text:short(n.text)});
         from=y+BH; y=y+BH+GAP;
@@ -693,7 +851,6 @@ function buildFlow(tree){
     return from;
   }
   const end=seq(tree, 14, 0);
-  paths[0].d=paths[0].d.replace(`M${CX},0`,`M${CX},0`);
   const ey=end+GAP;
   paths.push({d:`M${CX},${end} L${CX},${ey}`, ah:[CX,ey]});
   shapes.push({line:'end', kind:'end', x:CX-60, y:ey, w:120, h:30, text:'끝'});
@@ -701,8 +858,11 @@ function buildFlow(tree){
   let svg=`<svg class="flow" viewBox="0 0 ${W} ${H}" role="img" aria-label="순서도">`;
   paths.forEach((p,ix)=>{ if(ix===0) return; svg+=`<path class="ar" data-back="${p.back||''}" data-to="${p.to||''}" d="${p.d}"/>`; if(p.ah){ const [x,y,dir]=p.ah; svg+= dir==='r'?`<polygon class="ah" points="${x},${y} ${x-9},${y-5} ${x-9},${y+5}"/>`:`<polygon class="ah" points="${x},${y} ${x-5},${y-9} ${x+5},${y-9}"/>`; } });
   for(const s of shapes){
-    if(s.kind==='for'){ const {x,y,w,h:hh}=s; svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+14},${y} ${x+w-14},${y} ${x+w},${y+hh/2} ${x+w-14},${y+hh} ${x+14},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(s.text.length>24?s.text.slice(0,23)+'…':s.text)}</text></g>`; }
-    else svg+=`<g data-line="${s.line}"><rect x="${s.x}" y="${s.y}" width="${s.w}" height="${s.h}" rx="${s.kind==='end'?15:6}"/><text class="fl-t" x="${s.x+s.w/2}" y="${s.y+s.h/2+4}" text-anchor="middle">${esc(s.text)}</text></g>`;
+    const {x,y,w,h:hh}=s;
+    if(s.kind==='for') svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+14},${y} ${x+w-14},${y} ${x+w},${y+hh/2} ${x+w-14},${y+hh} ${x+14},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(short(s.text,24))}</text></g>`;
+    else if(s.kind==='dia') svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+w/2},${y} ${x+w},${y+hh/2} ${x+w/2},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(short(s.text,18))}</text></g>`;
+    else if(s.kind==='tag') svg+=`<g data-line="${s.line}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="11"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">else</text></g>`;
+    else svg+=`<g data-line="${s.line}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="${s.kind==='end'?15:6}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(s.text)}</text></g>`;
   }
   for(const l of labs) svg+=`<text class="${l.c}" data-lab="${l.line}-${l.k}" x="${l.x}" y="${l.y}">${l.t}</text>`;
   svg+='</svg>';
@@ -711,11 +871,11 @@ function buildFlow(tree){
 
 /* ───────── 실행기 ───────── */
 class Sim{
-  constructor(root, ex, opt={}){ this.root=root; this.ex=ex; this.opt=opt; this.code=ex.code; this.idx=0; this.timer=null; this.load(this.code); }
+  constructor(root, ex, opt={}){ this.root=root; this.ex=ex; this.opt=opt; this.code=ex.code; this.inputs=ex.inputs?ex.inputs.slice():null; this.idx=0; this.timer=null; this.load(this.code); }
   load(code){
     this.code=code; this.stop();
     this.an=analyze(code);
-    this.steps=this.an.err?[]:run(this.an.tree);
+    this.steps=this.an.err?[]:run(this.an.tree,this.inputs);
     this.idx=0; this.lv=loopVarsOf(this.an.tree);
     this.render();
   }
@@ -739,7 +899,8 @@ class Sim{
       this.el.next=h('button',{class:'primary',onclick:()=>{this.stop();this.updateAuto();this.go(this.idx+1);}},'다음 단계 ▶'),
       this.el.auto=h('button',{onclick:()=>this.toggleAuto()},'⏵ 자동 실행'),
       this.el.last=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(this.steps.length-1);}},'⏭ 끝까지'),
-      this.optsEl()
+      this.optsEl(),
+      this.inputs?this.inBarEl():null
     );
     if(err) [this.el.reset,this.el.prev,this.el.next,this.el.auto,this.el.last].forEach(b=>b.disabled=true);
     const codeEl=h('div',{class:'code nocopy'+(G.colors?' colors-on':''), 'aria-label':'코드'});
@@ -762,6 +923,7 @@ class Sim{
     const state=h('section',{class:'pane'},
       this.el.card=h('div',{class:'condcard'}, this.el.info=h('div',{class:'stepinfo'}), this.el.note=h('div',{class:'note'})),
       this.el.loopsWrap=h('div',{}, h('div',{class:'pane-h'},'반복 위치'), this.el.loops=h('div',{class:'loops'})),
+      this.el.inWrap=h('div',{hidden:!this.inputs}, h('div',{class:'pane-h'},'입력값 (input() 순서대로)'), this.el.inq=h('div',{class:'inq'})),
       h('div',{class:'pane-h'},'변수'), this.el.vars=h('div',{class:'vars'})
     );
     const flow=h('section',{class:'pane flowpane'}, h('div',{class:'pane-h'},'순서도'), this.el.flow=h('div',{class:'flowscroll', html: err?'':buildFlow(this.an.tree)}));
@@ -778,6 +940,12 @@ class Sim{
       h('label',{class:'tog'},'자동 속도', h('input',{type:'range',id:'opt-speed-'+this.opt.key,min:150,max:1500,step:50,value:1650-G.speed, oninput:e=>{G.speed=1650-(+e.target.value);store.set('speed',G.speed);if(this.timer){this.stop();this.toggleAuto();}}}))
     );
     d.append(box); return d;
+  }
+  inBarEl(){
+    const inp=h('input',{type:'text',id:'in-'+this.opt.key,value:this.inputs.join(' '),spellcheck:'false',autocomplete:'off','aria-label':'입력값 (띄어쓰기로 구분)'});
+    const apply=()=>{ const v=inp.value.trim().split(/[\s,]+/).filter(Boolean); if(v.join(' ')===this.inputs.join(' ')) return; this.inputs=v; this.load(this.code); toast('입력값을 바꿔서 다시 실행해요'); };
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); apply(); } });
+    return h('span',{class:'inbar'}, h('label',{'for':'in-'+this.opt.key},'⌨ 입력값'), inp, h('button',{onclick:apply},'바꿔서 실행'));
   }
   predictEl(){
     const key=this.opt.key;
@@ -832,7 +1000,7 @@ class Sim{
       hit.textContent=G.hits&&c?`×${c}`:''; hit.classList.toggle('up', !!(prev&&c!==(prev.hits[no]||0)));
     });
     // 안내
-    const loopInfo=s.loops.map(L=>`${L.role} ${Math.min(L.k,L.n)}/${L.n}`).join(' · ');
+    const loopInfo=s.loops.map(L=>L.w?`${L.role} ${L.k}번째`:`${L.role} ${Math.min(L.k,L.n)}/${L.n}`).join(' · ');
     this.el.info.textContent=`${this.idx}단계${s.line?` · ${s.line}번 줄`:''}${loopInfo?' · '+loopInfo:''}`;
     this.el.note.innerHTML=s.kind==='error'?`<span style="color:var(--false)">${esc(s.msg)}</span>`:s.msg;
     this.el.note.classList.toggle('muted', s.kind==='start');
@@ -843,8 +1011,9 @@ class Sim{
     for(const L of s.loops){
       const dots=h('div',{class:'dots'});
       const vals=[]; // 표시할 값
-      for(let q=1;q<=L.n;q++) dots.append(h('span',{class:'dot'+(q<L.k?' past':'')+(q===L.k?' now':'')},String(q)));
-      this.el.loops.append(h('div',{class:'loop lv'+L.d}, h('span',{class:'lname'},`${L.role} ${L.v}`), dots, h('span',{class:'stepinfo'}, L.k>L.n?'끝':`${L.k}번째`)));
+      const endW=L.w&&s.kind==='exit'&&s.line===L.line;
+      for(let q=1;q<=(L.w?L.k:L.n);q++) dots.append(h('span',{class:'dot'+(q<L.k||endW?' past':'')+(q===L.k&&!endW?' now':'')},String(q)));
+      this.el.loops.append(h('div',{class:'loop lv'+L.d}, h('span',{class:'lname'},L.w?'while':`${L.role} ${L.v}`), dots, h('span',{class:'stepinfo'}, (L.w?endW:L.k>L.n)?'끝':`${L.k}번째`)));
     }
     // 변수
     this.el.vars.className='vars'+(G.colors?' colors-on':'');
@@ -866,6 +1035,8 @@ class Sim{
         this.el.vars.append(h('div',{class:'var'+(ch?' changed':'')+lvc}, h('span',{class:'vn'},n), h('span',{class:'vv'+(txt.length>4?' s':'')},txt)));
       }
     }
+    // 입력값
+    if(this.inputs) this.el.inq.innerHTML=this.inputs.length?this.inputs.map((v,i)=>`<span class="iq${i<s.inIdx?(i===s.inIdx-1&&s.inUsed?' now':' used'):''}">${esc(v)}</span>`).join(''):'<span class="stepinfo">(입력값이 없어요)</span>';
     // 출력
     const out=s.out, nw=s.newOut||'';
     const before=out.slice(0,out.length-nw.length);
@@ -875,7 +1046,7 @@ class Sim{
     const svg=this.el.flow.querySelector('svg');
     if(svg){
       svg.querySelectorAll('g[data-line]').forEach(g=>g.classList.toggle('on', String(s.line)===g.dataset.line || (s.kind==='end'&&g.dataset.line==='end')));
-      svg.querySelectorAll('text[data-lab]').forEach(t=>t.classList.toggle('lab-on', t.dataset.lab===`${s.line}-${s.kind}`));
+      svg.querySelectorAll('text[data-lab]').forEach(t=>t.classList.toggle('lab-on', t.dataset.lab===`${s.line}-${s.lab||s.kind}`));
       svg.querySelectorAll('path.ar').forEach(p=>p.classList.remove('on'));
       if(s.line&&s.kind!=='error'){ const p=svg.querySelector(`path.ar[data-to="${s.line}"]`); if(p&&s.kind!=='exit'&&(!prev||prev.line!==s.line)) p.classList.add('on'); }
       const on=svg.querySelector('g.on'); if(on&&this.el.flow.scrollHeight>this.el.flow.clientHeight){ const r=on.getBoundingClientRect(), c=this.el.flow.getBoundingClientRect(); if(r.top<c.top||r.bottom>c.bottom) this.el.flow.scrollTop+=r.top-c.top-c.height/3; }
@@ -919,7 +1090,7 @@ function labResult(){
 }
 function renderLab(root){
   root.innerHTML='';
-  root.append(h('div',{class:'exhead'}, h('span',{class:'exno'},'실험'), h('span',{class:'extitle'},'들여쓰기를 옮기면 실행 횟수가 바뀔까?'), h('div',{class:'exdesc'},'예제 2-3 코드예요. ◀ ▶로 print 줄의 들여쓰기를 0칸 · 4칸 · 8칸으로 옮겨 보고, 미션을 해결해 보세요.')));
+  root.append(h('div',{class:'exhead'}, h('span',{class:'exno'},'실험'), h('span',{class:'extitle'},'들여쓰기를 옮기면 실행 횟수가 바뀔까?'), h('div',{class:'exdesc'},'for 안에 for가 있는 코드예요. ◀ ▶로 print 줄의 들여쓰기를 0칸 · 4칸 · 8칸으로 옮겨 보고, 미션을 해결해 보세요. 들여쓰기 = 어느 상자 안에 있는지!')));
   const grid=h('div',{class:'labgrid'});
   const left=h('section',{class:'pane'}), right=h('section',{class:'pane'});
   grid.append(left,right);
@@ -965,10 +1136,13 @@ function boxView(tree){
   function nodes(ns){
     const wrap=h('div',{class:'boxes'});
     for(const n of ns){
-      if(n.k==='for'){
-        const b=h('div',{class:'ib lv'+Math.min(n.depth,2)}, h('div',{class:'ib-h'}, h('span',{},n.text), h('span',{class:'ib-tag'},`${hits[n.line]||0}번 반복하는 상자`)));
-        b.append(h('div',{class:'ib-b'}, nodes(n.body))); wrap.append(b);
-      } else wrap.append(h('div',{class:'ib-s'}, h('span',{},n.text), h('span',{class:'times'},`→ ${hits[n.line]||0}번 실행`)));
+      if(!n.body){ wrap.append(h('div',{class:'ib-s'}, h('span',{},n.text), h('span',{class:'times'},`→ ${hits[n.line]||0}번 실행`))); continue; }
+      for(const c of [n,...(n.elifs||[]),...(n.orelse?[n.orelse]:[])]){
+        const k=hits[c.line]||0;
+        const tag=c.k==='for'?`${k}번 반복하는 상자`:c.k==='while'?`조건 검사 ${k}번`:c.k==='else'?'위 조건이 모두 False일 때':`조건 검사 ${k}번`;
+        const b=h('div',{class:'ib lv'+Math.min(c.cd,2)}, h('div',{class:'ib-h'}, h('span',{},c.text), h('span',{class:'ib-tag'},tag)));
+        b.append(h('div',{class:'ib-b'}, nodes(c.body))); wrap.append(b);
+      }
     }
     return wrap;
   }
@@ -980,19 +1154,15 @@ const digits=v=>{ const m=String(v).match(/-?\d+/); return m?m[0]:''; };
 const nospace=v=>String(v).replace(/\s+/g,'');
 const outLines=v=>String(v).replace(/\r/g,'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
 const ASK={
-  q1:{blank:"a = [3, 6, 9, 12]\na.append(15)\nprint(len(a))\nprint(a[ ① ], a[ ② ])",
+  q1:{blank:"a = [9, 4, 1, 3, 8]\nprint(a[ ① ], a[ ② ])\na.append( ③ )\nprint(a, len(a))", goal:'4 8\n[9, 4, 1, 3, 8, 6] 6',
       fields:[{id:'b1',label:'빈칸 ①',ans:'1 (또는 -4)',ok:v=>['1','-4'].includes(digits(v))&&nospace(v).length<=3},
-              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3}]},
-  q2:{fields:[{id:'out',label:'실행 결과',multi:true,ans:'3 4\n4 5',ok:v=>outLines(v).join('|')==='3 4|4 5'}]},
-  q3:{fields:[{id:'n',label:'세트 수',ans:'6개',ok:v=>digits(v)==='6'},
-              {id:'f',label:'첫 줄',ans:'떡볶이 콜라',ok:v=>nospace(v)==='떡볶이콜라'},
-              {id:'l',label:'마지막 줄',ans:'김밥 물',ok:v=>nospace(v)==='김밥물'}]},
-  q5:{fields:[{id:'ln',label:'몇 번째 줄을',ans:'3번째 줄',ok:v=>digits(v)==='3'},
-              {id:'sp',label:'몇 칸으로 들여쓸까',ans:'8칸',ok:v=>digits(v)==='8'}]},
-  q6:{blank:"# 1층부터 4층까지 별 계단 쌓기\n# 각 층에는 층 번호만큼 별을 출력\nfor i in range(1, 5):\n    for j in range( ① ):\n        print('*', ②='')\n    ③",
-      fields:[{id:'b1',label:'빈칸 ①',ans:'i',ok:v=>nospace(v)==='i'},
-              {id:'b2',label:'빈칸 ②',ans:'end',ok:v=>nospace(v)==='end'},
-              {id:'b3',label:'빈칸 ③',ans:'print()',ok:v=>nospace(v)==='print()'}]},
+              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3},
+              {id:'b3',label:'빈칸 ③',ans:'6',ok:v=>nospace(v)==='6'}]},
+  q2:{fields:[{id:'n',label:"'★' 출력 횟수",ans:'12번',ok:v=>digits(v)==='12'}]},
+  q3:{blank:"nums = [3, 8, 5, 12, 7, 6]\nfor x in ①:\n    if x % 2 == ②:\n        print(x, end=' ')", goal:'8 12 6',
+      fields:[{id:'b1',label:'빈칸 ①',ans:'nums',ok:v=>nospace(v)==='nums'},
+              {id:'b2',label:'빈칸 ②',ans:'0',ok:v=>nospace(v)==='0'}]},
+  q4:{fields:[{id:'out',label:'실행 결과',ans:'0 2 3',ok:v=>outLines(v).join(' ')==='0 2 3'}]},
 };
 G.answers={};
 function gateView(sec,key){
@@ -1028,7 +1198,9 @@ function gateView(sec,key){
     const first=A.fields.find((f,ix)=>!R[ix].ok); if(first) inputs[first.id].focus();
   });
   return h('div',{class:'gate'},
-    h('section',{class:'pane'}, h('div',{class:'pane-h'},'문제 코드'), codeEl),
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'문제 코드'), codeEl,
+      ex.inputs?h('div',{class:'stepinfo'},`입력 : ${ex.inputs.join(' ')}`):null,
+      A.goal?h('div',{class:'pane-h'},'결과'):null, A.goal?h('div',{class:'goalbox'},A.goal):null),
     h('section',{class:'pane'}, h('div',{class:'pane-h'},'🔒 내 답 입력'), h('div',{class:'stepinfo'},'프린트에 쓴 내 답을 그대로 입력해요. 제출하면 맞았는지 알려 주고, 코드를 한 단계씩 실행해 볼 수 있어요.'), form));
 }
 function resultView(sec,key){
@@ -1054,7 +1226,7 @@ function showEx(sec, key, flash){
   const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, `${EX[k].no} ${EX[k].title}`)));
   if(S.exs.length>1) panel.append(chips);
   const ex=EX[key];
-  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), h('div',{class:'exdesc'},ex.desc)));
+  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), ex.desc?h('div',{class:'exdesc'},ex.desc):null));
   if(ex.quiz&&!ex.locked) panel.append(h('div',{class:'lead'}, h('span',{},'📝'), h('span',{html:'<b>먼저 프린트에 직접 풀어요.</b> 내 답을 입력해야 실행 화면이 열려요.'})));
   if(ex.locked&&!G.unlocked[key]){
     panel.append(h('div',{class:'locked'}, h('b',{},'먼저 프린트에 직접 코드를 써 보세요!'), h('span',{class:'stepinfo'},'다 썼으면 아래 버튼을 눌러 정답 코드와 실행 과정을 확인해요.'), h('button',{class:'primary',onclick:()=>{G.unlocked[key]=true; showEx(sec,key);}},'정답 코드 보기')));

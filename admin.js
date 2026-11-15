@@ -48,6 +48,8 @@
   .adm-dlg .btns{display:flex;justify-content:flex-end;gap:8px}
   .adm-dlg button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);padding:.4em .9em}
   .adm-dlg button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+  /* 코드 글꼴이 != >= == 를 ≠ ≥ 같은 기호로 합치지 않게 (학생이 그대로 따라 쓸 수 있도록) */
+  html *{font-variant-ligatures:none;font-feature-settings:"liga" 0,"calt" 0}
   html[data-copyfree] .nocopy{-webkit-user-select:text!important;user-select:text!important}
   html[data-present]{font-size:22px!important}
   html[data-present] .intro,html[data-present] .lead,html[data-present] .kicker,html[data-present] footer.credit{display:none!important}
