@@ -97,6 +97,9 @@ li.wide{grid-column:1/-1}
 footer.credit{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
 .hctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.docbtn{display:inline-flex;align-items:center;gap:.3em;font-weight:700;text-decoration:none;border-radius:999px;border:1px solid var(--accent);background:var(--panel);color:var(--accent);padding:.38em .95em;white-space:nowrap}
+.docbtn:hover{background:var(--accent-soft)}
+.docbtn:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
 .card .badge.admin{background:var(--ink);color:var(--bg)}
 </style>
 <script src="admin.js"></script></head><body>
@@ -132,7 +135,7 @@ footer.credit b{color:var(--ink)}
       <p class="tip" id="tip" aria-live="polite"><b>파이</b> 안녕! 나를 누르면 코딩 꿀팁을 알려 줄게 🐍</p>
       </div>
     </div>
-    <div class="hctl"><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span></div>
+    <div class="hctl"><a class="docbtn" href="materials/index.html">📄 학습지</a><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span></div>
   </header>
 
   <ul class="cards" id="cards"></ul>
