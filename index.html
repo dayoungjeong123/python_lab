@@ -103,23 +103,26 @@ footer.credit b{color:var(--ink)}
 <script>
 // 실험실 목록: 새 실험실이 완성되면 href를 채우면 카드가 열려요.
 const LABS=[
-  {key:'while',no:'01',title:'<code>while</code>문',sub:'조건이 참인 동안 반복해요',href:'while/index.html',
+  {key:'for1',no:'01',title:'<code>for</code>문',sub:'정해진 횟수만큼 반복해요',href:'for1/index.html',
+   tags:['반복 · 반복문','for 형식','369 게임','문제 · 도전과제'],
+   code:'<span class="k">for</span> a <span class="k">in</span> range(<span class="n">1</span>, <span class="n">9</span>):\n    print(a)'},
+  {key:'while',no:'02',title:'<code>while</code>문',sub:'조건이 참인 동안 반복해요',href:'while/index.html',
    tags:['while 형식','for → while','break · continue','숫자 맞추기 게임'],
    code:'<span class="k">while</span> i &lt; <span class="n">5</span>:\n    print(<span class="s">"Hello"</span>)\n    i += <span class="n">1</span>'},
-  {key:'for',no:'02',title:'중첩 제어구조',sub:'제어구조 안에 또 제어구조를 넣어요',href:'for2/index.html',
-   tags:['for 안에 if','while 안에 if','for 안에 for','문제 풀기'],
-   code:'<span class="k">for</span> x <span class="k">in</span> s:\n    <span class="k">if</span> x &gt;= <span class="n">80</span>:\n        cnt += <span class="n">1</span>'},
   {key:'list',no:'03',title:'리스트',sub:'여러 값을 한 줄로 담아요',href:'list/index.html',
    tags:['만들기 · 꺼내기 · 바꾸기','len · append · 슬라이싱','리스트 + for'],
    code:'a = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>]\na.append(<span class="n">5</span>)\nprint(a[<span class="n">0</span>])'},
-  {key:'mylab',no:'04',title:'내 맘대로',sub:'내가 쓴 코드의 흐름을 따라가요',href:'mylab/index.html',
+  {key:'for',no:'04',title:'중첩 제어구조',sub:'제어구조 안에 또 제어구조를 넣어요',href:'for2/index.html',
+   tags:['for 안에 if','while 안에 if','for 안에 for','문제 풀기'],
+   code:'<span class="k">for</span> x <span class="k">in</span> s:\n    <span class="k">if</span> x &gt;= <span class="n">80</span>:\n        cnt += <span class="n">1</span>'},
+  {key:'mylab',no:'05',wide:true,title:'내 맘대로',sub:'파이썬 코드를 직접 쓰고, 한 단계씩 실행하면서 변수와 출력이 어떻게 바뀌는지 따라가요. 시험공부할 때 헷갈리는 코드를 넣어 보세요!',href:'mylab/index.html',
    tags:['코드 직접 입력','한 단계씩 실행','변수 · 출력 보기'],
-   code:'<span class="c"># 아무 코드나 써 보세요</span>\nx = <span class="n">3</span>\nprint(x * <span class="n">2</span>)'},
-  {key:'game',no:'05',wide:true,title:'🎮 코드 게임랜드',sub:'빈칸을 채워 코드를 완성하면 친구들이 코드대로 움직여요. 게임하면서 while · 이중 for · 리스트를 익혀요!',href:'games/index.html',
+   code:'✏️ ▶️ 👣'},
+  {key:'game',no:'06',wide:true,title:'🎮 코드 게임랜드',sub:'빈칸을 채워 코드를 완성하면 친구들이 코드대로 움직여요. 게임하면서 while · 이중 for · 리스트를 익혀요!',href:'games/index.html',
    tags:['🐱 고양이 길찾기','🌸 꽃밭 심기','🍩 도넛 가게','🐣 몇 번 돌까? 퀴즈'],code:'🐱 🌸 🍩 🐣'}
 ];
 // 카드 열림/잠김은 labs.json에서 읽어요 (관리자 패널에서 바꾸고 GitHub에 붙여 넣으면 학생 화면에 반영)
-const DEFAULT_OPEN={while:true,for:true,list:true,mylab:true,game:true};
+const DEFAULT_OPEN={for1:true,while:true,for:true,list:true,mylab:true,game:true};
 let published={...DEFAULT_OPEN},draft=null;
 const EDIT_URL='https://github.com/dayoungjeong123/python_lab/edit/main/labs.json';
 const openState=()=>draft||published;
@@ -130,7 +133,7 @@ function renderCards(){const st=openState(),adm=window.PL&&PL.admin;
     if(l.wide)return `<li class="wide"><${tag} class="card wide ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
     <div class="wbody"><div class="top"><span class="no">${l.no}</span>${badge}</div><h2 class="big">${l.title}</h2><p class="sub">${l.sub}</p><ul class="tags">${l.tags.map(t=>`<li>${t}</li>`).join('')}</ul></div>
     <div class="wemo" aria-hidden="true">${l.code.split(' ').map((e,k)=>`<span style="animation-delay:${k*.25}s">${e}</span>`).join('')}</div>
-    <div class="go"><span>${open?'게임하러 가기':peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
+    <div class="go"><span>${open?(l.key==='game'?'게임하러 가기':'실험실 들어가기'):peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
   </${tag}></li>`;
     return `<li><${tag} class="card ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
     <div class="top"><span class="no">${l.no}</span>${badge}</div>

@@ -1,7 +1,8 @@
 {
+  "for1": true,
   "while": true,
-  "for": true,
   "list": true,
+  "for": true,
   "mylab": true,
   "game": true
 }

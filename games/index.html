@@ -390,19 +390,15 @@ const SHOP={key:'shop',emo:'🍩',name:'도넛 가게',tag:'리스트',sub:'인�
    hint:'뒤에서부터 셀 때는 -1, -2, …를 써요.',
    prog(B,w){const i=B.i==='len(shelf)'?w.shelf.length:+B.i;w.give(w.at(i,1),1)},check:w=>w.given==='케이크'?null:'맨 끝은 케이크예요!'},
   {title:'푸딩 진열하기',order:'👩‍🍳 “새로 만든 푸딩을 맨 뒤에 놓아 줘요.”',goal:'푸딩을 진열대 맨 뒤에 추가해요.',shelf:['도넛','쿠키','컵케이크'],
-   code:['shelf = ["도넛", "쿠키", "컵케이크"]','shelf.{{m}}("푸딩")','print(shelf)'],blanks:{m:['append','insert','remove','pop']},answer:{m:'append'},
+   code:['shelf = ["도넛", "쿠키", "컵케이크"]','shelf.{{m}}("푸딩")','print(shelf)'],blanks:{m:['append','insert','pop']},answer:{m:'append'},
    hint:'append는 리스트 맨 뒤에 붙여요.',
-   prog(B,w){if(B.m==='remove')throw (w.snap(1,'푸딩은 아직 진열대에 없어요!'),new Stop('remove는 있는 걸 빼는 기능이에요. 푸딩은 아직 없어요! → ValueError'));w.call(B.m,'푸딩',1);w.print(JSON.stringify(w.shelf).replace(/,/g,', '),2)},
+   prog(B,w){w.call(B.m,'푸딩',1);w.print(JSON.stringify(w.shelf).replace(/,/g,', '),2)},
    check:w=>w.shelf[w.shelf.length-1]==='푸딩'?null:'푸딩이 맨 뒤에 없어요.'},
-  {title:'다 팔린 쿠키 빼기',order:'👩‍🍳 “쿠키가 다 팔렸어요. 진열대에서 빼 줘요.”',goal:'진열대에서 쿠키를 빼요.',shelf:['도넛','쿠키','컵케이크','케이크'],
-   code:['shelf = ["도넛", "쿠키", "컵케이크", "케이크"]','shelf.{{m}}("쿠키")','print(len(shelf))'],blanks:{m:['remove','append','pop']},answer:{m:'remove'},
-   hint:'remove(값)은 그 값을 찾아서 빼요.',
-   prog(B,w){w.call(B.m,'쿠키',1);w.print(w.shelf.length,2)},check:w=>!w.shelf.includes('쿠키')?null:'아직 쿠키가 진열대에 있어요.'},
   {title:'도넛만 포장하기',order:'🦊 “도넛만 전부 상자에 담아 주세요!”',goal:'for로 진열대를 하나씩 보면서 도넛만 box에 담아요. 도넛은 3개예요.',shelf:['도넛','쿠키','도넛','케이크','도넛'],
-   code:['shelf = ["도넛", "쿠키", "도넛", "케이크", "도넛"]','box = []','for d in shelf:','    if d == {{v}}:','        box.{{m}}(d)','print(len(box))'],blanks:{v:['"도넛"','"쿠키"','d'],m:['append','remove']},answer:{v:'"도넛"',m:'append'},
+   code:['shelf = ["도넛", "쿠키", "도넛", "케이크", "도넛"]','box = []','for d in shelf:','    if d == {{v}}:','        box.append(d)','print(len(box))'],blanks:{v:['"도넛"','"쿠키"','d']},answer:{v:'"도넛"'},
    hint:'d에는 진열대 물건이 하나씩 들어가요. d가 "도넛"일 때만 box에 append해요.',
    prog(B,w){w.box=[];w.snap(1,'box = []');w.shelf.forEach((d,k)=>{w.set('d',d,2,{pick:k});const v=B.v==='d'?d:B.v.replace(/"/g,'');
-     if(w.test(`d == ${B.v}`,d===v,3,{pick:k})){if(B.m==='append'){w.box.push(d);w.snap(4,`box에 ${ICON[d]} 담기`,{pick:k})}else{w.snap(4,'box는 비어 있어서 뺄 게 없어요!');throw new Stop('box.remove(d): 빈 상자에서는 뺄 수 없어요. 담을 때는 append! → ValueError')}}});w.print(w.box.length,5)},
+     if(w.test(`d == ${B.v}`,d===v,3,{pick:k})){w.box.push(d);w.snap(4,`box에 ${ICON[d]} 담기`,{pick:k})}});w.print(w.box.length,5)},
    check:w=>w.box.length===3&&w.box.every(x=>x==='도넛')?null:`상자에 ${w.box.map(x=>ICON[x]).join('')||'아무것도 없어요'} — 도넛 3개만 담아야 해요.`}
  ],
  render(st,f,L,done,ok){
