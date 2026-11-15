@@ -1,0 +1,1492 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>for문 흐름 실험실</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
+<style>
+body{margin:0}
+.titlebox{display:flex;flex-direction:column;gap:4px}
+.home{font-size:.9rem;font-weight:700;color:var(--muted);text-decoration:none;align-self:flex-start;border-radius:6px;padding:.1em .3em;margin-left:-.3em}
+.home:hover{color:var(--accent);background:var(--accent-soft)}
+footer.credit{border-top:1px solid var(--line);padding-top:14px;margin-top:8px;text-align:center;color:var(--muted);font-size:.92rem}
+footer.credit b{color:var(--ink)}
+/* Layout: 학습지 예제 실행기 — 상단 탭, 코드 | 상태 | 흐름도 (python_lab과 같은 디자인) */
+:root{
+  --bg:#EEF2F7; --panel:#FFFFFF; --ink:#152033; --muted:#5A6579; --line:#D6DDE8; --line-strong:#9AA6B8;
+  --accent:#2F6FEB; --accent-ink:#FFFFFF; --accent-soft:#E3ECFD;
+  --code-bg:#18202F; --code-fg:#E4E8F0; --code-dim:#6F7B91; --code-hi:rgba(255,204,77,.22); --code-hibar:#FFCC4D;
+  --t-kw:#8DB8FF; --t-str:#A9D48C; --t-com:#7D879B; --t-num:#F5B97A;
+  --m-init:#4FA3FF; --m-cond:#C08BFF; --m-upd:#FF8A5B;
+  --true:#16915F; --true-soft:#DDF5EA; --false:#D93A40; --false-soft:#FDE4E5;
+  --font-d:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
+  --font-b:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --font-m:"JetBrains Mono",ui-monospace,Consolas,"D2Coding",monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018;
+  --true:#3CCB8A; --true-soft:#143326; --false:#FF6B70; --false-soft:#3A1A1C; color-scheme:dark}
+[hidden]{display:none!important}
+html{font-size:17px}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-b);font-size:1rem;line-height:1.55}
+.wrap{max-width:1500px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:18px 48px;display:flex;flex-direction:column;gap:16px}
+header.top{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+h1{font-family:var(--font-d);font-weight:400;font-size:2.1rem;line-height:1.1;margin:0;text-wrap:balance}
+h1 code{font-family:var(--font-m);font-size:.85em;color:var(--accent)}
+.fontctl{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.exhead{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.exno{font-family:var(--font-d);font-size:1.7rem;line-height:1;background:var(--ink);color:var(--bg);border-radius:10px;padding:.25em .6em;white-space:nowrap}
+.extitle{font-family:var(--font-d);font-size:1.5rem}
+.exdesc{color:var(--muted);font-size:.95rem;flex-basis:100%;margin-top:-4px}
+details.jump-menu{position:relative}
+details.jump-menu summary{list-style:none;cursor:pointer;white-space:nowrap;font-weight:700;border:1px solid var(--accent);color:var(--accent);background:var(--panel);border-radius:8px;padding:.42em .9em}
+details.jump-menu summary::-webkit-details-marker{display:none}
+details.jump-menu[open] summary{background:var(--accent);color:var(--accent-ink)}
+.jm-list{position:absolute;right:0;top:calc(100% + 6px);z-index:20;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:4px;min-width:min(330px,90vw);max-height:70vh;overflow:auto;box-shadow:0 10px 30px rgba(0,0,0,.15)}
+.jm-list button{text-align:left;border:none;display:flex;gap:10px;align-items:center;font-size:1rem;white-space:nowrap}
+.jm-list button b{font-family:var(--font-d);font-weight:400;font-size:1.1rem;min-width:5.2em}
+.jm-list .sec{font-size:.75rem;color:var(--muted);font-weight:700;padding:6px 8px 0}
+button{font:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);padding:.42em .9em}
+button:hover{background:var(--accent-soft)}
+button:focus-visible,input:focus-visible,summary:focus-visible,textarea:focus-visible,a:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent);font-weight:700}
+button.primary:hover{filter:brightness(1.08);background:var(--accent)}
+button:disabled{opacity:.45;cursor:not-allowed}
+nav.tabs{display:flex;gap:6px;flex-wrap:wrap;border-bottom:2px solid var(--line)}
+nav.tabs a{font-family:var(--font-d);font-size:1.2rem;padding:.4em 1em;color:var(--muted);text-decoration:none;border-radius:10px 10px 0 0;border:2px solid transparent;border-bottom:none;margin-bottom:-2px}
+nav.tabs a[aria-selected="true"]{color:var(--ink);background:var(--panel);border-color:var(--line)}
+.panel{display:flex;flex-direction:column;gap:12px}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{border-radius:999px;padding:.3em .9em;font-size:.95rem}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+label.tog{display:flex;align-items:center;gap:6px;font-size:.92rem;cursor:pointer}
+details.opts summary{cursor:pointer;color:var(--muted);font-size:.9rem;padding:.4em .6em;list-style:none}
+details.opts summary::before{content:"⚙ "}
+.optbox{display:flex;flex-wrap:wrap;gap:14px;align-items:center;padding:6px 4px;font-size:.9rem;color:var(--muted)}
+
+.rgrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr) minmax(0,.85fr);gap:14px;align-items:start}
+@media (max-width:1150px){.rgrid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.flowpane{grid-column:1/-1}}
+@media (max-width:720px){.rgrid{grid-template-columns:minmax(0,1fr)}}
+.pane{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.pane-h{font-size:.78rem;font-weight:700;letter-spacing:.08em;color:var(--muted)}
+
+.code{background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 0;font-family:var(--font-m);font-size:1.12rem;overflow-x:auto}
+.ln{display:flex;white-space:pre;border-left:4px solid transparent;transition:background .2s;align-items:baseline}
+.ln .no{width:2.6em;flex:none;text-align:right;padding-right:.9em;color:var(--code-dim);user-select:none}
+.ln .tx{padding:.18em .6em .18em 0;flex:1}
+.ln .hit{flex:none;font-size:.78rem;color:var(--code-dim);padding-right:.8em;font-weight:700;min-width:3.2em;text-align:right}
+.ln .hit.up{color:var(--code-hibar)}
+.ln.done{background:var(--code-hi);border-left-color:var(--code-hibar)}
+.ln.err{background:rgba(255,107,112,.22);border-left-color:var(--false)}
+.ln.blank .tx{color:var(--code-dim)}
+.t-kw{color:var(--t-kw);font-weight:700}.t-str{color:var(--t-str)}.t-com{color:var(--t-com);font-style:italic}.t-num{color:var(--t-num)}
+.ig{display:inline-block;border-left:2px solid rgba(255,255,255,.12)}
+.ig.l0{border-left-color:color-mix(in srgb,var(--m-init) 70%,transparent)}
+.ig.l1{border-left-color:color-mix(in srgb,var(--m-cond) 70%,transparent)}
+.ig.l2{border-left-color:color-mix(in srgb,var(--m-upd) 70%,transparent)}
+.colors-on .lv0{color:var(--m-init);font-weight:700}
+.colors-on .lv1{color:var(--m-upd);font-weight:700}
+.colors-on .lv2{color:var(--m-cond);font-weight:700}
+.errbox{font-family:var(--font-m);font-size:.95rem;color:var(--false);background:var(--false-soft);border-radius:8px;padding:.5em .8em;white-space:pre-wrap;word-break:break-word}
+
+.condcard{border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.stepinfo{font-size:.82rem;color:var(--muted)}
+.note{font-size:1.12rem;font-weight:500}
+.note.muted{color:var(--muted)}
+.note code{font-family:var(--font-m);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:0 .35em}
+.banner{border-radius:8px;padding:.5em .8em;font-weight:500;font-size:.95rem}
+.banner.ok{background:var(--true-soft);color:var(--true)}
+.banner.bad{background:var(--false-soft);color:var(--false)}
+.banner.done{background:var(--accent-soft);color:var(--ink)}
+
+.loops{display:flex;flex-direction:column;gap:6px}
+.loop{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:.92rem}
+.loop .lname{font-weight:700;min-width:5.4em}
+.loop .dots{display:flex;gap:4px;flex-wrap:wrap}
+.loop .dot{width:1.5em;height:1.5em;border-radius:6px;border:2px solid var(--line-strong);font-family:var(--font-m);font-size:.72rem;display:grid;place-items:center;color:var(--muted)}
+.loop .dot.past{background:var(--line);border-color:var(--line)}
+.loop .dot.now{border-color:var(--accent);background:var(--accent-soft);color:var(--ink);font-weight:700}
+.loop.lv0 .dot.now{border-color:var(--m-init)}
+.loop.lv1 .dot.now{border-color:var(--m-upd)}
+
+.vars{display:flex;flex-wrap:wrap;gap:10px}
+.var{border:2px solid var(--line-strong);border-radius:10px;min-width:88px;padding:6px 12px 8px;display:flex;flex-direction:column;align-items:center;background:var(--panel)}
+.var .vn{font-family:var(--font-m);font-size:.9rem;color:var(--muted)}
+.var .vv{font-family:var(--font-m);font-size:2rem;font-weight:700;line-height:1.1;font-variant-numeric:tabular-nums;white-space:nowrap}
+.var .vv.s{font-size:1.4rem}
+.var.empty .vv{color:var(--line-strong)}
+.var.changed{border-color:var(--accent)}
+.var.changed .vv{animation:pop .35s ease}
+.colors-on .var.lv0{border-color:var(--m-init)}
+.colors-on .var.lv1{border-color:var(--m-upd)}
+.var.list{align-items:flex-start;max-width:100%}
+.cells{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+.cell{display:flex;flex-direction:column;align-items:center;gap:2px}
+.cell .box{min-width:2.6em;padding:.15em .4em;border:2px solid var(--line-strong);border-radius:6px;font-family:var(--font-m);font-weight:700;font-size:1.15rem;text-align:center;background:var(--bg);white-space:nowrap}
+.cell .ix{font-family:var(--font-m);font-size:.72rem;color:var(--muted);line-height:1.15;text-align:center}
+.cell .ix .neg{color:var(--false);opacity:.8}
+.cell.r .box{border-color:var(--accent);background:var(--accent-soft)}
+.cell.w .box{border-color:var(--m-upd);background:color-mix(in srgb,var(--m-upd) 20%,var(--panel));animation:pop .35s ease}
+.cell.a .box{border-color:var(--true);background:var(--true-soft);animation:pop .35s ease}
+.cell.s .box{border-color:var(--m-cond);background:color-mix(in srgb,var(--m-cond) 18%,var(--panel))}
+@keyframes pop{0%{transform:scale(1.25)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){.var.changed .vv,.cell .box{animation:none!important}}
+
+.console{background:var(--code-bg);color:var(--code-fg);font-family:var(--font-m);border-radius:10px;padding:10px 12px;height:9em;overflow:auto;font-size:1rem;white-space:pre-wrap;word-break:break-all}
+.console .newest{color:#FFFFFF;font-weight:700;background:rgba(255,204,77,.28);border-radius:3px}
+.console .nl{color:var(--code-dim)}
+
+svg.flow{width:100%;height:auto;max-width:420px;display:block;margin:0 auto}
+svg.flow rect,svg.flow polygon.nd{fill:var(--panel);stroke:var(--line-strong);stroke-width:2;transition:fill .2s,stroke .2s}
+svg.flow g.on rect,svg.flow g.on polygon.nd{fill:var(--accent-soft);stroke:var(--accent);stroke-width:3.5}
+svg.flow .fl-t{font-family:var(--font-m);font-size:12.5px;fill:var(--ink)}
+svg.flow .fl-lab{font-family:var(--font-b);font-size:11px;fill:var(--muted)}
+svg.flow path.ar{fill:none;stroke:var(--line-strong);stroke-width:2}
+svg.flow path.ar.on{stroke:var(--accent);stroke-width:4}
+svg.flow .ah{fill:var(--line-strong)}
+svg.flow .lab-t{fill:var(--true);font-weight:700;font-size:12px;font-family:var(--font-m)}
+svg.flow .lab-f{fill:var(--false);font-weight:700;font-size:12px;font-family:var(--font-m)}
+svg.flow .lab-on{font-size:15px}
+.flowscroll{overflow:auto;max-height:34em}
+
+.predict{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.predict .ph{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.predict .ph b{font-family:var(--font-d);font-weight:400;font-size:1.3rem}
+.predict .ph span{color:var(--muted);font-size:.92rem}
+.predict textarea{font-family:var(--font-m);font-size:1rem;width:100%;box-sizing:border-box;min-height:5.5em;border:2px solid var(--line-strong);border-radius:10px;background:var(--bg);color:var(--ink);padding:8px 10px;resize:vertical}
+.cmp{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:2px 10px;font-family:var(--font-m);font-size:.95rem;align-items:center}
+.cmp .h{font-family:var(--font-b);font-size:.78rem;color:var(--muted);font-weight:700}
+.cmp .o{color:var(--true);font-weight:700}.cmp .x{color:var(--false);font-weight:700}
+.cmp div{white-space:pre;overflow:hidden;text-overflow:ellipsis}
+
+details.trace{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+details.trace summary{cursor:pointer;font-weight:700}
+.tablewrap{overflow:auto;max-height:22em;margin-top:8px}
+table{border-collapse:collapse;width:100%;font-size:.92rem;font-variant-numeric:tabular-nums}
+th,td{border-bottom:1px solid var(--line);padding:.35em .6em;text-align:left;white-space:nowrap}
+th{position:sticky;top:0;background:var(--panel);font-size:.8rem;color:var(--muted)}
+td.m{font-family:var(--font-m)}
+td.chg{color:var(--accent);font-weight:700}
+tr.cur td{background:var(--accent-soft)}
+tr{cursor:pointer}
+
+.lead{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.lead b{color:var(--accent)}
+.labgrid{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:900px){.labgrid{grid-template-columns:minmax(0,1fr)}}
+.lrow{display:flex;align-items:center;gap:6px;font-family:var(--font-m);font-size:1.1rem;white-space:pre}
+.lrow .lno{color:var(--code-dim);width:1.6em;text-align:right;flex:none}
+.lrow .ctl{display:flex;gap:4px;flex:none;width:9.4em;align-items:center}
+.lrow .ctl button{padding:.1em .5em;font-size:.95rem}
+.lrow .ctl .sp{font-family:var(--font-b);font-size:.8rem;color:var(--muted);width:3em;text-align:center}
+.lrow .lcode{color:var(--code-fg)}
+.lrow .dotsp{color:var(--code-dim)}
+.labcode{background:var(--code-bg);border-radius:10px;padding:10px 8px;display:flex;flex-direction:column;gap:4px;overflow-x:auto}
+.counts{display:flex;gap:10px;flex-wrap:wrap}
+.cnt{border:2px solid var(--line-strong);border-radius:10px;padding:6px 14px;display:flex;flex-direction:column;align-items:center;min-width:5em}
+.cnt b{font-family:var(--font-m);font-size:1.6rem}
+.cnt span{font-size:.85rem;color:var(--muted)}
+.mission{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.mission li{display:flex;gap:8px;align-items:baseline}
+.mission li .ck{font-weight:700;color:var(--line-strong);width:1.2em}
+.mission li.ok .ck{color:var(--true)}
+.mission li.ok{color:var(--true)}
+.ib{--c:var(--m-init);border:2px solid var(--c);border-left-width:8px;border-radius:10px;background:color-mix(in srgb,var(--c) 7%,var(--panel));padding:4px 6px 8px;display:flex;flex-direction:column;gap:4px}
+.ib.lv1{--c:var(--m-upd)}
+.ib.lv2{--c:var(--m-cond)}
+.ib-h{font-family:var(--font-m);font-weight:700;padding:.2em .5em;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.ib-tag{font-family:var(--font-b);font-size:.82rem;font-weight:500;background:color-mix(in srgb,var(--c) 22%,var(--panel));border-radius:999px;padding:.05em .7em}
+.ib-b{display:flex;flex-direction:column;gap:4px;margin-left:clamp(10px,3vw,24px)}
+.ib-s{font-family:var(--font-m);padding:.2em .5em;border-radius:6px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.ib-s .times{font-family:var(--font-b);font-size:.82rem;color:var(--muted)}
+.boxes{display:flex;flex-direction:column;gap:6px}
+
+.locked{display:flex;flex-direction:column;align-items:flex-start;gap:10px;background:var(--panel);border:2px dashed var(--line-strong);border-radius:12px;padding:16px}
+.lrow.errrow{background:rgba(255,107,112,.22);border-radius:6px}
+.flash{animation:flash 1.2s ease}
+@keyframes flash{0%,40%{box-shadow:0 0 0 4px var(--accent)}100%{box-shadow:0 0 0 0 transparent}}
+.gate{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:14px;align-items:start}
+@media (max-width:820px){.gate{grid-template-columns:minmax(0,1fr)}}
+.gateform{display:flex;flex-direction:column;gap:10px}
+.gf{display:flex;flex-direction:column;gap:4px;font-weight:700}
+.gf input,.gf textarea{font-family:var(--font-m);font-size:1.1rem;border:2px solid var(--line-strong);border-radius:8px;background:var(--bg);color:var(--ink);padding:.35em .6em;box-sizing:border-box;width:100%}
+.gmark{font-size:.85rem;font-weight:700;margin-left:.3em}
+.gmark.ok{color:var(--true)}.gmark.bad{color:var(--false)}
+.gf input.bad,.gf textarea.bad{border-color:var(--false)}
+.blank{display:inline-block;min-width:1.6em;text-align:center;border:2px dashed var(--code-hibar);border-radius:6px;color:var(--code-hibar);font-weight:700;margin:0 .1em}
+.seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;border:1px solid var(--line-strong);border-radius:999px;padding:3px;background:var(--panel)}
+.seg::before{content:"";position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:var(--accent);box-shadow:0 2px 6px rgba(0,0,0,.18)}
+.seg[data-on="dark"]::before{transform:translateX(100%)}
+.seg.ready::before{transition:transform .35s cubic-bezier(.65,0,.35,1),background-color .35s}
+.seg button{position:relative;z-index:1;border:none;border-radius:999px;padding:.32em .85em;background:transparent;color:var(--muted);white-space:nowrap;font-weight:500;transition:color .35s}
+.seg button:hover{background:transparent;color:var(--ink)}
+.seg button[aria-checked="true"],.seg button[aria-checked="true"]:hover{color:var(--accent-ink);font-weight:700}
+::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
+@media (prefers-reduced-motion:reduce){.seg.ready::before,.seg button{transition:none}}
+.nocopy{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.inbar{display:inline-flex;align-items:center;gap:6px;font-size:.92rem;flex-wrap:wrap}
+.inbar label{font-weight:700}
+.inbar input{font-family:var(--font-m);width:10em;padding:.32em .55em;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink)}
+.inq{display:flex;gap:6px;flex-wrap:wrap}
+.iq{font-family:var(--font-m);font-weight:700;border:2px solid var(--line-strong);border-radius:8px;padding:.08em .6em;background:var(--panel)}
+.iq.used{opacity:.45;text-decoration:line-through}
+.iq.now{border-color:var(--accent);background:var(--accent-soft)}
+.note .tt{color:var(--true)}.note .ff{color:var(--false)}
+.goalbox{font-family:var(--font-m);background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:8px 12px;white-space:pre-wrap}
+.ch-ed{width:100%;min-height:16em;resize:vertical;font-family:var(--font-m);font-size:1rem;line-height:1.6;background:var(--code-bg);color:var(--code-fg);border:2px solid var(--line-strong);border-radius:10px;padding:10px 12px;tab-size:4;white-space:pre;overflow:auto;caret-color:var(--code-hibar)}
+.ch-ed:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.reward{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;background:linear-gradient(170deg,#FFF3C4,#FFE08A);color:#3A2E10;border-radius:16px;padding:22px 16px}
+.reward .stepinfo{color:#5A4A1A}
+.rw-big{font-family:var(--font-d);font-size:2.4rem;line-height:1.1}
+.rw-t{font-family:var(--font-d);font-size:1.6rem}
+.rw-tests{list-style:none;margin:0;padding:0;font-family:var(--font-m);font-size:.9rem}
+.reward button{background:#FFFDF4;color:#3A2E10;border-color:#C9A63A}
+.ch-admin{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
+.confetti span{position:absolute;top:-2em;font-size:1.6rem;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.lbar{width:min(220px,40vw);height:10px;border-radius:999px;background:var(--line);overflow:hidden;align-self:center}
+.lbar i{display:block;height:100%;background:var(--accent);transition:width .2s}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
+</style>
+<script src="../admin.js"></script>
+</head><body>
+
+<div class="wrap">
+  <header class="top">
+    <div class="titlebox"><a class="home" href="../index.html">← 실험실 목록</a><h1><code>for</code>문 흐름 실험실</h1></div>
+    <div class="fontctl">
+      <details class="jump-menu" id="jump">
+        <summary>📋 예제 선택 ▾</summary>
+        <div class="jm-list" id="jmList"></div>
+      </details>
+      <button id="fsDown" aria-label="글자 작게">A−</button>
+      <button id="fsUp" aria-label="글자 크게">A+</button>
+      <div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" role="tablist"></nav>
+  <main id="main" class="panel"></main>
+  <footer class="credit">© <b>JeongDayoung</b></footer>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+/*ENGINE-START*/
+class PyErr extends Error{}
+class Halt extends Error{}
+const LIMIT = 900;
+
+function stripComment(s){
+  let q=null;
+  for(let i=0;i<s.length;i++){
+    const c=s[i];
+    if(q){ if(c==='\\'){i++;continue;} if(c===q) q=null; }
+    else if(c==="'"||c==='"') q=c;
+    else if(c==='#') return s.slice(0,i);
+  }
+  return s;
+}
+function tokenize(src){
+  const toks=[]; let i=0;
+  while(i<src.length){
+    const c=src[i];
+    if(c===' '||c==='\t'){i++;continue;}
+    if(c==='#') break;
+    if(c==="'"||c==='"'){
+      let j=i+1, s='';
+      while(j<src.length && src[j]!==c){ if(src[j]==='\\'&&j+1<src.length){s+=src[j+1];j+=2;continue;} s+=src[j]; j++; }
+      if(j>=src.length) throw new PyErr('SyntaxError: unterminated string literal');
+      toks.push({t:'str',v:s}); i=j+1; continue;
+    }
+    if(/[0-9]/.test(c)){ let j=i; while(j<src.length&&/[0-9]/.test(src[j]))j++;
+      if(src[j]==='.'&&/[0-9]/.test(src[j+1]||'')){ j++; while(j<src.length&&/[0-9]/.test(src[j]))j++; toks.push({t:'num',v:mkF(+src.slice(i,j))}); }
+      else toks.push({t:'num',v:+src.slice(i,j)});
+      i=j; continue; }
+    if(/[A-Za-z_가-힣]/.test(c)){ let j=i; while(j<src.length&&/[\w가-힣]/.test(src[j]))j++; toks.push({t:'name',v:src.slice(i,j)}); i=j; continue; }
+    const two=src.slice(i,i+2);
+    if(['+=','-=','*=','==','!=','<=','>=','//'].includes(two)){toks.push({t:'op',v:two});i+=2;continue;}
+    if('+-*/%()[],:=.<>'.includes(c)){toks.push({t:'op',v:c});i++;continue;}
+    throw new PyErr('SyntaxError: invalid syntax');
+  }
+  return toks;
+}
+const CMP=['<','>','<=','>=','==','!='];
+function parseTokens(toks){
+  let p=0;
+  const isOp=v=>toks[p]&&toks[p].t==='op'&&toks[p].v===v;
+  const isKw=v=>toks[p]&&toks[p].t==='name'&&toks[p].v===v;
+  const eat=v=>{ if(!isOp(v)) throw new PyErr('SyntaxError: invalid syntax'); p++; };
+  const expr=()=>or();
+  function or(){ let a=and(); while(isKw('or')){p++; a={t:'bool_op',op:'or',a,b:and()};} return a; }
+  function and(){ let a=not(); while(isKw('and')){p++; a={t:'bool_op',op:'and',a,b:not()};} return a; }
+  function not(){ if(isKw('not')){p++; return {t:'not',a:not()};} return cmp(); }
+  function cmp(){ let a=add();
+    if(isKw('in')){ p++; return {t:'cmp',op:'in',a,b:add()}; }
+    if(isKw('not')&&toks[p+1]&&toks[p+1].t==='name'&&toks[p+1].v==='in'){ p+=2; return {t:'cmp',op:'not in',a,b:add()}; }
+    if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)){ const op=toks[p++].v; a={t:'cmp',op,a,b:add()}; if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)) throw new PyErr('SyntaxError: 비교를 이어서 쓰는 건 이 실험실에서 지원하지 않아요'); } else if(isOp('=')) throw new PyErr("SyntaxError: invalid syntax. Maybe you meant '==' instead of '='?"); return a; }
+  function add(){ let a=mul(); while(isOp('+')||isOp('-')){const op=toks[p++].v; a={t:'bin',op,a,b:mul()};} return a; }
+  function mul(){ let a=unary(); while(isOp('*')||isOp('/')||isOp('//')||isOp('%')){const op=toks[p++].v; a={t:'bin',op,a,b:unary()};} return a; }
+  function unary(){ if(isOp('-')){p++; return {t:'neg',a:unary()};} return post(); }
+  function post(){
+    let a=prim();
+    for(;;){
+      if(isOp('(')){
+        p++; const args=[],kw={};
+        while(!isOp(')')){
+          if(toks[p]&&toks[p].t==='name'&&toks[p+1]&&toks[p+1].t==='op'&&toks[p+1].v==='='){const k=toks[p].v;p+=2;kw[k]=expr();}
+          else args.push(expr());
+          if(isOp(','))p++; else break;
+        }
+        eat(')'); a={t:'call',f:a,args,kw};
+      } else if(isOp('[')){
+        p++; let lo=null,hi=null;
+        if(!isOp(':')) lo=expr();
+        if(isOp(':')){ p++; if(!isOp(']')) hi=expr(); eat(']'); a={t:'slice',obj:a,lo,hi}; }
+        else { eat(']'); a={t:'idx',obj:a,i:lo}; }
+      } else if(isOp('.')){
+        p++; const n=toks[p++]; if(!n||n.t!=='name') throw new PyErr('SyntaxError: invalid syntax'); a={t:'attr',obj:a,n:n.v};
+      } else break;
+    }
+    return a;
+  }
+  function prim(){
+    const k=toks[p]; if(!k) throw new PyErr('SyntaxError: invalid syntax');
+    if(k.t==='num'){p++;return {t:'num',v:k.v};}
+    if(k.t==='str'){p++;return {t:'str',v:k.v};}
+    if(k.t==='name'){
+      if(k.v==='True'||k.v==='False'){p++;return {t:'const',v:k.v==='True'};}
+      if(k.v==='None'){p++;return {t:'const',v:null};}
+      if(['and','or','not','if','in','for','while','else','elif'].includes(k.v)) throw new PyErr('SyntaxError: invalid syntax');
+      p++;return {t:'name',n:k.v};
+    }
+    if(isOp('[')){ p++; const items=[]; while(!isOp(']')){ items.push(expr()); if(isOp(','))p++; else break; } eat(']'); return {t:'list',items}; }
+    if(isOp('(')){ p++; const e=expr(); eat(')'); return e; }
+    throw new PyErr('SyntaxError: invalid syntax');
+  }
+  if(!toks.length) throw new PyErr('SyntaxError: invalid syntax');
+  const e=expr(); if(p!==toks.length) throw new PyErr('SyntaxError: invalid syntax'); return e;
+}
+const pe=t=>parseTokens(tokenize(t));
+function parseStmt(text){
+  let m=text.match(/^for\s+([A-Za-z_]\w*)\s+in\s+(.+?)\s*:$/);
+  if(m) return {k:'for', v:m[1], it:pe(m[2]), itText:m[2].trim()};
+  if(m=text.match(/^while\s+(.+?)\s*:$/)) return {k:'while', cond:pe(m[1]), condText:m[1].trim()};
+  if(m=text.match(/^if\s+(.+?)\s*:$/)) return {k:'if', cond:pe(m[1]), condText:m[1].trim()};
+  if(m=text.match(/^elif\s+(.+?)\s*:$/)) return {k:'elif', cond:pe(m[1]), condText:m[1].trim()};
+  if(/^else\s*:$/.test(text)) return {k:'else'};
+  if(/^(for|while|if|elif|else)\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
+  if(text==='break'||text==='continue'||text==='pass') return {k:text};
+  { const im=text.match(/^import\s+([A-Za-z_]\w*)$/); if(im){ if(im[1]!=='random') throw new PyErr(`ModuleNotFoundError: 이 실험실에서는 random 모듈만 쓸 수 있어요`); return {k:'import', mod:im[1]}; } }
+  const toks=tokenize(text);
+  const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='||t.v==='*='));
+  if(ai>0) return {k:'aug', op:toks[ai].v[0], target:parseTokens(toks.slice(0,ai)), e:parseTokens(toks.slice(ai+1))};
+  let depth=0, ei=-1;
+  toks.forEach((t,ix)=>{ if(t.t==='op'){ if('(['.includes(t.v))depth++; else if(')]'.includes(t.v))depth--; else if(t.v==='='&&depth===0&&ei<0) ei=ix; }});
+  if(ei>0){
+    const target=parseTokens(toks.slice(0,ei));
+    if(target.t!=='name'&&target.t!=='idx') throw new PyErr('SyntaxError: cannot assign to expression');
+    return {k:'assign', target, e:parseTokens(toks.slice(ei+1))};
+  }
+  return {k:'expr', e:parseTokens(toks)};
+}
+const HASBODY=new Set(['for','while','if','elif','else']);
+function analyze(code){
+  const lines=code.replace(/\t/g,'    ').split('\n').map((r,ix)=>({no:ix+1, raw:r, ind:r.match(/^ */)[0].length, text:stripComment(r).trim()}));
+  const real=lines.filter(l=>l.text!=='');
+  const stack=[0]; let prevColon=null;
+  const kwOf=l=>(l.text.match(/^(\w+)/)||[])[1]||'for';
+  for(const l of real) if(/^(for|while|if|elif|else)\b/.test(l.text)&&!/:$/.test(l.text)) return {lines, err:{line:l.no, msg:"SyntaxError: expected ':'"}};
+  for(const l of real){
+    const cur=stack[stack.length-1];
+    if(prevColon){
+      if(l.ind<=cur) return {lines, err:{line:l.no, msg:`IndentationError: expected an indented block after '${kwOf(prevColon)}' statement on line ${prevColon.no}`}};
+      stack.push(l.ind);
+    } else if(l.ind>cur) return {lines, err:{line:l.no, msg:'IndentationError: unexpected indent'}};
+    else if(l.ind<cur){
+      while(stack.length>1&&stack[stack.length-1]>l.ind) stack.pop();
+      if(stack[stack.length-1]!==l.ind) return {lines, err:{line:l.no, msg:'IndentationError: unindent does not match any outer indentation level'}};
+    }
+    prevColon=/:$/.test(l.text)?l:null;
+  }
+  if(prevColon) return {lines, err:{line:prevColon.no, msg:`IndentationError: expected an indented block after '${kwOf(prevColon)}' statement on line ${prevColon.no}`}};
+  let k=0;
+  function block(ind, depth, cd, inLoop){
+    const out=[];
+    while(k<real.length && real[k].ind===ind){
+      const l=real[k++]; let st;
+      try{ st=parseStmt(l.text); }catch(e){ e.line=l.no; throw e; }
+      if((st.k==='break'||st.k==='continue')&&!inLoop){ const e=new PyErr(`SyntaxError: '${st.k}' outside loop`); e.line=l.no; throw e; }
+      const node={line:l.no, text:l.text, depth, cd, ...st};
+      if(HASBODY.has(st.k)) node.body=block(real[k].ind, st.k==='for'?depth+1:depth, cd+1, inLoop||st.k==='for'||st.k==='while');
+      if(st.k==='elif'||st.k==='else'){
+        const prev=out[out.length-1];
+        if(!prev||prev.k!=='if'||prev.orelse){ const e=new PyErr('SyntaxError: invalid syntax'); e.line=l.no; throw e; }
+        if(st.k==='elif') (prev.elifs=prev.elifs||[]).push(node); else prev.orelse=node;
+        continue;
+      }
+      out.push(node);
+    }
+    return out;
+  }
+  try{ return {lines, tree:block(0,0,0,false)}; }
+  catch(e){ if(e instanceof PyErr) return {lines, err:{line:e.line, msg:e.message}}; throw e; }
+}
+/* 값: int = number, float = {__f:number}, bool = boolean, str, list, None = null */
+const mkF=v=>({__f:v});
+const isF=x=>x!==null&&typeof x==='object'&&!Array.isArray(x)&&'__f' in x;
+const isNum=x=>typeof x==='number'||isF(x)||typeof x==='boolean';
+const nv=x=>isF(x)?x.__f:+x;
+function repr(v){
+  if(typeof v==='string') return (v.includes("'")&&!v.includes('"'))?'"'+v+'"':"'"+v.replace(/'/g,"\\'")+"'";
+  if(Array.isArray(v)) return '['+v.map(repr).join(', ')+']';
+  if(v===null||v===undefined) return 'None';
+  if(typeof v==='boolean') return v?'True':'False';
+  if(isF(v)){ const f=v.__f; if(!isFinite(f)) return f>0?'inf':'-inf'; return Number.isInteger(f)?f.toFixed(1):String(f); }
+  return String(v);
+}
+function pstr(v){ return typeof v==='string'?v:repr(v); }
+function tname(v){ return typeof v==='string'?'str':Array.isArray(v)?'list':typeof v==='boolean'?'bool':isF(v)?'float':typeof v==='number'?'int':'NoneType'; }
+function truthy(v){ if(Array.isArray(v)||typeof v==='string') return v.length>0; if(v===null||v===undefined) return false; return nv(v)!==0; }
+function binop(op,a,b){
+  const ta=tname(a), tb=tname(b);
+  if(op==='+'){ if(ta==='str'&&tb==='str') return a+b; if(ta==='list'&&tb==='list') return a.concat(b);
+    if(!(isNum(a)&&isNum(b))) throw new PyErr(ta==='str'?`TypeError: can only concatenate str (not "${tb}") to str`:`TypeError: unsupported operand type(s) for +: '${ta}' and '${tb}'`); }
+  if(op==='*'){ if(ta==='str'&&tb==='int') return a.repeat(Math.max(0,b)); if(ta==='int'&&tb==='str') return b.repeat(Math.max(0,a));
+    if(ta==='list'&&tb==='int'){ let r=[]; for(let q=0;q<b;q++) r=r.concat(a); return r; }
+    if(!(isNum(a)&&isNum(b))) throw new PyErr(`TypeError: unsupported operand type(s) for *: '${ta}' and '${tb}'`); }
+  if(!(isNum(a)&&isNum(b))) throw new PyErr(`TypeError: unsupported operand type(s) for ${op}: '${ta}' and '${tb}'`);
+  const x=nv(a), y=nv(b), fl=isF(a)||isF(b)||op==='/';
+  let r;
+  if(op==='+') r=x+y; else if(op==='-') r=x-y; else if(op==='*') r=x*y;
+  else if(op==='/'){ if(y===0) throw new PyErr('ZeroDivisionError: division by zero'); r=x/y; }
+  else if(op==='//'){ if(y===0) throw new PyErr('ZeroDivisionError: integer division or modulo by zero'); r=Math.floor(x/y); }
+  else if(op==='%'){ if(y===0) throw new PyErr('ZeroDivisionError: integer modulo by zero'); r=((x%y)+y)%y; }
+  return fl?mkF(r):r;
+}
+function compare(op,a,b){
+  if(op==='in'||op==='not in'){
+    let r;
+    if(typeof b==='string'){ if(typeof a!=='string') throw new PyErr(`TypeError: 'in <string>' requires string as left operand, not ${tname(a)}`); r=b.includes(a); }
+    else if(Array.isArray(b)) r=b.some(x=>compare('==',x,a));
+    else throw new PyErr(`TypeError: argument of type '${tname(b)}' is not iterable`);
+    return op==='in'?r:!r;
+  }
+  if(op==='=='||op==='!='){ const eq=isNum(a)&&isNum(b)?nv(a)===nv(b):JSON.stringify(a)===JSON.stringify(b); return op==='=='?eq:!eq; }
+  let x,y;
+  if(isNum(a)&&isNum(b)){ x=nv(a); y=nv(b); }
+  else if(typeof a==='string'&&typeof b==='string'){ x=a; y=b; }
+  else throw new PyErr(`TypeError: '${op}' not supported between instances of '${tname(a)}' and '${tname(b)}'`);
+  return op==='<'?x<y:op==='>'?x>y:op==='<='?x<=y:x>=y;
+}
+function ev(n,S){
+  switch(n.t){
+    case 'num': return n.v;
+    case 'str': return n.v;
+    case 'const': return n.v;
+    case 'name': if(!(n.n in S.vars)) throw new PyErr(`NameError: name '${n.n}' is not defined`); return S.vars[n.n];
+    case 'list': return n.items.map(x=>ev(x,S));
+    case 'neg': { const v=ev(n.a,S); if(!isNum(v)) throw new PyErr(`TypeError: bad operand type for unary -: '${tname(v)}'`); return isF(v)?mkF(-v.__f):-v; }
+    case 'bin': return binop(n.op, ev(n.a,S), ev(n.b,S));
+    case 'cmp': return compare(n.op, ev(n.a,S), ev(n.b,S));
+    case 'not': return !truthy(ev(n.a,S));
+    case 'bool_op': { const a=ev(n.a,S); if(n.op==='and') return truthy(a)?ev(n.b,S):a; return truthy(a)?a:ev(n.b,S); }
+    case 'idx': {
+      const o=ev(n.obj,S), i=ev(n.i,S);
+      if(!Array.isArray(o)&&typeof o!=='string') throw new PyErr(`TypeError: '${tname(o)}' object is not subscriptable`);
+      if(typeof i!=='number') throw new PyErr(`TypeError: list indices must be integers, not ${tname(i)}`);
+      const j=i<0?o.length+i:i;
+      if(j<0||j>=o.length) throw new PyErr(`IndexError: ${Array.isArray(o)?'list':'string'} index out of range`);
+      if(n.obj.t==='name') S.acc.push({n:n.obj.n,i:j,k:'r'});
+      return o[j];
+    }
+    case 'slice': {
+      const o=ev(n.obj,S); const L=o.length;
+      let lo=n.lo?ev(n.lo,S):0, hi=n.hi?ev(n.hi,S):L;
+      if(lo<0) lo=Math.max(0,L+lo); if(hi<0) hi=Math.max(0,L+hi); lo=Math.min(lo,L); hi=Math.min(hi,L);
+      if(n.obj.t==='name') for(let q=lo;q<hi;q++) S.acc.push({n:n.obj.n,i:q,k:'s'});
+      return o.slice(lo,hi);
+    }
+    case 'attr': throw new PyErr(`AttributeError: '${tname(ev(n.obj,S))}' object has no attribute '${n.n}'`);
+    case 'call': return call(n,S);
+  }
+}
+/* 조건식을 값으로 바꿔 보여 주기: x >= 80 → 90 >= 80 */
+function showExpr(n,S){
+  const P=x=>showExpr(x,S);
+  switch(n.t){
+    case 'num': return repr(n.v);
+    case 'str': return repr(n.v);
+    case 'const': return repr(n.v);
+    case 'cmp': case 'bin': return `${P(n.a)} ${n.op} ${P(n.b)}`;
+    case 'bool_op': return `${P(n.a)} ${n.op} ${P(n.b)}`;
+    case 'not': return `not ${P(n.a)}`;
+    default: { const save=S.acc.length; try{ return repr(ev(n,S)); }catch(e){ return '?'; } finally{ S.acc.length=save; } }
+  }
+}
+function call(n,S){
+  if(n.f.t==='attr'&&n.f.obj.t==='name'&&n.f.obj.n==='random'&&!('random' in S.vars)){
+    if(!S.mods.random) throw new PyErr("NameError: name 'random' is not defined (import random을 먼저 써요)");
+    const args=n.args.map(a=>ev(a,S));
+    if(n.f.n==='randint'){ if(args.length!==2||args.some(x=>typeof x!=='number')) throw new PyErr('TypeError: randint()에는 정수 2개가 필요해요'); const [a,b]=args; if(a>b) throw new PyErr(`ValueError: empty range in randint(${a}, ${b})`); const v=a+Math.floor(S.rng()*(b-a+1)); S.note={kind:'random',v}; return v; }
+    if(n.f.n==='choice'){ const a=args[0]; if(!Array.isArray(a)&&typeof a!=='string') throw new PyErr(`TypeError: object of type '${tname(a)}' has no len()`); if(!a.length) throw new PyErr('IndexError: Cannot choose from an empty sequence'); const v=a[Math.floor(S.rng()*a.length)]; S.note={kind:'random',v}; return v; }
+    throw new PyErr(`AttributeError: module 'random' has no attribute '${n.f.n}'`);
+  }
+  if(n.f.t==='attr'){
+    const o=ev(n.f.obj,S);
+    if(n.f.n==='append'&&Array.isArray(o)){
+      if(n.args.length!==1) throw new PyErr(`TypeError: list.append() takes exactly one argument (${n.args.length} given)`);
+      const v=ev(n.args[0],S); o.push(v);
+      if(n.f.obj.t==='name') S.acc.push({n:n.f.obj.n,i:o.length-1,k:'a'});
+      S.note={kind:'append', name:n.f.obj.t==='name'?n.f.obj.n:'리스트', v, arr:o};
+      return null;
+    }
+    throw new PyErr(`AttributeError: '${tname(o)}' object has no attribute '${n.f.n}'`);
+  }
+  if(n.f.t!=='name') throw new PyErr('TypeError: object is not callable');
+  const fn=n.f.n;
+  if(fn in S.vars) throw new PyErr(`TypeError: '${tname(S.vars[fn])}' object is not callable`);
+  const args=n.args.map(a=>ev(a,S));
+  const one=name=>{ if(args.length!==1) throw new PyErr(`TypeError: ${name}() takes exactly one argument (${args.length} given)`); return args[0]; };
+  if(fn==='len'){
+    const a=one('len');
+    if(typeof a!=='string'&&!Array.isArray(a)) throw new PyErr(`TypeError: object of type '${tname(a)}' has no len()`);
+    return a.length;
+  }
+  if(fn==='range'){
+    let [a,b,c]=args; if(args.length===1){b=a;a=0;} c=c===undefined?1:c;
+    if([a,b,c].some(x=>typeof x!=='number')) throw new PyErr(`TypeError: '${tname([a,b,c].find(x=>typeof x!=='number'))}' object cannot be interpreted as an integer`);
+    if(c===0) throw new PyErr('ValueError: range() arg 3 must not be zero');
+    const r=[]; for(let x=a; c>0?x<b:x>b; x+=c){ r.push(x); if(r.length>5000) break; } return r;
+  }
+  if(fn==='print'){
+    const end='end' in n.kw?ev(n.kw.end,S):'\n', sep='sep' in n.kw?ev(n.kw.sep,S):' ';
+    S.print=(S.print||'')+args.map(pstr).join(sep)+end; return null;
+  }
+  if(fn==='input'){
+    if(args.length) S.out+=pstr(args[0]);
+    if(S.inIdx>=S.inq.length) throw new PyErr('EOFError: 입력값이 더 없어요 (위의 입력값 칸에 값을 더 넣어 보세요)');
+    const v=S.inq[S.inIdx++]; S.inNote=v; return v;
+  }
+  if(fn==='int'){
+    const a=one('int');
+    if(typeof a==='string'){ if(!/^\s*[+-]?\d+\s*$/.test(a)) throw new PyErr(`ValueError: invalid literal for int() with base 10: ${repr(a)}`); return parseInt(a,10); }
+    if(isNum(a)) return Math.trunc(nv(a));
+    throw new PyErr(`TypeError: int() argument must be a string or a number, not '${tname(a)}'`);
+  }
+  if(fn==='float'){
+    const a=one('float');
+    if(typeof a==='string'){ const t=a.trim(); if(!/^[+-]?(\d+\.?\d*|\.\d+)$/.test(t)) throw new PyErr(`ValueError: could not convert string to float: ${repr(a)}`); return mkF(+t); }
+    if(isNum(a)) return mkF(nv(a));
+    throw new PyErr(`TypeError: float() argument must be a string or a real number, not '${tname(a)}'`);
+  }
+  if(fn==='str') return pstr(one('str'));
+  if(fn==='abs'){ const a=one('abs'); if(!isNum(a)) throw new PyErr(`TypeError: bad operand type for abs(): '${tname(a)}'`); return isF(a)?mkF(Math.abs(a.__f)):Math.abs(+a); }
+  if(fn==='sum'){ const a=one('sum'); if(!Array.isArray(a)) throw new PyErr(`TypeError: '${tname(a)}' object is not iterable`); return a.reduce((s,x)=>binop('+',s,x),0); }
+  if(fn==='max'||fn==='min'){
+    const arr=args.length===1&&Array.isArray(args[0])?args[0]:args;
+    if(!arr.length) throw new PyErr(`ValueError: ${fn}() arg is an empty sequence`);
+    return arr.reduce((m,x)=>compare(fn==='max'?'>':'<',x,m)?x:m);
+  }
+  throw new PyErr(`NameError: name '${fn}' is not defined`);
+}
+function treeDepth(nodes){ let m=0; for(const n of nodes||[]){ const kids=[n.body,...(n.elifs||[]).map(e=>e.body),n.orelse&&n.orelse.body].filter(Boolean); for(const b of kids) m=Math.max(m,(n.k==='for'?1:0)+treeDepth(b)); if(n.k==='for'&&!n.body.length) m=Math.max(m,1); } return m; }
+function ctrlDepth(nodes){ let m=0; for(const n of nodes||[]){ if(n.body){ m=Math.max(m,1+ctrlDepth(n.body)); for(const e of n.elifs||[]) m=Math.max(m,1+ctrlDepth(e.body)); if(n.orelse) m=Math.max(m,1+ctrlDepth(n.orelse.body)); } } return m; }
+function showPrint(t){
+  if(t==='\n') return '빈 줄(줄바꿈)만 출력';
+  if(t.endsWith('\n')) return `출력: ${t.slice(0,-1)}`;
+  if(t.endsWith(' ')) return `출력: ${t.trimEnd()} (뒤에 공백, 줄 안 바꿈)`;
+  return `출력: ${t} (줄 안 바꿈)`;
+}
+class BreakSig{} class ContSig{}
+function run(tree, inputs){
+  let seed=20261; const rng=()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null, mods:{}, rng};
+  const maxD=treeDepth(tree);
+  const snap=o=>{
+    if(S.steps.length>LIMIT) throw new Halt('limit');
+    S.steps.push(Object.assign({acc:[],changed:[],newOut:''},o,{vars:JSON.parse(JSON.stringify(S.vars)), out:S.out, hits:{...S.hits}, loops:S.loops.map(x=>({...x})), inIdx:S.inIdx}));
+  };
+  const fail=(e,n)=>{ snap({line:n.line, kind:'error', msg:e.message}); throw new Halt('error'); };
+  const hit=n=>{ S.hits[n.line]=(S.hits[n.line]||0)+1; };
+  const test=(n,cond)=>{ S.acc=[]; let shown, v; try{ shown=showExpr(cond,S); S.acc=[]; v=truthy(ev(cond,S)); }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; } return {v, shown, acc:S.acc}; };
+  const condMsg=(n,r,yes,no)=>`조건 <code>${esc(n.condText)}</code>${r.shown!==n.condText?` → <code>${esc(r.shown)}</code>`:''} → <b class="${r.v?'tt':'ff'}">${r.v?'True':'False'}</b> → ${r.v?yes:no}`;
+  function exec(nodes,d){
+    for(const n of nodes){
+      S.acc=[]; S.print=null; S.note=null; S.inNote=null;
+      if(n.k==='for'){
+        let it; try{ it=ev(n.it,S); }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
+        if(!Array.isArray(it)&&typeof it!=='string') fail(new PyErr(`TypeError: '${tname(it)}' object is not iterable`),n);
+        const items=typeof it==='string'?[...it]:it.slice();
+        const role=maxD>1?(n.depth===0?'바깥 for':(n.depth===1?'안쪽 for':'가장 안쪽 for')):'for';
+        const L={line:n.line, v:n.v, k:0, n:items.length, role, d:n.depth};
+        S.loops.push(L);
+        const src=n.it.t==='name'?n.it.n:null;
+        let broke=false;
+        for(let q=0;q<items.length;q++){
+          hit(n);
+          L.k=q+1; S.vars[n.v]=items[q];
+          snap({line:n.line, kind:'iter', d, msg:`${role}: <code>${n.v} = ${esc(repr(items[q]))}</code>${src?` (${src}의 ${q}번 값)`:''} → ${q+1}번째 반복`, acc:src?[{n:src,i:q,k:'r'}]:[], changed:[n.v]});
+          try{ exec(n.body,d+1); }catch(e){ if(e instanceof BreakSig){ broke=true; break; } if(!(e instanceof ContSig)) throw e; }
+        }
+        if(!broke){ L.k=items.length+1;
+          snap({line:n.line, kind:'exit', d, msg: items.length===0?`${role}: 꺼낼 값이 없어서 한 번도 반복하지 않아요`:(n.depth>0?`${role} 끝! 남은 값이 없어요 → 바깥 for로 돌아가요`:`${role} 끝! 남은 값이 없어요 → 반복 끝`)}); }
+        S.loops.pop();
+      } else if(n.k==='while'){
+        const L={line:n.line, v:'', k:0, n:null, role:'while', d:n.depth, w:true};
+        S.loops.push(L);
+        for(;;){
+          hit(n); S.acc=[];
+          const r=test(n,n.cond);
+          if(!r.v){ snap({line:n.line, kind:'exit', d, msg:condMsg(n,r,'','반복 끝!'), acc:r.acc}); break; }
+          L.k++;
+          snap({line:n.line, kind:'iter', d, msg:condMsg(n,r,`while 안으로 (${L.k}번째 반복)`,''), acc:r.acc});
+          try{ exec(n.body,d+1); }catch(e){ if(e instanceof BreakSig) break; if(!(e instanceof ContSig)) throw e; }
+        }
+        S.loops.pop();
+      } else if(n.k==='if'){
+        const chain=[n,...(n.elifs||[])];
+        let done=false;
+        for(const c of chain){
+          hit(c); S.acc=[];
+          const r=test(c,c.cond);
+          const kw=c.k==='if'?'if':'elif';
+          snap({line:c.line, kind:'if', lab:r.v?'T':'F', d, msg:condMsg(c,r,`${kw} 안쪽을 실행해요`, c===chain[chain.length-1]&&!n.orelse?`${kw} 안쪽을 건너뛰어요`:'다음 조건으로'), acc:r.acc});
+          if(r.v){ exec(c.body,d+1); done=true; break; }
+        }
+        if(!done&&n.orelse){ hit(n.orelse); snap({line:n.orelse.line, kind:'stmt', d, msg:'위 조건이 모두 False → <b>else</b> 안쪽을 실행해요'}); exec(n.orelse.body,d+1); }
+      } else if(n.k==='break'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>break</b> → 반복을 바로 끝내요'}); throw new BreakSig(); }
+      else if(n.k==='continue'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>continue</b> → 아래는 건너뛰고 반복 처음으로'}); throw new ContSig(); }
+      else if(n.k==='import'){ hit(n); S.mods[n.mod]=true; snap({line:n.line, kind:'stmt', d, msg:`<code>${n.mod}</code> 모듈을 불러와요 (무작위 수를 만들 수 있어요)`}); }
+      else if(n.k==='pass'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'pass → 아무것도 하지 않아요'}); }
+      else {
+        hit(n);
+        let msg='', changed=[];
+        try{
+          if(n.k==='expr'){
+            ev(n.e,S);
+            if(S.print!==null){ S.out+=S.print; msg=esc(showPrint(S.print)); }
+            else if(S.note&&S.note.kind==='append'){ msg=`<code>${esc(S.note.name)}</code> 맨 뒤에 ${esc(repr(S.note.v))} 추가 → <code>${esc(repr(S.note.arr))}</code>`; changed=[S.note.name]; }
+            else msg='실행';
+          } else if(n.k==='assign'){
+            const v=ev(n.e,S);
+            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`+(S.note&&S.note.kind==='random'?' 🎲 (무작위로 뽑은 수)':''); }
+            else {
+              const o=ev(n.target.obj,S), i=ev(n.target.i,S);
+              if(!Array.isArray(o)) throw new PyErr(`TypeError: '${tname(o)}' object does not support item assignment`);
+              const j=i<0?o.length+i:i; if(j<0||j>=o.length) throw new PyErr('IndexError: list assignment index out of range');
+              const old=o[j]; o[j]=v; const nm=n.target.obj.t==='name'?n.target.obj.n:'리스트';
+              S.acc=S.acc.filter(a=>!(a.n===nm&&a.i===j&&a.k==='r')); S.acc.push({n:nm,i:j,k:'w'}); changed=[nm];
+              msg=`<code>${nm}[${i}]</code>의 값을 ${esc(repr(old))} → ${esc(repr(v))}(으)로 바꿔요`;
+            }
+          } else if(n.k==='aug'){
+            const cur=ev(n.target,S), add=ev(n.e,S), nv2=binop(n.op,cur,add);
+            if(n.target.t==='name'){ S.vars[n.target.n]=nv2; changed=[n.target.n]; msg=`<code>${n.target.n} ${n.op}= ${esc(repr(add))}</code> → ${n.target.n} = ${esc(repr(cur))} ${n.op} ${esc(repr(add))} = <b>${esc(repr(nv2))}</b>`; }
+            else { const o=ev(n.target.obj,S), i=ev(n.target.i,S), j=i<0?o.length+i:i; o[j]=nv2; changed=[n.target.obj.n]; msg=`값을 ${esc(repr(nv2))}(으)로 바꿔요`; }
+          }
+          if(S.inNote!==null) msg=`⌨ 입력값 <b>${esc(S.inNote)}</b>을(를) 받았어요 → `+msg;
+        }catch(e){ if(e instanceof PyErr) fail(e,n); throw e; }
+        snap({line:n.line, kind:S.print!==null?'print':'stmt', d, msg, acc:S.acc, changed, newOut:S.print||'', inUsed:S.inNote!==null});
+      }
+    }
+  }
+  try{
+    snap({line:null, kind:'start', msg:'‘다음 단계’를 눌러 시작해요'});
+    exec(tree,0);
+    snap({line:null, kind:'end', msg:'프로그램 끝! 출력 결과를 확인해 보세요'});
+  }catch(e){
+    if(!(e instanceof Halt)) throw e;
+    if(e.message==='limit') S.steps.push({...S.steps[S.steps.length-1], kind:'error', msg:'단계가 너무 많아서 여기서 멈췄어요 (끝나지 않는 반복인지 확인해 보세요)'});
+  }
+  return S.steps;
+}
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+/*ENGINE-END*/
+
+/* ───────── 예제 데이터 (프린트와 같은 번호) ───────── */
+const EX = {
+  f1:{no:'형식 ①', title:'for a in data:', desc:'a가 data 안에 있는 값인 동안 명령어 B를 실행해요. 리스트의 값이 a에 하나씩 차례로 들어가요', code:
+`for a in [1,2,3]:
+    print(a)`},
+  f2:{no:'형식 ②', title:'for a in range(시작, 종료):', desc:'a에 시작 숫자가 먼저 들어가고, 종료 숫자 - 1까지 명령어 B를 반복해요. 종료 숫자가 들어가면 반복 끝!', code:
+`for a in range(1, 9):
+    print(a)`},
+  g369:{no:'예제 1-1', title:'369 게임을 만들어 보자', desc:"⌨ 입력값은 내가 차례로 말하는 숫자예요. 3·6·9가 들어간 숫자는 '짝'! 틀리게 말하면 '틀렸습니다.'를 출력하고 break로 멈춰요. 입력값을 바꿔서도 해 보세요", inputs:['1','2','짝','4','5','짝','7','8','짝','10','11','12','13'], code:
+`print("3~, 6~, 9~")
+
+for i in range(1, 101):
+    say = input()
+    if '3' in str(i) or '6' in str(i) or '9' in str(i):
+        answer = "짝"
+    else:
+        answer = str(i)
+
+    if say != answer:
+        print("틀렸습니다.")
+        break`},
+  fp1:{no:'문제 (1)', title:'1부터 50까지의 숫자의 합을 구해 보자.', desc:'빈칸 정답: ① range(1, 51)   ② sum + i   →   결과 1275', code:
+`sum = 0
+for i in range(1, 51):
+    sum = sum + i
+
+print(sum)`},
+  fp2:{no:'문제 (2)', title:'숫자 하나를 입력받고, 1부터 입력받은 숫자까지의 곱을 구해 보세요.', desc:'빈칸 정답: ① 1   ② range(1, num + 1)   ③ result = result * i   →   입력 4, 결과 24', inputs:['4'], code:
+`result = 1
+num = int(input())
+for i in range(1, num + 1):
+    result = result * i
+
+print(result)`},
+  fp3:{no:'문제 (3)', title:'구구단 4단을 출력해 보자.', desc:'빈칸 정답: ① range(1, 10)   →   결과 4 X 1 = 4 … 4 X 9 = 36', code:
+`for i in range(1, 10):
+    print('4 X', i, "=", 4*i)`},
+  fc1:{no:'도전과제 (1)', title:'구구단 외울 단을 입력받아, 해당 숫자의 구구단을 외워 봅시다.', desc:'정답 예시 · ⌨ 입력값에 외울 단을 넣어요', inputs:['7'], code:
+`dan = int(input())
+for i in range(1, 10):
+    print(dan, 'X', i, '=', dan * i)`},
+  fc2:{no:'도전과제 (2)', title:'랜덤으로 곱셈 문제를 내고, 답을 맞추는 게임을 만들어 보자.', desc:'정답 예시 · 실험실에서는 매번 같은 문제(6 X 2, 9 X 2, 6 X 4)가 나와요. ⌨ 입력값이 내 답이에요 (마지막은 일부러 틀림)', inputs:['12', '18', '25'], code:
+`import random
+for i in range(3):
+    a = random.randint(2, 9)
+    b = random.randint(2, 9)
+    print(a, 'X', b, '= ?')
+    ans = int(input())
+    if ans == a * b:
+        print('정답!')
+    else:
+        print('틀렸어요. 정답은', a * b)`},
+  fc3:{no:'도전과제 (3)', title:'1부터 30까지 숫자의 홀수 짝수를 판별하는 프로그램을 만들어 보자.', desc:'정답 예시 · i % 2 == 0 이면 짝수', code:
+`for i in range(1, 31):
+    if i % 2 == 0:
+        print(i, '짝수')
+    else:
+        print(i, '홀수')`},
+  e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
+`list1 = ["실드", "투시경", "물약"]
+print(list1[0], list1[-1])
+list1[1] = "바늘"
+print(list1)`},
+  e12:{no:'예제 1-2', title:'리스트 활용 3총사', desc:'len(개수), append(맨 뒤에 추가), 슬라이싱 s[a:b](a부터 b-1까지)', code:
+`s = [90, 85, 77]
+print(len(s))
+s.append(60)
+print(s)
+print(s[0:2])`},
+  e13a:{no:'예제 1-3 ①', title:'리스트 + for: 값을 바로 꺼내 더하기', desc:'for x in s: → x에 리스트 값이 하나씩 들어가요', code:
+`s = [90, 85, 77]
+total = 0
+for x in s:              # x = 값
+    total += x
+print(total)`},
+  e13b:{no:'예제 1-3 ②', title:'리스트 + for: 인덱스로 꺼내 더하기', desc:'for i in range(len(s)): → i에 자리 번호가 들어가요', code:
+`s = [90, 85, 77]
+total = 0
+for i in range(len(s)):      # i = 자리 번호
+    total += s[i]
+print(total)`},
+  e31:{no:'예제 3-1', title:'조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
+`s = [90, 85, 77, 100, 68]
+cnt = 0
+for x in s:
+    if x >= 80:
+        cnt += 1
+print(cnt)`},
+  e32:{no:'예제 3-2', title:'0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
+`total = 0
+n = int(input())
+while n != 0:
+    if n % 2 == 0:
+        total += n
+    n = int(input())
+print(total)`},
+  e33:{no:'예제 3-3', title:'별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
+`for i in range(3):
+    for j in range(5):
+        print('*', end='')
+    print()`},
+  e34:{no:'예제 3-4', title:'', desc:'', code:
+`for i in range(1, 3):
+    for j in range(1, 4):
+        print(i * j, end=' ')
+    print()`},
+  e35:{no:'예제 3-5', title:'', desc:'', code:
+`a = [2, 4, 6]
+for i in range(3):
+    for j in range(i + 1):
+        print(a[j], end=' ')
+    print()`},
+  q1:{no:'문제 1', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오.', desc:'결과: 4 8 / [9, 4, 1, 3, 8, 6] 6', quiz:true, code:
+`a = [9, 4, 1, 3, 8]
+print(a[1], a[-1])
+a.append(6)
+print(a, len(a))`},
+  q2:{no:'문제 2', title:"'★'은 몇 번 출력될까?", desc:'★ : (   ) 번', quiz:true, code:
+`for i in range(3):
+    for j in range(4):
+        print('★')`},
+  q3:{no:'문제 3', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오. (짝수만 출력)', desc:'결과: 8 12 6', quiz:true, code:
+`nums = [3, 8, 5, 12, 7, 6]
+for x in nums:
+    if x % 2 == 0:
+        print(x, end=' ')`},
+  q4:{no:'문제 4', title:'실행 결과를 쓰시오. (값일까? 인덱스일까?)', desc:'', quiz:true, code:
+`s = [6, 3, 8, 5, 2]
+for i in range(len(s)):
+    if s[i] > 4:
+        print(i, end=' ')`},
+  q5:{no:'(도전)문제 5', title:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력하시오.', desc:'결과: 84.0 / 3', quiz:true, challenge:true, code:
+`s = [90, 85, 77, 100, 68]
+# 아래에 코드를 써 보세요.
+`},
+};
+const APP='for1';
+const SECTIONS = ({
+ for1:[
+  {id:'form', name:'1) for 형식', exs:['f1','f2']},
+  {id:'game', name:'2) 예제 1-1 369 게임', exs:['g369']},
+  {id:'quiz', name:'3) 문제', exs:['fp1','fp2','fp3']},
+  {id:'challenge', name:'4) 도전과제', exs:['fc1','fc2','fc3']},
+ ],
+ list:[
+  {id:'basic', name:'1) 리스트 기본', exs:['e11']},
+  {id:'func', name:'2) 활용 3총사', exs:['e12']},
+  {id:'loop', name:'3) 리스트 + for', exs:['e13a','e13b']},
+ ],
+ nested:[
+  {id:'forif', name:'① for 안에 if', exs:['e31']},
+  {id:'whileif', name:'② while 안에 if', exs:['e32']},
+  {id:'forfor', name:'③ for 안에 for', exs:['e33','e34','e35']},
+  {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
+ ]})[APP];
+
+/* ───────── 공통 상태 ───────── */
+const store={get(k,d){try{const v=localStorage.getItem('lfl-'+APP+'-'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('lfl-'+APP+'-'+k,JSON.stringify(v));}catch(e){}}};
+const G={ colors:store.get('colors',true), hits:store.get('hits',true), speed:store.get('speed',800), predicts:{}, cur:{}, unlocked:{} };
+const $=(s,r=document)=>r.querySelector(s);
+const h=(tag,attrs={},...kids)=>{ const e=document.createElement(tag); for(const [k,v] of Object.entries(attrs)){ if(k==='class') e.className=v; else if(k==='html') e.innerHTML=v; else if(k.startsWith('on')) e.addEventListener(k.slice(2),v); else if(v!==false&&v!=null) e.setAttribute(k,v===true?'':v); } for(const c of kids.flat()) if(c!=null&&c!==false) e.append(c.nodeType?c:document.createTextNode(c)); return e; };
+let toastT=null;
+function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
+
+/* 코드 강조 */
+const KW=new Set(['import','for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
+function hlLine(raw, loopVars){
+  const ind=raw.match(/^ */)[0].length;
+  let guides='';
+  for(let k=0;k<Math.floor(ind/4);k++) guides+=`<span class="ig l${k}">    </span>`;
+  guides+=' '.repeat(ind%4);
+  const body=raw.slice(ind);
+  const re=/(#.*$)|('(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|(\b\d+\b)|([A-Za-z_가-힣][\w가-힣]*)|([^#'"\w가-힣]+)/g;
+  let out='', m;
+  while((m=re.exec(body))){
+    if(m[1]) out+=`<span class="t-com">${esc(m[1])}</span>`;
+    else if(m[2]) out+=`<span class="t-str">${esc(m[2])}</span>`;
+    else if(m[3]) out+=`<span class="t-num">${m[3]}</span>`;
+    else if(m[4]){ const w=m[4]; if(w in loopVars) out+=`<span class="lv${loopVars[w]}">${w}</span>`; else if(KW.has(w)) out+=`<span class="t-kw">${w}</span>`; else out+=esc(w); }
+    else out+=esc(m[5]);
+  }
+  return guides+out;
+}
+function loopVarsOf(tree){ const r={}; (function w(ns){ for(const n of ns){ if(n.k==='for'&&!(n.v in r)) r[n.v]=n.depth; if(n.body) w(n.body); (n.elifs||[]).forEach(e=>w(e.body)); if(n.orelse) w(n.orelse.body); } })(tree||[]); return r; }
+
+/* ───────── 순서도 ───────── */
+function buildFlow(tree){
+  const BW=184, BH=34, HW=196, HH=40, DW=204, DH=52, GAP=22;
+  const D=Math.max(1,ctrlDepth(tree));
+  const lane=cd=>Math.max(HW,DW)/2+16+(D-1-cd)*16;
+  const CX=Math.max(lane(0)+24, 130);
+  const W=CX*2;
+  const shapes=[], paths=[], labs=[];
+  const short=(t,n=22)=>t.length>n?t.slice(0,n-1)+'…':t;
+  const down=(x,y)=>[x,y];
+  function seq(nodes, y, from){
+    for(const n of nodes){
+      paths.push({d:`M${CX},${from} L${CX},${y}`, ah:down(CX,y), to:n.line});
+      if(n.k==='for'||n.k==='while'){
+        const isW=n.k==='while', w=isW?DW:HW, hh=isW?DH:HH;
+        shapes.push({line:n.line, kind:isW?'dia':'for', x:CX-w/2, y, w, h:hh, text:isW?n.condText:`${n.v} in ${n.itText}`});
+        const yb=seq(n.body, y+hh+GAP, y+hh);
+        labs.push({x:CX+6, y:y+hh+14, t:'True', c:'lab-t', line:n.line, k:'iter'});
+        const L=lane(n.cd);
+        paths.push({d:`M${CX},${yb} L${CX},${yb+10} L${CX-L},${yb+10} L${CX-L},${y+hh/2} L${CX-w/2},${y+hh/2}`, ah:[CX-w/2,y+hh/2,'r'], back:n.line});
+        paths.push({d:`M${CX+w/2},${y+hh/2} L${CX+L},${y+hh/2} L${CX+L},${yb+26} L${CX},${yb+26}`, exit:n.line});
+        labs.push({x:CX+w/2+4, y:y+hh/2-6, t:'False', c:'lab-f', line:n.line, k:'exit'});
+        from=yb+26; y=yb+26+GAP;
+      } else if(n.k==='if'){
+        const parts=[n,...(n.elifs||[])], L=lane(n.cd), ends=[];
+        let cy=y, pendingFalse=null;
+        parts.forEach((c,ix)=>{
+          if(pendingFalse){ const [fx,fy]=pendingFalse; paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${cy-10} L${CX},${cy-10} L${CX},${cy}`, ah:down(CX,cy), to:c.line}); }
+          shapes.push({line:c.line, kind:'dia', x:CX-DW/2, y:cy, w:DW, h:DH, text:(c.k==='elif'?'elif ':'')+c.condText});
+          labs.push({x:CX+6, y:cy+DH+14, t:'True', c:'lab-t', line:c.line, k:'T'});
+          labs.push({x:CX+DW/2+4, y:cy+DH/2-6, t:'False', c:'lab-f', line:c.line, k:'F'});
+          const yb=seq(c.body, cy+DH+GAP, cy+DH);
+          ends.push(yb); pendingFalse=[CX+DW/2, cy+DH/2];
+          cy=yb+30;
+        });
+        let elseEnd=null;
+        if(n.orelse){
+          const [fx,fy]=pendingFalse; const ey=cy;
+          shapes.push({line:n.orelse.line, kind:'tag', x:CX-30, y:ey, w:60, h:22, text:'else'});
+          paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${ey-10} L${CX},${ey-10} L${CX},${ey}`, ah:down(CX,ey), to:n.orelse.line});
+          elseEnd=seq(n.orelse.body, ey+22+GAP, ey+22); pendingFalse=null;
+        }
+        const last=elseEnd??ends[ends.length-1];
+        const yM=last+16;
+        ends.forEach((e,ix)=>{ const isLast=elseEnd===null&&ix===ends.length-1;
+          if(isLast) paths.push({d:`M${CX},${e} L${CX},${yM}`});
+          else paths.push({d:`M${CX},${e} L${CX},${e+10} L${CX-L},${e+10} L${CX-L},${yM} L${CX},${yM}`}); });
+        if(elseEnd!==null) paths.push({d:`M${CX},${elseEnd} L${CX},${yM}`});
+        if(pendingFalse){ const [fx,fy]=pendingFalse; paths.push({d:`M${fx},${fy} L${CX+L},${fy} L${CX+L},${yM} L${CX},${yM}`, exit:n.line}); }
+        from=yM; y=yM+GAP;
+      } else {
+        shapes.push({line:n.line, kind:'box', x:CX-BW/2, y, w:BW, h:BH, text:short(n.text)});
+        from=y+BH; y=y+BH+GAP;
+      }
+    }
+    return from;
+  }
+  const end=seq(tree, 14, 0);
+  const ey=end+GAP;
+  paths.push({d:`M${CX},${end} L${CX},${ey}`, ah:[CX,ey]});
+  shapes.push({line:'end', kind:'end', x:CX-60, y:ey, w:120, h:30, text:'끝'});
+  const H=ey+44;
+  let svg=`<svg class="flow" viewBox="0 0 ${W} ${H}" role="img" aria-label="순서도">`;
+  paths.forEach((p,ix)=>{ if(ix===0) return; svg+=`<path class="ar" data-back="${p.back||''}" data-to="${p.to||''}" d="${p.d}"/>`; if(p.ah){ const [x,y,dir]=p.ah; svg+= dir==='r'?`<polygon class="ah" points="${x},${y} ${x-9},${y-5} ${x-9},${y+5}"/>`:`<polygon class="ah" points="${x},${y} ${x-5},${y-9} ${x+5},${y-9}"/>`; } });
+  for(const s of shapes){
+    const {x,y,w,h:hh}=s;
+    if(s.kind==='for') svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+14},${y} ${x+w-14},${y} ${x+w},${y+hh/2} ${x+w-14},${y+hh} ${x+14},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(short(s.text,24))}</text></g>`;
+    else if(s.kind==='dia') svg+=`<g data-line="${s.line}"><polygon class="nd" points="${x+w/2},${y} ${x+w},${y+hh/2} ${x+w/2},${y+hh} ${x},${y+hh/2}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(short(s.text,18))}</text></g>`;
+    else if(s.kind==='tag') svg+=`<g data-line="${s.line}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="11"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">else</text></g>`;
+    else svg+=`<g data-line="${s.line}"><rect x="${x}" y="${y}" width="${w}" height="${hh}" rx="${s.kind==='end'?15:6}"/><text class="fl-t" x="${x+w/2}" y="${y+hh/2+4}" text-anchor="middle">${esc(s.text)}</text></g>`;
+  }
+  for(const l of labs) svg+=`<text class="${l.c}" data-lab="${l.line}-${l.k}" x="${l.x}" y="${l.y}">${l.t}</text>`;
+  svg+='</svg>';
+  return svg;
+}
+
+/* ───────── 실행기 ───────── */
+class Sim{
+  constructor(root, ex, opt={}){ this.root=root; this.ex=ex; this.opt=opt; this.code=ex.code; this.inputs=ex.inputs?ex.inputs.slice():null; this.idx=0; this.timer=null; this.load(this.code); }
+  load(code){
+    this.code=code; this.stop();
+    this.an=analyze(code);
+    this.steps=this.an.err?[]:run(this.an.tree,this.inputs);
+    this.idx=0; this.lv=loopVarsOf(this.an.tree);
+    this.render();
+  }
+  stop(){ if(this.timer){ clearInterval(this.timer); this.timer=null; } }
+  go(i){ if(!this.steps.length) return; this.idx=Math.max(0,Math.min(this.steps.length-1,i)); this.update(); if(this.idx===this.steps.length-1){ this.stop(); this.updateAuto(); this.onEnd(); } }
+  toggleAuto(){ if(this.timer){ this.stop(); } else { if(this.idx>=this.steps.length-1) this.idx=0; this.timer=setInterval(()=>this.go(this.idx+1), G.speed); } this.updateAuto(); }
+  updateAuto(){ const b=this.el.auto; if(b) b.textContent=this.timer?'⏸ 멈춤':'⏵ 자동 실행'; }
+  key(e){
+    if(!this.root.isConnected||this.root.closest('[hidden]')) return;
+    if(['TEXTAREA','INPUT'].includes(document.activeElement.tagName)) return;
+    if(e.key==='ArrowRight'){ this.stop(); this.updateAuto(); this.go(this.idx+1); e.preventDefault(); }
+    else if(e.key==='ArrowLeft'){ this.stop(); this.updateAuto(); this.go(this.idx-1); e.preventDefault(); }
+    else if(e.key===' '){ this.toggleAuto(); e.preventDefault(); }
+  }
+  render(){
+    const ex=this.ex, err=this.an.err;
+    this.root.innerHTML=''; this.el={};
+    const ctl=h('div',{class:'toolbar'},
+      this.el.reset=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(0);}},'↺ 처음부터'),
+      this.el.prev=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(this.idx-1);}},'◀ 이전'),
+      this.el.next=h('button',{class:'primary',onclick:()=>{this.stop();this.updateAuto();this.go(this.idx+1);}},'다음 단계 ▶'),
+      this.el.auto=h('button',{onclick:()=>this.toggleAuto()},'⏵ 자동 실행'),
+      this.el.last=h('button',{onclick:()=>{this.stop();this.updateAuto();this.go(this.steps.length-1);}},'⏭ 끝까지'),
+      this.optsEl(),
+      this.inputs?this.inBarEl():null
+    );
+    if(err) [this.el.reset,this.el.prev,this.el.next,this.el.auto,this.el.last].forEach(b=>b.disabled=true);
+    const codeEl=h('div',{class:'code nocopy'+(G.colors?' colors-on':''), 'aria-label':'코드'});
+    this.an.lines.forEach(l=>{
+      const row=h('div',{class:'ln'+(l.text===''?' emptyln':''), 'data-line':l.no},
+        h('span',{class:'no'},String(l.no)), h('span',{class:'tx',html:hlLine(l.raw,this.lv)||' '}), h('span',{class:'hit'}));
+      codeEl.append(row);
+    });
+    this.el.code=codeEl;
+    const codePane=h('section',{class:'pane'}, h('div',{class:'pane-h'},'코드'), codeEl,
+      h('div',{class:'pane-h'},'출력'), this.el.out=h('div',{class:'console nocopy', 'aria-live':'polite'}));
+    if(err){
+      codeEl.querySelector(`[data-line="${err.line}"]`)?.classList.add('err');
+      codePane.append(h('div',{class:'errbox'},`Traceback (most recent call last):\n  line ${err.line}\n${err.msg}`));
+    }
+    if(ex.fix){
+      const fixed=this.code===ex.fix;
+      codePane.append(h('div',{class:'toolbar'}, h('button',{onclick:()=>this.load(fixed?ex.code:ex.fix)}, fixed?'↩ 처음 코드로':'✔ 고친 코드로 실행해 보기')));
+    }
+    const state=h('section',{class:'pane'},
+      this.el.card=h('div',{class:'condcard'}, this.el.info=h('div',{class:'stepinfo'}), this.el.note=h('div',{class:'note'})),
+      this.el.loopsWrap=h('div',{}, h('div',{class:'pane-h'},'반복 위치'), this.el.loops=h('div',{class:'loops'})),
+      this.el.inWrap=h('div',{hidden:!this.inputs}, h('div',{class:'pane-h'},'입력값 (input() 순서대로)'), this.el.inq=h('div',{class:'inq'})),
+      h('div',{class:'pane-h'},'변수'), this.el.vars=h('div',{class:'vars'})
+    );
+    const flow=h('section',{class:'pane flowpane'}, h('div',{class:'pane-h'},'순서도'), this.el.flow=h('div',{class:'flowscroll', html: err?'':buildFlow(this.an.tree)}));
+    if(err) this.el.flow.append(h('div',{class:'note muted'},'들여쓰기 오류가 있어서 실행할 수 없어요. 오류가 난 줄을 고쳐 보세요.'));
+    const grid=h('div',{class:'rgrid'}, codePane, state, flow);
+    this.root.append(ctl, grid, this.traceEl());
+    this.update();
+  }
+  optsEl(){
+    const d=h('details',{class:'opts'}, h('summary',{},'설정'));
+    const box=h('div',{class:'optbox'},
+      h('label',{class:'tog'}, h('input',{type:'checkbox',id:'opt-colors-'+this.opt.key, checked:G.colors, onchange:e=>{G.colors=e.target.checked;store.set('colors',G.colors);this.el.code.classList.toggle('colors-on',G.colors);this.el.vars.classList.toggle('colors-on',G.colors);this.el.loops.classList.toggle('colors-on',G.colors);}}),'반복 변수 색칠 (i·j)'),
+      h('label',{class:'tog'}, h('input',{type:'checkbox',id:'opt-hits-'+this.opt.key, checked:G.hits, onchange:e=>{G.hits=e.target.checked;store.set('hits',G.hits);this.update();}}),'줄마다 실행 횟수'),
+      h('label',{class:'tog'},'자동 속도', h('input',{type:'range',id:'opt-speed-'+this.opt.key,min:150,max:1500,step:50,value:1650-G.speed, oninput:e=>{G.speed=1650-(+e.target.value);store.set('speed',G.speed);if(this.timer){this.stop();this.toggleAuto();}}}))
+    );
+    d.append(box); return d;
+  }
+  inBarEl(){
+    const inp=h('input',{type:'text',id:'in-'+this.opt.key,value:this.inputs.join(' '),spellcheck:'false',autocomplete:'off','aria-label':'입력값 (띄어쓰기로 구분)'});
+    const apply=()=>{ const v=inp.value.trim().split(/[\s,]+/).filter(Boolean); if(v.join(' ')===this.inputs.join(' ')) return; this.inputs=v; this.load(this.code); toast('입력값을 바꿔서 다시 실행해요'); };
+    inp.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); apply(); } });
+    return h('span',{class:'inbar'}, h('label',{'for':'in-'+this.opt.key},'⌨ 입력값'), inp, h('button',{onclick:apply},'바꿔서 실행'));
+  }
+  predictEl(){
+    const key=this.opt.key;
+    const ta=h('textarea',{id:'pred-'+key, placeholder:'실행하기 전에, 화면에 출력될 결과를 줄마다 그대로 써 보세요.', spellcheck:'false'});
+    ta.value=G.predicts[key]||'';
+    ta.addEventListener('input',()=>{ G.predicts[key]=ta.value; this.el.cmp.innerHTML=''; });
+    this.el.ta=ta;
+    this.el.cmp=h('div',{});
+    return h('section',{class:'predict'},
+      h('div',{class:'ph'}, h('b',{},'✍ 내 예측'), h('span',{},'먼저 예측을 쓰고 → 실행해서 → 맞았는지 비교해요')),
+      ta,
+      h('div',{class:'toolbar'}, h('button',{onclick:()=>{ if(!this.steps.length) return; this.go(this.steps.length-1); }},'⏭ 끝까지 실행하고 비교'), h('button',{onclick:()=>this.compare(true)},'지금 출력과 비교')),
+      this.el.cmp);
+  }
+  traceEl(){
+    const d=h('details',{class:'trace'}, h('summary',{},'추적표 보기'));
+    this.el.tw=h('div',{class:'tablewrap'});
+    d.append(this.el.tw);
+    d.addEventListener('toggle',()=>{ if(d.open) this.drawTrace(); });
+    this.el.traceD=d; return d;
+  }
+  drawTrace(){
+    if(!this.el.traceD.open) return;
+    const names=[]; this.steps.forEach(s=>Object.keys(s.vars).forEach(k=>{ if(!names.includes(k)) names.push(k); }));
+    const strip=s=>s.replace(/<[^>]+>/g,'').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');
+    let html='<table><thead><tr><th>단계</th><th>줄</th>'+names.map(n=>`<th>${esc(n)}</th>`).join('')+'<th>한 일</th></tr></thead><tbody>';
+    this.steps.forEach((s,ix)=>{
+      html+=`<tr data-i="${ix}" class="${ix===this.idx?'cur':''}"><td>${ix}</td><td>${s.line??''}</td>`+names.map(n=>`<td class="m ${s.changed.includes(n)?'chg':''}">${n in s.vars?esc(repr(s.vars[n])):''}</td>`).join('')+`<td>${esc(strip(s.msg))}</td></tr>`;
+    });
+    html+='</tbody></table>';
+    this.el.tw.innerHTML=html;
+    this.el.tw.querySelectorAll('tr[data-i]').forEach(tr=>tr.addEventListener('click',()=>{this.stop();this.updateAuto();this.go(+tr.dataset.i);}));
+    const cur=this.el.tw.querySelector('tr.cur'); if(cur) cur.scrollIntoView({block:'nearest'});
+  }
+  update(){
+    const err=this.an.err;
+    if(err){
+      this.el.info.textContent='실행 전 검사';
+      this.el.note.innerHTML=`<span style="color:var(--false)">${esc(err.msg)}</span>`;
+      this.el.card.lastChild && null;
+      this.el.loopsWrap.hidden=true; this.el.vars.innerHTML=''; this.el.out.textContent='';
+      return;
+    }
+    const s=this.steps[this.idx], prev=this.steps[this.idx-1];
+    this.el.prev.disabled=this.idx===0; this.el.reset.disabled=this.idx===0;
+    this.el.next.disabled=this.el.last.disabled=this.idx>=this.steps.length-1;
+    // 코드 줄
+    this.el.code.querySelectorAll('.ln').forEach(r=>{
+      const no=+r.dataset.line; r.classList.toggle('done', s.line===no);
+      if(s.kind==='error') r.classList.toggle('err', s.line===no);
+      const hit=r.querySelector('.hit'); const c=s.hits[no]||0;
+      hit.textContent=G.hits&&c?`×${c}`:''; hit.classList.toggle('up', !!(prev&&c!==(prev.hits[no]||0)));
+    });
+    // 안내
+    const loopInfo=s.loops.map(L=>L.w?`${L.role} ${L.k}번째`:`${L.role} ${Math.min(L.k,L.n)}/${L.n}`).join(' · ');
+    this.el.info.textContent=`${this.idx}단계${s.line?` · ${s.line}번 줄`:''}${loopInfo?' · '+loopInfo:''}`;
+    this.el.note.innerHTML=s.kind==='error'?`<span style="color:var(--false)">${esc(s.msg)}</span>`:s.msg;
+    this.el.note.classList.toggle('muted', s.kind==='start');
+    // 반복 위치
+    this.el.loopsWrap.hidden=!s.loops.length;
+    this.el.loops.className='loops'+(G.colors?' colors-on':'');
+    this.el.loops.innerHTML='';
+    for(const L of s.loops){
+      const dots=h('div',{class:'dots'});
+      const vals=[]; // 표시할 값
+      const endW=L.w&&s.kind==='exit'&&s.line===L.line;
+      const many=!L.w&&L.n>20;
+      if(many) dots.append(h('div',{class:'lbar'}, h('i',{style:`width:${Math.min(100,(Math.min(L.k,L.n)/L.n)*100)}%`})), h('span',{class:'stepinfo'},`${Math.min(L.k,L.n)} / ${L.n}`));
+      else for(let q=1;q<=(L.w?L.k:L.n);q++) dots.append(h('span',{class:'dot'+(q<L.k||endW?' past':'')+(q===L.k&&!endW?' now':'')},String(q)));
+      this.el.loops.append(h('div',{class:'loop lv'+L.d}, h('span',{class:'lname'},L.w?'while':`${L.role} ${L.v}`), dots, h('span',{class:'stepinfo'}, (L.w?endW:L.k>L.n)?'끝':`${L.k}번째`)));
+    }
+    // 변수
+    this.el.vars.className='vars'+(G.colors?' colors-on':'');
+    this.el.vars.innerHTML='';
+    const names=Object.keys(s.vars);
+    if(!names.length) this.el.vars.append(h('div',{class:'var empty'}, h('span',{class:'vn'},'변수'), h('span',{class:'vv'},'?')));
+    for(const n of names){
+      const v=s.vars[n], ch=s.changed.includes(n), lvc=(n in this.lv)?' lv'+this.lv[n]:'';
+      if(Array.isArray(v)){
+        const cells=h('div',{class:'cells'});
+        v.forEach((x,i)=>{
+          const a=s.acc.filter(q=>q.n===n&&q.i===i).map(q=>q.k);
+          const k=a.includes('w')?'w':a.includes('a')?'a':a.includes('r')?'r':a.includes('s')?'s':'';
+          cells.append(h('div',{class:'cell '+k}, h('div',{class:'box'},repr(x)), h('div',{class:'ix',html:`${i}<br><span class="neg">${i-v.length}</span>`})));
+        });
+        this.el.vars.append(h('div',{class:'var list'+(ch?' changed':'')}, h('span',{class:'vn'},`${n}  (길이 ${v.length})`), cells));
+      } else {
+        const txt=repr(v);
+        this.el.vars.append(h('div',{class:'var'+(ch?' changed':'')+lvc}, h('span',{class:'vn'},n), h('span',{class:'vv'+(txt.length>4?' s':'')},txt)));
+      }
+    }
+    // 입력값
+    if(this.inputs) this.el.inq.innerHTML=this.inputs.length?this.inputs.map((v,i)=>`<span class="iq${i<s.inIdx?(i===s.inIdx-1&&s.inUsed?' now':' used'):''}">${esc(v)}</span>`).join(''):'<span class="stepinfo">(입력값이 없어요)</span>';
+    // 출력
+    const out=s.out, nw=s.newOut||'';
+    const before=out.slice(0,out.length-nw.length);
+    this.el.out.innerHTML=esc(before)+(nw?`<span class="newest">${esc(nw.replace(/\n$/,''))||'↵'}</span>${nw.endsWith('\n')?'\n':''}`:'');
+    this.el.out.scrollTop=this.el.out.scrollHeight;
+    // 순서도
+    const svg=this.el.flow.querySelector('svg');
+    if(svg){
+      svg.querySelectorAll('g[data-line]').forEach(g=>g.classList.toggle('on', String(s.line)===g.dataset.line || (s.kind==='end'&&g.dataset.line==='end')));
+      svg.querySelectorAll('text[data-lab]').forEach(t=>t.classList.toggle('lab-on', t.dataset.lab===`${s.line}-${s.lab||s.kind}`));
+      svg.querySelectorAll('path.ar').forEach(p=>p.classList.remove('on'));
+      if(s.line&&s.kind!=='error'){ const p=svg.querySelector(`path.ar[data-to="${s.line}"]`); if(p&&s.kind!=='exit'&&(!prev||prev.line!==s.line)) p.classList.add('on'); }
+      const on=svg.querySelector('g.on'); if(on&&this.el.flow.scrollHeight>this.el.flow.clientHeight){ const r=on.getBoundingClientRect(), c=this.el.flow.getBoundingClientRect(); if(r.top<c.top||r.bottom>c.bottom) this.el.flow.scrollTop+=r.top-c.top-c.height/3; }
+    }
+    this.drawTrace();
+    if(this.opt.onStep) this.opt.onStep(s);
+  }
+  onEnd(){ if(this.el.ta && this.el.ta.value.trim()) this.compare(false); }
+  compare(manual){
+    const pred=(this.el.ta.value||'').replace(/\r/g,'');
+    const s=this.steps[this.idx]; if(!s) return;
+    if(!pred.trim()){ this.el.cmp.innerHTML=''; if(manual) toast('먼저 예측을 써 주세요'); return; }
+    const norm=t=>t.split('\n').map(x=>x.replace(/\s+/g,' ').trim());
+    let A=norm(s.out.replace(/\n$/,'')), P=norm(pred.replace(/\n+$/,''));
+    const n=Math.max(A.length,P.length); let ok=0;
+    const g=h('div',{class:'cmp'}, h('div',{class:'h'},''), h('div',{class:'h'},'내 예측'), h('div',{class:'h'},s.kind==='end'?'실제 출력':'지금까지 출력'));
+    for(let i=0;i<n;i++){ const a=A[i]??'', p=P[i]??''; const same=a===p; if(same) ok++; g.append(h('div',{class:same?'o':'x'},same?'○':'✕'), h('div',{},p||' '), h('div',{},a||' ')); }
+    this.el.cmp.innerHTML=''; this.el.cmp.append(g);
+    const all=ok===n&&s.kind==='end';
+    this.el.cmp.append(h('div',{class:'banner '+(all?'ok':(s.kind==='end'?'bad':'done'))}, all?`모두 맞혔어요! (${ok}/${n}줄)`:`${ok}/${n}줄 맞았어요.`+(s.kind==='end'?' 다른 줄은 단계별로 다시 따라가 보세요.':' 끝까지 실행하면 전체를 비교해요.')));
+    if(all) toast('예측 성공! 🎉');
+  }
+}
+
+/* ───────── 들여쓰기 실험실 ───────── */
+const LAB={ lines:[ {t:"for i in range(2):",ind:0,fix:true}, {t:"for j in range(3):",ind:4,fix:true}, {t:"print('A')",ind:8}, {t:"print('B')",ind:4}, {t:"print('C')",ind:0} ] };
+const MISSIONS=[
+  {t:'B가 6번 출력되게 만들어 보세요', ok:r=>r.c&&r.c.B===6},
+  {t:'C가 2번 출력되게 만들어 보세요', ok:r=>r.c&&r.c.C===2},
+  {t:'A, B, C가 모두 6번씩 출력되게 만들어 보세요', ok:r=>r.c&&r.c.A===6&&r.c.B===6&&r.c.C===6},
+  {t:'A는 6번, B와 C는 2번씩 출력되게 만들어 보세요', ok:r=>r.c&&r.c.A===6&&r.c.B===2&&r.c.C===2},
+  {t:'IndentationError가 나게 만들어 보세요', ok:r=>r.err&&/IndentationError/.test(r.err)},
+];
+const labDone=new Set();
+function labCode(){ return LAB.lines.map(l=>' '.repeat(l.ind)+l.t).join('\n'); }
+function labResult(){
+  const an=analyze(labCode());
+  if(an.err) return {err:an.err.msg, line:an.err.line, an};
+  const st=run(an.tree), out=st[st.length-1].out.split('\n').filter(Boolean);
+  return {c:{A:out.filter(x=>x==='A').length,B:out.filter(x=>x==='B').length,C:out.filter(x=>x==='C').length}, an};
+}
+function renderLab(root){
+  root.innerHTML='';
+  root.append(h('div',{class:'exhead'}, h('span',{class:'exno'},'실험'), h('span',{class:'extitle'},'들여쓰기를 옮기면 실행 횟수가 바뀔까?'), h('div',{class:'exdesc'},'for 안에 for가 있는 코드예요. ◀ ▶로 print 줄의 들여쓰기를 0칸 · 4칸 · 8칸으로 옮겨 보고, 미션을 해결해 보세요. 들여쓰기 = 어느 상자 안에 있는지!')));
+  const grid=h('div',{class:'labgrid'});
+  const left=h('section',{class:'pane'}), right=h('section',{class:'pane'});
+  grid.append(left,right);
+  const simRoot=h('div',{class:'panel'});
+  root.append(grid, h('div',{class:'pane-h'},'↓ 지금 코드를 한 단계씩 실행해 보기'), simRoot);
+  let sim=null;
+  function draw(){
+    const r=labResult();
+    left.innerHTML='';
+    left.append(h('div',{class:'pane-h'},'코드 (◀ ▶로 들여쓰기 옮기기)'));
+    const lc=h('div',{class:'labcode nocopy'});
+    LAB.lines.forEach((l,ix)=>{
+      const ctl=h('span',{class:'ctl'});
+      if(l.fix) ctl.append(h('span',{class:'sp'},`${l.ind}칸`));
+      else ctl.append(
+        h('button',{'aria-label':`${ix+1}번 줄 왼쪽으로`, disabled:l.ind===0, onclick:()=>{l.ind-=4; draw();}},'◀'),
+        h('span',{class:'sp'},`${l.ind}칸`),
+        h('button',{'aria-label':`${ix+1}번 줄 오른쪽으로`, disabled:l.ind>=12, onclick:()=>{l.ind+=4; draw();}},'▶'));
+      lc.append(h('div',{class:'lrow'+(r.line===ix+1?' errrow':'')}, h('span',{class:'lno'},String(ix+1)), ctl,
+        h('span',{class:'dotsp'},'·'.repeat(l.ind)), h('span',{class:'lcode',html:hlLine(l.t,{i:0,j:1})})));
+    });
+    left.append(lc);
+    if(r.err) left.append(h('div',{class:'errbox'},`${r.line}번 줄 → ${r.err}`));
+    else left.append(h('div',{class:'counts'}, ...['A','B','C'].map(k=>h('div',{class:'cnt'}, h('b',{},String(r.c[k])), h('span',{},`${k} 출력 횟수`)))));
+    left.append(h('div',{class:'toolbar'}, h('button',{onclick:()=>{ LAB.lines[2].ind=8; LAB.lines[3].ind=4; LAB.lines[4].ind=0; draw(); }},'↺ 처음 코드로')));
+    // 오른쪽: 상자 + 미션
+    right.innerHTML='';
+    right.append(h('div',{class:'pane-h'},'들여쓰기 = 상자'));
+    if(r.err) right.append(h('div',{class:'note muted'},'오류가 있으면 상자를 만들 수 없어요.'));
+    else right.append(boxView(r.an.tree));
+    right.append(h('div',{class:'pane-h'},'미션'));
+    const ul=h('ul',{class:'mission'});
+    MISSIONS.forEach((m,ix)=>{ if(m.ok(r)) labDone.add(ix); ul.append(h('li',{class:labDone.has(ix)?'ok':''}, h('span',{class:'ck'},labDone.has(ix)?'✔':'○'), m.t)); });
+    right.append(ul, h('div',{class:'stepinfo'},`해결한 미션 ${labDone.size} / ${MISSIONS.length}`));
+    if(sim) sim.stop();
+    sim=new Sim(simRoot,{no:'',title:'',code:labCode()},{key:'lab'});
+    LAB.sim=sim;
+  }
+  draw();
+}
+function boxView(tree){
+  const st=run(tree), hits=st[st.length-1].hits;
+  function nodes(ns){
+    const wrap=h('div',{class:'boxes'});
+    for(const n of ns){
+      if(!n.body){ wrap.append(h('div',{class:'ib-s'}, h('span',{},n.text), h('span',{class:'times'},`→ ${hits[n.line]||0}번 실행`))); continue; }
+      for(const c of [n,...(n.elifs||[]),...(n.orelse?[n.orelse]:[])]){
+        const k=hits[c.line]||0;
+        const tag=c.k==='for'?`${k}번 반복하는 상자`:c.k==='while'?`조건 검사 ${k}번`:c.k==='else'?'위 조건이 모두 False일 때':`조건 검사 ${k}번`;
+        const b=h('div',{class:'ib lv'+Math.min(c.cd,2)}, h('div',{class:'ib-h'}, h('span',{},c.text), h('span',{class:'ib-tag'},tag)));
+        b.append(h('div',{class:'ib-b'}, nodes(c.body))); wrap.append(b);
+      }
+    }
+    return wrap;
+  }
+  return nodes(tree);
+}
+
+/* ───────── 문제 잠금: 내 답을 먼저 입력해야 열림 ───────── */
+const digits=v=>{ const m=String(v).match(/-?\d+/); return m?m[0]:''; };
+const nospace=v=>String(v).replace(/\s+/g,'');
+const outLines=v=>String(v).replace(/\r/g,'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
+const ASK={
+  q1:{blank:"a = [9, 4, 1, 3, 8]\nprint(a[ ① ], a[ ② ])\na.append( ③ )\nprint(a, len(a))", goal:'4 8\n[9, 4, 1, 3, 8, 6] 6',
+      fields:[{id:'b1',label:'빈칸 ①',ans:'1 (또는 -4)',ok:v=>['1','-4'].includes(digits(v))&&nospace(v).length<=3},
+              {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3},
+              {id:'b3',label:'빈칸 ③',ans:'6',ok:v=>nospace(v)==='6'}]},
+  q2:{fields:[{id:'n',label:"'★' 출력 횟수",ans:'12번',ok:v=>digits(v)==='12'}]},
+  q3:{blank:"nums = [3, 8, 5, 12, 7, 6]\nfor x in ①:\n    if x % 2 == ②:\n        print(x, end=' ')", goal:'8 12 6',
+      fields:[{id:'b1',label:'빈칸 ①',ans:'nums',ok:v=>nospace(v)==='nums'},
+              {id:'b2',label:'빈칸 ②',ans:'0',ok:v=>nospace(v)==='0'}]},
+  q4:{fields:[{id:'out',label:'실행 결과',ans:'0 2 3',ok:v=>outLines(v).join(' ')==='0 2 3'}]},
+};
+G.answers={};
+function gateView(sec,key){
+  const ex=EX[key], A=ASK[key];
+  const code=A.blank||ex.code;
+  const codeEl=h('div',{class:'code nocopy'});
+  code.split('\n').forEach((raw,ix)=>codeEl.append(h('div',{class:'ln'}, h('span',{class:'no'},String(ix+1)), h('span',{class:'tx',html:(hlLine(raw,{})||' ').replace(/[①②③]/g,m=>`<span class="blank">${m}</span>`)}))));
+  const inputs={}, marks={};
+  let tries=0;
+  const form=h('form',{class:'gateform'});
+  const fb=h('div',{class:'banner bad','aria-live':'polite',hidden:true});
+  A.fields.forEach(f=>{
+    const inp=f.multi?h('textarea',{id:`ans-${key}-${f.id}`,rows:3,spellcheck:'false',autocomplete:'off'}):h('input',{id:`ans-${key}-${f.id}`,type:'text',autocomplete:'off',spellcheck:'false'});
+    inputs[f.id]=inp;
+    const mark=h('span',{class:'gmark'});
+    marks[f.id]=mark;
+    inp.addEventListener('input',()=>{ mark.textContent=''; mark.className='gmark'; inp.classList.remove('bad'); });
+    form.append(h('label',{class:'gf','for':`ans-${key}-${f.id}`}, h('span',{},f.label,' ',mark), inp));
+  });
+  const btn=h('button',{class:'primary',type:'submit',disabled:true},'답 제출하고 실행해 보기 ▶');
+  const check=()=>{ btn.disabled=A.fields.some(f=>!inputs[f.id].value.trim()); };
+  Object.values(inputs).forEach(i=>i.addEventListener('input',check));
+  form.append(h('div',{class:'toolbar'},btn, h('span',{class:'stepinfo'},'모든 칸이 맞아야 실행 화면이 열려요')), fb);
+  form.addEventListener('submit',e=>{
+    e.preventDefault(); if(btn.disabled) return;
+    tries++;
+    const R=A.fields.map(f=>({label:f.label, v:inputs[f.id].value, ok:f.ok(inputs[f.id].value)}));
+    R.forEach((r,ix)=>{ const f=A.fields[ix]; marks[f.id].textContent=r.ok?'○ 맞았어요':'✕ 다시 생각해 봐요'; marks[f.id].className='gmark '+(r.ok?'ok':'bad'); inputs[f.id].classList.toggle('bad',!r.ok); });
+    if(R.every(r=>r.ok)){ G.answers[key]={tries}; G.unlocked[key]=true; toast('정답! 실행 화면이 열렸어요 🎉'); showEx(sec,key); return; }
+    const bad=R.filter(r=>!r.ok).length;
+    fb.hidden=false;
+    fb.textContent=`${bad}칸이 아직 틀렸어요. ✕ 표시된 칸을 고쳐서 다시 제출해요. (${tries}번째 시도)`+(tries>=3?' 힌트: 코드를 한 줄씩 손으로 따라가 보세요!':'');
+    const first=A.fields.find((f,ix)=>!R[ix].ok); if(first) inputs[first.id].focus();
+  });
+  return h('div',{class:'gate'},
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'문제 코드'), codeEl,
+      ex.inputs?h('div',{class:'stepinfo'},`입력 : ${ex.inputs.join(' ')}`):null,
+      A.goal?h('div',{class:'pane-h'},'결과'):null, A.goal?h('div',{class:'goalbox'},A.goal):null),
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'🔒 내 답 입력'), h('div',{class:'stepinfo'},'프린트에 쓴 내 답을 그대로 입력해요. 제출하면 맞았는지 알려 주고, 코드를 한 단계씩 실행해 볼 수 있어요.'), form));
+}
+function resultView(sec,key){
+  const R=G.answers[key]; if(!R) return null;
+  return h('section',{class:'predict'},
+    h('div',{class:'ph'}, h('b',{},'🎉 정답!'), h('span',{},`${R.tries}번 만에 맞혔어요. 아래에서 한 단계씩 실행하며 왜 그런지 확인해 보세요.`)),
+    h('div',{class:'toolbar'}, h('button',{onclick:()=>{ G.unlocked[key]=false; delete G.answers[key]; showEx(sec,key); }},'↺ 다시 풀기')));
+  const n=R.filter(r=>r.ok).length, all=n===R.length;
+  const grid=h('div',{class:'cmp'}, h('div',{class:'h'},''), h('div',{class:'h'},'내 답'), h('div',{class:'h'},'정답'));
+  R.forEach(r=>grid.append(h('div',{class:r.ok?'o':'x'},r.ok?'○':'✕'), h('div',{},`${r.label}: ${r.v.trim().replace(/\n/g,' / ')}`), h('div',{},r.ok?'':r.ans.replace(/\n/g,' / '))));
+  return h('section',{class:'predict'},
+    h('div',{class:'ph'}, h('b',{},all?'🎉 모두 맞았어요!':`${n} / ${R.length} 맞았어요`), h('span',{},all?'아래에서 실행 과정을 확인해 보세요':'틀린 곳은 아래에서 한 단계씩 실행하며 이유를 찾아보세요')),
+    grid, h('div',{class:'toolbar'}, h('button',{onclick:()=>{ G.unlocked[key]=false; delete G.answers[key]; showEx(sec,key); }},'↺ 다시 풀기')));
+}
+
+/* ───────── (도전)문제: 직접 쓴 코드를 숨은 테스트로 채점 ─────────
+   정답 코드는 페이지에 그대로 두지 않고, 관리자 비밀번호로 암호화해 두었어요 (PBKDF2 + AES-GCM). */
+const SOL={"s": "9lr0PJ7jdPGeYrvnR6H1iQ==", "i": "TDHHm/omKQ8jZNa3", "c": "sVeuN1YnNKMnrsNZ4wDVTc6Br9DbHqMC30eIz69KBY08oOmPbbqZUSri238OOennQ8+4dofiIkLnlr25g0RYUxZYpm3YY6YtGPfeZ4zZY/Dk4734wlaB5pZ2zHoU4EpmbnV77eR/QNF3SywO8wRWn9rQNGesptK1QsOnOU8VxEomnNnO8AYgX0qMNgWE2zWU1P+oV0avFb3z91n1A+Di23hxFH1/0D+PtaPyhWgayQ=="};
+const CH_TESTS=[ {s:[90,85,77,100,68], out:['84.0','3'], main:true}, {s:[50,70,90,60], out:['67.5','2']}, {s:[100,100], out:['100.0','2']} ];
+function chRun(code){
+  const an=analyze(code); if(an.err) return {err:`${an.err.line}번 줄 → ${an.err.msg}`, line:an.err.line};
+  const st=run(an.tree,[]), last=st[st.length-1];
+  if(last.kind==='error') return {err:`${last.line?last.line+'번 줄 → ':''}${last.msg}`, line:last.line, out:last.out};
+  return {out:last.out};
+}
+const chLines=o=>String(o||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+function chWithList(code,arr){ const L=code.split('\n'); const k=L.findIndex(l=>/^s\s*=\s*\[/.test(l)); if(k<0) return null; L[k]='s = '+repr(arr); return L.join('\n'); }
+function chGrade(code){
+  if(chWithList(code,[1])===null) return {ok:false, msg:'첫 줄의 s = [90, 85, 77, 100, 68]은 지우지 말고 그대로 두세요.'};
+  const res=CH_TESTS.map(t=>({t, r:chRun(chWithList(code,t.s))}));
+  const m=res[0];
+  if(m.r.err) return {ok:false, msg:`실행하다가 오류가 났어요. ${m.r.err}`, res};
+  const got=chLines(m.r.out);
+  if(got.join('|')!=='84.0|3'){
+    let hint='';
+    if(got[0]==='84') hint=' 힌트: 평균은 / 로 나누면 84.0이 나와요.';
+    else if(!got.length) hint=' 힌트: print로 평균과 개수를 출력해야 해요.';
+    else if(got.length!==2) hint=' 힌트: 평균 한 줄, 개수 한 줄, 모두 두 줄을 출력해요.';
+    return {ok:false, msg:`출력이 결과와 달라요. 내 출력: ${got.join(' / ')||'(없음)'} → 결과: 84.0 / 3.${hint}`, res};
+  }
+  for(const x of res.slice(1)){
+    const g=x.r.err?null:chLines(x.r.out);
+    if(!g||g.join('|')!==x.t.out.join('|')){
+      let hint=' 숫자를 직접 쓰지 말고 리스트 s로 계산하게 만들어 보세요.';
+      if(x.t.s.join()==='100,100'&&g&&g[0]===x.t.out[0]) hint=" 힌트: '평균 이상'은 평균과 같은 점수도 세야 해요. 비교 기호를 확인해 보세요.";
+      return {ok:false, msg:`s를 ${repr(x.t.s)}(으)로 바꿔서 실행해 보니 ${g?g.join(' / ')||'(출력 없음)':'오류: '+x.r.err} 이(가) 나왔어요. 맞으려면 ${x.t.out.join(' / ')} 이(가) 나와야 해요.${hint}`, res};
+    }
+  }
+  return {ok:true, res};
+}
+async function chDecrypt(pw){
+  const b=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b(SOL.s),iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b(SOL.i)},key,b(SOL.c)));
+}
+function chConfetti(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return; const c=h('div',{class:'confetti'}); for(let k=0;k<28;k++) c.append(h('span',{style:`left:${Math.random()*100}%;animation-delay:${Math.random()*.5}s`},['🍬','🎉','⭐','✨'][k%4])); document.body.append(c); setTimeout(()=>c.remove(),2600); }
+function challengeView(sec,key){
+  const ex=EX[key], saved=store.get('challenge-'+key,null);
+  const wrap=h('div',{class:'panel'});
+  if(saved){
+    const t=new Date(saved.at);
+    wrap.append(h('section',{class:'reward'},
+      h('div',{class:'rw-big'},'🎉 도전 성공! 🍬'),
+      h('div',{class:'rw-t'},'마이쮸 획득!'),
+      h('div',{class:'stepinfo'},`선생님께 이 화면을 보여 주세요 · 성공 시각 ${t.toLocaleDateString('ko-KR')} ${t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`),
+      h('ul',{class:'rw-tests'}, ...CH_TESTS.map(x=>h('li',{},`✔ s = ${repr(x.s)} → ${x.out.join(' / ')}`))),
+      h('div',{class:'toolbar'}, h('button',{onclick:()=>{ if(!confirm('다시 도전할까요? 지금 성공 기록이 지워져요.')) return; store.set('challenge-'+key,null); showEx(sec,key); }},'↺ 다시 도전하기'))));
+    wrap.append(h('div',{class:'pane-h'},'↓ 내가 쓴 코드를 한 단계씩 실행해 보기'));
+    const root=h('div',{class:'panel'}); wrap.append(root);
+    if(sims[sec]) sims[sec].stop();
+    sims[sec]=new Sim(root,{...ex,code:saved.code},{key:key+'-mine'});
+    return wrap;
+  }
+  const draftKey='challenge-draft-'+key;
+  const ta=h('textarea',{id:'ch-'+key,class:'ch-ed',spellcheck:'false',autocomplete:'off',autocapitalize:'off','aria-label':'(도전)문제 코드 입력'});
+  ta.value=store.get(draftKey,null)??ex.code;
+  ta.addEventListener('input',()=>{ store.set(draftKey,ta.value); out.textContent=''; fb.hidden=true; });
+  ta.addEventListener('paste',e=>{ if(document.documentElement.hasAttribute('data-copyfree')) return; e.preventDefault(); toast('✍️ 붙여넣기는 안 돼요. 직접 입력해 보세요!'); });
+  ta.addEventListener('drop',e=>{ if(document.documentElement.hasAttribute('data-copyfree')) return; e.preventDefault(); });
+  ta.addEventListener('keydown',e=>{
+    const v=ta.value, a=ta.selectionStart, b=ta.selectionEnd, ls=v.lastIndexOf('\n',a-1)+1;
+    const ins=t=>{ ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end'); ta.dispatchEvent(new Event('input')); };
+    if(e.key==='Tab'&&!e.shiftKey&&a===b){ e.preventDefault(); ins('    '); }
+    else if(e.key==='Tab'&&e.shiftKey){ e.preventDefault(); if(v.slice(ls,ls+4)==='    '){ ta.setSelectionRange(ls,ls+4); ins(''); ta.setSelectionRange(Math.max(ls,a-4),Math.max(ls,a-4)); } }
+    else if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); const line=v.slice(ls,a); let ind=line.match(/^ */)[0]; if(/:\s*(#.*)?$/.test(line)) ind+='    '; ins('\n'+ind); }
+    else if(e.key==='Backspace'&&a===b&&a>ls&&/^ +$/.test(v.slice(ls,a))&&(a-ls)%4===0){ e.preventDefault(); ta.setSelectionRange(a-4,a); ins(''); }
+  });
+  const out=h('div',{class:'console'}), fb=h('div',{class:'banner bad','aria-live':'polite',hidden:true});
+  const runBtn=h('button',{onclick:()=>{ const r=chRun(ta.value); out.textContent=(r.out||'')+(r.err?`\n⚠ ${r.err}`:''); if(!r.out&&!r.err) out.textContent='(출력 없음)'; }},'▶ 실행해 보기');
+  let tries=store.get('challenge-tries-'+key,0);
+  const subBtn=h('button',{class:'primary',onclick:()=>{
+    const g=chGrade(ta.value); tries++; store.set('challenge-tries-'+key,tries);
+    if(g.ok){ store.set('challenge-'+key,{code:ta.value,at:Date.now(),tries}); chConfetti(); toast('🎉 도전 성공! 마이쮸 획득!'); showEx(sec,key); return; }
+    fb.hidden=false; fb.textContent=`✕ 아직이에요 (${tries}번째 제출). ${g.msg}`;
+  }},'✅ 제출하고 채점받기');
+  wrap.append(h('div',{class:'lead'}, h('span',{},'🍬'), h('span',{html:'<b>맞힌 학생만 마이쮸!</b> 프린트에 쓴 코드를 아래에 <b>직접 입력</b>하고 제출하세요. 점수 리스트를 바꿔도 맞게 나오는지 숨은 테스트로 채점해요.'})));
+  const grid=h('div',{class:'gate'},
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'내 코드 (Tab = 4칸 들여쓰기)'), ta,
+      h('div',{class:'toolbar'}, runBtn, subBtn), fb),
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'결과 (목표)'), h('div',{class:'goalbox'},'84.0\n3'),
+      h('div',{class:'pane-h'},'내 출력'), out,
+      h('div',{class:'stepinfo'},'채점 기준: 위 결과가 똑같이 나오고, 점수 리스트 s를 다른 값으로 바꿔도 평균과 개수가 맞게 나와야 해요.')));
+  wrap.append(grid);
+  // 선생님 전용: 비밀번호로 정답 풀기
+  const adm=h('div',{class:'ch-admin'});
+  const paintAdm=()=>{ adm.innerHTML=''; if(!(window.PL&&PL.admin)) return;
+    const box=h('div',{});
+    adm.append(h('button',{onclick:async()=>{ const pw=prompt('관리자 비밀번호를 입력하세요'); if(!pw) return;
+      try{ const code=await chDecrypt(pw); box.innerHTML=''; box.append(h('div',{class:'pane-h'},'정답 코드 (선생님만)'), h('pre',{class:'goalbox'},code)); }
+      catch(err){ toast('비밀번호가 달라요'); } }},'🔑 정답 코드 보기 (선생님)'), box); };
+  paintAdm(); window.addEventListener('pl-change',paintAdm);
+  wrap.append(adm);
+  return wrap;
+}
+
+/* ───────── 화면 구성 ───────── */
+let sims={};
+function showEx(sec, key, flash){
+  G.cur[sec]=key;
+  const panel=$(`#panel-${sec}`);
+  panel.innerHTML='';
+  const S=SECTIONS.find(x=>x.id===sec);
+  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, EX[k].title?`${EX[k].no} ${EX[k].title}`:EX[k].no)));
+  if(S.exs.length>1) panel.append(chips);
+  const ex=EX[key];
+  panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), ex.desc?h('div',{class:'exdesc'},ex.desc):null));
+  if(ex.challenge){ if(sims[sec]) sims[sec].stop(); panel.append(challengeView(sec,key)); return; }
+  if(ex.quiz&&!ex.locked) panel.append(h('div',{class:'lead'}, h('span',{},'📝'), h('span',{html:'<b>먼저 프린트에 직접 풀어요.</b> 내 답을 입력해야 실행 화면이 열려요.'})));
+  if(ex.locked&&!G.unlocked[key]){
+    panel.append(h('div',{class:'locked'}, h('b',{},'먼저 프린트에 직접 코드를 써 보세요!'), h('span',{class:'stepinfo'},'다 썼으면 아래 버튼을 눌러 정답 코드와 실행 과정을 확인해요.'), h('button',{class:'primary',onclick:()=>{G.unlocked[key]=true; showEx(sec,key);}},'정답 코드 보기')));
+    return;
+  }
+  if(ASK[key]&&!G.unlocked[key]){ if(sims[sec]) sims[sec].stop(); panel.append(gateView(sec,key)); return; }
+  if(ASK[key]) panel.append(resultView(sec,key));
+  const root=h('div',{class:'panel'}); panel.append(root);
+  if(sims[sec]) sims[sec].stop();
+  sims[sec]=new Sim(root, ex, {key});
+  if(flash){ root.classList.add('flash'); }
+}
+function buildTabs(){
+  const nav=$('#tabs'), main=$('#main');
+  SECTIONS.forEach(S=>{
+    nav.append(h('a',{href:'#'+S.id, role:'tab', id:'tab-'+S.id, 'aria-controls':'panel-'+S.id}, S.name));
+    main.append(h('section',{class:'panel', id:'panel-'+S.id, role:'tabpanel', hidden:true}));
+  });
+  // 예제 선택 메뉴
+  const jm=$('#jmList');
+  SECTIONS.forEach(S=>{
+    jm.append(h('div',{class:'sec'},S.name));
+    if(!S.exs) jm.append(h('button',{onclick:()=>{ $('#jump').open=false; location.hash=S.id; }}, h('b',{},S.render?'정리':'실험'), S.menu||'들여쓰기 옮기기'));
+    else S.exs.forEach(k=>jm.append(h('button',{onclick:()=>{ $('#jump').open=false; if(location.hash!=='#'+S.id) location.hash=S.id; showEx(S.id,k,true); }}, h('b',{},EX[k].no), EX[k].title)));
+  });
+}
+function route(){
+  const id=location.hash.slice(1);
+  const S=SECTIONS.find(x=>x.id===id)||SECTIONS[0];
+  SECTIONS.forEach(x=>{ $('#panel-'+x.id).hidden=x.id!==S.id; $('#tab-'+x.id).setAttribute('aria-selected',String(x.id===S.id)); if(x.id!==S.id&&sims[x.id]) sims[x.id].stop(); });
+  const p=$('#panel-'+S.id);
+  if(!p.childElementCount){ if(S.exs) showEx(S.id,G.cur[S.id]||S.exs[0]); else (S.render||renderLab)(p); }
+}
+document.addEventListener('keydown',e=>{ const id=(SECTIONS.find(x=>x.id===location.hash.slice(1))||SECTIONS[0]).id; const s=id==='indent'?LAB.sim:sims[id]; if(s) s.key(e); });
+document.addEventListener('click',e=>{ const j=$('#jump'); if(j.open&&!j.contains(e.target)) j.open=false; });
+
+/* 글자 크기 · 테마 */
+let fs=17; try{ fs=+localStorage.getItem('wl-fs')||17; }catch(e){}
+const applyFs=()=>{ document.documentElement.style.fontSize=fs+'px'; };
+const saveFs=()=>{ try{ localStorage.setItem('wl-fs',fs); }catch(e){} };
+$('#fsDown').onclick=()=>{ fs=Math.max(13,fs-1); saveFs(); applyFs(); };
+$('#fsUp').onclick=()=>{ fs=Math.min(26,fs+1); saveFs(); applyFs(); };
+const mq=window.matchMedia('(prefers-color-scheme: dark)');
+const isDark=()=>{ const t=document.documentElement.dataset.theme; return t?t==='dark':mq.matches; };
+const themeLabel=()=>{ const d=isDark(),seg=document.getElementById('theme-seg'); seg.dataset.on=d?'dark':'light'; seg.querySelectorAll('[data-theme-set]').forEach(b=>b.setAttribute('aria-checked',String((b.dataset.themeSet==='dark')===d))); };
+document.querySelectorAll('[data-theme-set]').forEach(b=>b.onclick=()=>{ const t=b.dataset.themeSet; if((t==='dark')===isDark()) return;
+  try{ localStorage.setItem('wl-theme',t); }catch(e){}
+  const seg=document.getElementById('theme-seg'); seg.dataset.on=t; seg.querySelectorAll('button').forEach(x=>x.setAttribute('aria-checked',String(x===b)));
+  const apply=()=>{ document.documentElement.dataset.theme=t; };
+  setTimeout(()=>{ if(document.startViewTransition&&!matchMedia('(prefers-reduced-motion: reduce)').matches) document.startViewTransition(apply); else apply(); },120); });
+let savedTheme=null; try{ savedTheme=localStorage.getItem('wl-theme'); }catch(e){} if(savedTheme) document.documentElement.dataset.theme=savedTheme;
+mq.addEventListener?.('change',themeLabel);
+applyFs(); themeLabel(); requestAnimationFrame(()=>requestAnimationFrame(()=>document.getElementById('theme-seg').classList.add('ready')));
+buildTabs(); route();
+window.addEventListener('hashchange',route);
+</script>
+
+</body></html>

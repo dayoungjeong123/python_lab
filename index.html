@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>파이썬 흐름 실험실</title>
-<meta name="description" content="고등학교 1학년 정보 수업용 파이썬 흐름 실험실: while문, 이중 for문, 리스트">
+<title>다영쌤의 파이썬 흐름 실험실</title>
+<meta name="description" content="다영쌤의 고등학교 1학년 정보 수업용 파이썬 흐름 실험실: for문, while문, 리스트, 중첩 제어구조, 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
 <style>
@@ -9,6 +9,7 @@
 :root{
   --bg:#EEF2F7; --panel:#FFFFFF; --ink:#152033; --muted:#5A6579; --line:#D6DDE8; --line-strong:#9AA6B8;
   --accent:#2F6FEB; --accent-ink:#FFFFFF; --accent-soft:#E3ECFD;
+  --c-extra:#7A4FD6;
   --code-bg:#18202F; --code-fg:#E4E8F0; --t-kw:#8DB8FF; --t-num:#FFCC4D; --t-str:#A9D48C;
     --font-d:"Do Hyeon","IBM Plex Sans KR",system-ui,sans-serif;
   --font-b:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
@@ -16,14 +17,27 @@
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
-  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; color-scheme:dark}}
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; --c-extra:#B597FF; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0F141D; --panel:#171E2A; --ink:#E6EAF2; --muted:#9AA5B8; --line:#2A3445; --line-strong:#56637A;
-  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; color-scheme:dark}
+  --accent:#6E9DFF; --accent-ink:#0F141D; --accent-soft:#1F2C47; --code-bg:#0B1018; --c-extra:#B597FF; color-scheme:dark}
 *{box-sizing:border-box}
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.55}
-.wrap{max-width:1120px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
+.wrap{max-width:980px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
+.brand{display:flex;align-items:flex-end;gap:14px}
+.mascot{flex:none;width:clamp(78px,12vw,112px);aspect-ratio:140/150;padding:0;border:none;background:none;cursor:pointer;border-radius:20px;animation:sway 3.2s ease-in-out infinite;transform-origin:50% 95%}
+.mascot svg{width:100%;height:100%;display:block}
+.mascot:hover{animation-duration:1.4s}
+.mascot:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.mascot.hop{animation:hop .5s ease}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes hop{30%{transform:translateY(-14px) scale(1.04)}60%{transform:translateY(0)}}
+.tip{position:relative;display:inline-block;margin:.7em 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.35em .8em;font-size:.92rem;box-shadow:0 2px 6px rgba(20,30,50,.06)}
+.tip b{color:#3E9D5C;margin-right:.3em}
+@media (prefers-reduced-motion:reduce){.mascot,.mascot.hop{animation:none}}
+@media (max-width:600px){.brand{flex-direction:column;align-items:flex-start;gap:6px}.mascot{width:76px}}
+h1,.lead,.tip{word-break:keep-all}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
 .kicker{font-size:.9rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
 h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);line-height:1.1;margin:.15em 0 0;text-wrap:balance}
@@ -41,14 +55,15 @@ h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);li
 ::view-transition-old(root),::view-transition-new(root){animation-duration:.35s}
 
 /* 카드뉴스 */
-.cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;list-style:none;margin:0;padding:0}
-@media (max-width:1000px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:1fr;gap:16px;list-style:none;margin:0;padding:0}
+@media (max-width:860px){.cards{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media (max-width:600px){.cards{grid-template-columns:minmax(0,1fr)}}
 .card{--c:var(--accent);position:relative;display:flex;flex-direction:column;height:100%;border-radius:16px;overflow:hidden;text-decoration:none;color:var(--ink);
   background:linear-gradient(170deg,color-mix(in srgb,var(--c) 12%,var(--panel)) 0%,var(--panel) 70%);
   border:1px solid var(--line);box-shadow:0 2px 8px rgba(20,30,50,.06);transition:transform .25s,box-shadow .25s,border-color .25s}
 a.card:hover{transform:translateY(-4px);box-shadow:0 10px 24px color-mix(in srgb,var(--c) 22%,transparent);border-color:var(--c)}
 a.card:focus-visible{outline:4px solid var(--c);outline-offset:4px}
+.card.mylab,.card.game{--c:var(--c-extra)}
 .card .top{display:flex;justify-content:space-between;align-items:center;padding:14px 16px 0}
 .no{font-family:var(--font-d);font-size:1rem;color:var(--c)}
 .badge{font-size:.75rem;font-weight:700;border-radius:999px;padding:.2em .8em;background:var(--c);color:var(--panel)}
@@ -56,7 +71,7 @@ a.card:focus-visible{outline:4px solid var(--c);outline-offset:4px}
 .card .big{font-family:var(--font-d);font-size:1.9rem;line-height:1.1;padding:8px 16px 0;margin:0;font-weight:400}
 .card .big code{font-family:var(--font-m);font-weight:700;color:var(--c);font-size:.82em}
 .card .sub{padding:4px 16px 0;margin:0;font-size:.95rem;font-weight:500}
-.snip{margin:12px 16px 0;margin-top:auto;background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 12px;font-family:var(--font-m);font-size:.8rem;line-height:1.55;white-space:pre;overflow:hidden}
+.snip{margin:12px 16px 0;margin-top:auto;min-height:5.4em;background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 12px;font-family:var(--font-m);font-size:.8rem;line-height:1.55;white-space:pre;overflow:hidden}
 .snip .k{color:var(--t-kw);font-weight:700}.snip .c{color:#7D879B;font-style:italic}.snip .n{color:var(--t-num)}.snip .s{color:var(--t-str)}
 .tags{display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px 12px;margin:0;list-style:none}
 .tags li{font-size:.74rem;font-weight:500;border-radius:999px;padding:.15em .7em;background:color-mix(in srgb,var(--c) 14%,var(--panel));color:var(--ink)}
@@ -87,10 +102,35 @@ footer.credit b{color:var(--ink)}
 <script src="admin.js"></script></head><body>
 <div class="wrap">
   <header class="top">
-    <div>
+    <div class="brand">
+      <button type="button" class="mascot" id="mascot" aria-label="파이에게 꿀팁 듣기">
+        <svg viewBox="0 0 140 150" aria-hidden="true" focusable="false">
+          <ellipse cx="70" cy="140" rx="44" ry="6" fill="#000" opacity=".08"/>
+          <ellipse cx="70" cy="122" rx="48" ry="17" fill="#3E9D5C"/>
+          <ellipse cx="70" cy="118" rx="44" ry="13" fill="#5BC27A"/>
+          <ellipse cx="70" cy="103" rx="38" ry="14" fill="#3E9D5C"/>
+          <ellipse cx="70" cy="99" rx="34" ry="11" fill="#5BC27A"/>
+          <path d="M96 99 C112 92 112 118 92 120" fill="none" stroke="#3E9D5C" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="72" cy="86" rx="15" ry="12" fill="#5BC27A"/>
+          <ellipse cx="70" cy="62" rx="33" ry="28" fill="#5BC27A"/>
+          <ellipse cx="70" cy="70" rx="22" ry="13" fill="#B9EBC6"/>
+          <circle cx="57" cy="57" r="8" fill="#fff"/><circle cx="83" cy="57" r="8" fill="#fff"/>
+          <circle cx="58" cy="58" r="4.6" fill="#1E2A3A"/><circle cx="84" cy="58" r="4.6" fill="#1E2A3A"/>
+          <circle cx="59.6" cy="56.2" r="1.6" fill="#fff"/><circle cx="85.6" cy="56.2" r="1.6" fill="#fff"/>
+          <ellipse cx="47" cy="69" rx="6" ry="3.6" fill="#FF9DB3" opacity=".75"/><ellipse cx="93" cy="69" rx="6" ry="3.6" fill="#FF9DB3" opacity=".75"/>
+          <path d="M63 72 Q70 78 77 72" fill="none" stroke="#1E2A3A" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M70 76 L70 82 M70 82 L67 85 M70 82 L73 85" fill="none" stroke="#F0506E" stroke-width="2" stroke-linecap="round"/>
+          <path d="M44 34 L70 22 L96 34 L70 46 Z" fill="#2B3445"/>
+          <rect x="60" y="36" width="20" height="9" rx="2" fill="#2B3445"/>
+          <path d="M96 34 L98 50" stroke="#F5B301" stroke-width="2.4" stroke-linecap="round"/><circle cx="98" cy="52" r="3.2" fill="#F5B301"/>
+        </svg>
+      </button>
+      <div>
       <div class="kicker">고등학교 1학년 정보 · 파이썬</div>
-      <h1>파이썬 흐름 실험실</h1>
+      <h1>다영쌤의 파이썬 흐름 실험실</h1>
       <p class="lead">코드를 한 줄씩 실행하면서 변수와 흐름이 어떻게 바뀌는지 살펴봐요. 카드를 골라 들어가세요.</p>
+      <p class="tip" id="tip" aria-live="polite"><b>파이</b> 안녕! 나를 누르면 코딩 꿀팁을 알려 줄게 🐍</p>
+      </div>
     </div>
     <div class="hctl"><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span></div>
   </header>
@@ -103,23 +143,27 @@ footer.credit b{color:var(--ink)}
 <script>
 // 실험실 목록: 새 실험실이 완성되면 href를 채우면 카드가 열려요.
 const LABS=[
-  {key:'while',no:'01',title:'<code>while</code>문',sub:'조건이 참인 동안 반복해요',href:'while/index.html',
+  {key:'for1',no:'01',title:'<code>for</code>문',sub:'정해진 횟수만큼 반복해요',href:'for1/index.html',
+   tags:['for 형식','369 게임','문제','도전과제'],
+   code:'<span class="k">for</span> a <span class="k">in</span> range(<span class="n">1</span>, <span class="n">9</span>):\n    print(a)'},
+  {key:'while',no:'02',title:'<code>while</code>문',sub:'조건이 참인 동안 반복해요',href:'while/index.html',
    tags:['while 형식','for → while','break · continue','숫자 맞추기 게임'],
    code:'<span class="k">while</span> i &lt; <span class="n">5</span>:\n    print(<span class="s">"Hello"</span>)\n    i += <span class="n">1</span>'},
-  {key:'for',no:'02',title:'중첩 제어구조',sub:'제어구조 안에 또 제어구조를 넣어요',href:'for2/index.html',
-   tags:['for 안에 if','while 안에 if','for 안에 for','문제 풀기'],
-   code:'<span class="k">for</span> x <span class="k">in</span> s:\n    <span class="k">if</span> x &gt;= <span class="n">80</span>:\n        cnt += <span class="n">1</span>'},
   {key:'list',no:'03',title:'리스트',sub:'여러 값을 한 줄로 담아요',href:'list/index.html',
    tags:['만들기 · 꺼내기 · 바꾸기','len · append · 슬라이싱','리스트 + for'],
    code:'a = [<span class="n">3</span>, <span class="n">1</span>, <span class="n">4</span>]\na.append(<span class="n">5</span>)\nprint(a[<span class="n">0</span>])'},
-  {key:'mylab',no:'04',title:'내 맘대로',sub:'내가 쓴 코드의 흐름을 따라가요',href:'mylab/index.html',
+  {key:'for',no:'04',title:'중첩 제어구조',sub:'제어구조 안에 또 제어구조를 넣어요',href:'for2/index.html',
+   tags:['for 안에 if','while 안에 if','for 안에 for','문제 풀기'],
+   code:'<span class="k">for</span> x <span class="k">in</span> s:\n    <span class="k">if</span> x &gt;= <span class="n">80</span>:\n        cnt += <span class="n">1</span>'},
+  {key:'mylab',no:'05',title:'내 맘대로',sub:'내가 쓴 코드의 흐름을 따라가요',href:'mylab/index.html',
    tags:['코드 직접 입력','한 단계씩 실행','변수 · 출력 보기'],
    code:'<span class="c"># 아무 코드나 써 보세요</span>\nx = <span class="n">3</span>\nprint(x * <span class="n">2</span>)'},
-  {key:'game',no:'05',wide:true,title:'🎮 코드 게임랜드',sub:'빈칸을 채워 코드를 완성하면 친구들이 코드대로 움직여요. 게임하면서 while · 이중 for · 리스트를 익혀요!',href:'games/index.html',
-   tags:['🐱 고양이 길찾기','🌸 꽃밭 심기','🍩 도넛 가게','🐣 몇 번 돌까? 퀴즈'],code:'🐱 🌸 🍩 🐣'}
+  {key:'game',no:'06',title:'🎮 게임랜드',sub:'빈칸을 채워 친구들을 움직여요',href:'games/index.html',
+   tags:['🐱 고양이','🌸 꽃밭','🍩 도넛 가게','🐣 퀴즈'],
+   code:'<span class="k">while not</span> 생선():\n    move()  <span class="c"># 🐱 → 🐟</span>'}
 ];
 // 카드 열림/잠김은 labs.json에서 읽어요 (관리자 패널에서 바꾸고 GitHub에 붙여 넣으면 학생 화면에 반영)
-const DEFAULT_OPEN={while:true,for:true,list:true,mylab:true,game:true};
+const DEFAULT_OPEN={for1:true,while:true,for:true,list:true,mylab:true,game:true};
 let published={...DEFAULT_OPEN},draft=null;
 const EDIT_URL='https://github.com/dayoungjeong123/python_lab/edit/main/labs.json';
 const openState=()=>draft||published;
@@ -130,16 +174,21 @@ function renderCards(){const st=openState(),adm=window.PL&&PL.admin;
     if(l.wide)return `<li class="wide"><${tag} class="card wide ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
     <div class="wbody"><div class="top"><span class="no">${l.no}</span>${badge}</div><h2 class="big">${l.title}</h2><p class="sub">${l.sub}</p><ul class="tags">${l.tags.map(t=>`<li>${t}</li>`).join('')}</ul></div>
     <div class="wemo" aria-hidden="true">${l.code.split(' ').map((e,k)=>`<span style="animation-delay:${k*.25}s">${e}</span>`).join('')}</div>
-    <div class="go"><span>${open?'게임하러 가기':peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
+    <div class="go"><span>${open?(l.key==='game'?'게임하러 가기':'실험실 들어가기'):peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
   </${tag}></li>`;
     return `<li><${tag} class="card ${l.key}${open?'':' locked'}" ${link?`href="${l.href}"`:'aria-disabled="true"'}>
     <div class="top"><span class="no">${l.no}</span>${badge}</div>
     <h2 class="big">${l.title}</h2><p class="sub">${l.sub}</p>
     <ul class="tags">${l.tags.map(t=>`<li>${t}</li>`).join('')}</ul>
     <div class="snip" aria-hidden="true">${l.code}</div>
-    <div class="go"><span>${open?'실험실 들어가기':peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
+    <div class="go"><span>${open?(l.key==='game'?'게임하러 가기':'실험실 들어가기'):peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
   </${tag}></li>`}).join('')}
 renderCards();
+// 마스코트 '파이': 누르면 꿀팁
+const TIPS=['range(1, 9)는 1부터 8까지! 끝 숫자는 안 들어가요','for·if·while 줄 끝에는 콜론(:)을 꼭!','반복할 줄은 4칸 들여쓰기','리스트 인덱스는 0부터 세요. 맨 뒤는 -1!','같은지 비교할 때는 = 말고 ==','while 조건이 계속 True면 무한 반복!','합계는 0에서, 곱은 1에서 시작해요','break는 반복을 바로 끝내요',"print(x, end=' ')는 줄을 안 바꿔요",'막히면 05 내 맘대로에서 한 줄씩 실행해 봐요'];
+let tipI=-1;
+document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIPS.length;document.getElementById('tip').innerHTML='<b>파이</b> '+TIPS[tipI].replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const m=e.currentTarget;m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),520)});
 fetch('labs.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){published={...DEFAULT_OPEN,...j};renderCards()}}).catch(()=>{});
 window.addEventListener('pl-change',()=>{if(!PL.admin)draft=null;renderCards()});
 // 관리자 패널: 카드 스위치

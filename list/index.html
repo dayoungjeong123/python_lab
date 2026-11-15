@@ -251,6 +251,8 @@ tr{cursor:pointer}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
 .confetti span{position:absolute;top:-2em;font-size:1.6rem;animation:fall 1.6s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
+.lbar{width:min(220px,40vw);height:10px;border-radius:999px;background:var(--line);overflow:hidden;align-self:center}
+.lbar i{display:block;height:100%;background:var(--accent);transition:width .2s}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
 </style>
 <script src="../admin.js"></script>
@@ -325,7 +327,10 @@ function parseTokens(toks){
   function or(){ let a=and(); while(isKw('or')){p++; a={t:'bool_op',op:'or',a,b:and()};} return a; }
   function and(){ let a=not(); while(isKw('and')){p++; a={t:'bool_op',op:'and',a,b:not()};} return a; }
   function not(){ if(isKw('not')){p++; return {t:'not',a:not()};} return cmp(); }
-  function cmp(){ let a=add(); if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)){ const op=toks[p++].v; a={t:'cmp',op,a,b:add()}; if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)) throw new PyErr('SyntaxError: 비교를 이어서 쓰는 건 이 실험실에서 지원하지 않아요'); } else if(isOp('=')) throw new PyErr("SyntaxError: invalid syntax. Maybe you meant '==' instead of '='?"); return a; }
+  function cmp(){ let a=add();
+    if(isKw('in')){ p++; return {t:'cmp',op:'in',a,b:add()}; }
+    if(isKw('not')&&toks[p+1]&&toks[p+1].t==='name'&&toks[p+1].v==='in'){ p+=2; return {t:'cmp',op:'not in',a,b:add()}; }
+    if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)){ const op=toks[p++].v; a={t:'cmp',op,a,b:add()}; if(toks[p]&&toks[p].t==='op'&&CMP.includes(toks[p].v)) throw new PyErr('SyntaxError: 비교를 이어서 쓰는 건 이 실험실에서 지원하지 않아요'); } else if(isOp('=')) throw new PyErr("SyntaxError: invalid syntax. Maybe you meant '==' instead of '='?"); return a; }
   function add(){ let a=mul(); while(isOp('+')||isOp('-')){const op=toks[p++].v; a={t:'bin',op,a,b:mul()};} return a; }
   function mul(){ let a=unary(); while(isOp('*')||isOp('/')||isOp('//')||isOp('%')){const op=toks[p++].v; a={t:'bin',op,a,b:unary()};} return a; }
   function unary(){ if(isOp('-')){p++; return {t:'neg',a:unary()};} return post(); }
@@ -378,6 +383,7 @@ function parseStmt(text){
   if(/^else\s*:$/.test(text)) return {k:'else'};
   if(/^(for|while|if|elif|else)\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
   if(text==='break'||text==='continue'||text==='pass') return {k:text};
+  { const im=text.match(/^import\s+([A-Za-z_]\w*)$/); if(im){ if(im[1]!=='random') throw new PyErr(`ModuleNotFoundError: 이 실험실에서는 random 모듈만 쓸 수 있어요`); return {k:'import', mod:im[1]}; } }
   const toks=tokenize(text);
   const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='||t.v==='*='));
   if(ai>0) return {k:'aug', op:toks[ai].v[0], target:parseTokens(toks.slice(0,ai)), e:parseTokens(toks.slice(ai+1))};
@@ -465,6 +471,13 @@ function binop(op,a,b){
   return fl?mkF(r):r;
 }
 function compare(op,a,b){
+  if(op==='in'||op==='not in'){
+    let r;
+    if(typeof b==='string'){ if(typeof a!=='string') throw new PyErr(`TypeError: 'in <string>' requires string as left operand, not ${tname(a)}`); r=b.includes(a); }
+    else if(Array.isArray(b)) r=b.some(x=>compare('==',x,a));
+    else throw new PyErr(`TypeError: argument of type '${tname(b)}' is not iterable`);
+    return op==='in'?r:!r;
+  }
   if(op==='=='||op==='!='){ const eq=isNum(a)&&isNum(b)?nv(a)===nv(b):JSON.stringify(a)===JSON.stringify(b); return op==='=='?eq:!eq; }
   let x,y;
   if(isNum(a)&&isNum(b)){ x=nv(a); y=nv(b); }
@@ -518,6 +531,13 @@ function showExpr(n,S){
   }
 }
 function call(n,S){
+  if(n.f.t==='attr'&&n.f.obj.t==='name'&&n.f.obj.n==='random'&&!('random' in S.vars)){
+    if(!S.mods.random) throw new PyErr("NameError: name 'random' is not defined (import random을 먼저 써요)");
+    const args=n.args.map(a=>ev(a,S));
+    if(n.f.n==='randint'){ if(args.length!==2||args.some(x=>typeof x!=='number')) throw new PyErr('TypeError: randint()에는 정수 2개가 필요해요'); const [a,b]=args; if(a>b) throw new PyErr(`ValueError: empty range in randint(${a}, ${b})`); const v=a+Math.floor(S.rng()*(b-a+1)); S.note={kind:'random',v}; return v; }
+    if(n.f.n==='choice'){ const a=args[0]; if(!Array.isArray(a)&&typeof a!=='string') throw new PyErr(`TypeError: object of type '${tname(a)}' has no len()`); if(!a.length) throw new PyErr('IndexError: Cannot choose from an empty sequence'); const v=a[Math.floor(S.rng()*a.length)]; S.note={kind:'random',v}; return v; }
+    throw new PyErr(`AttributeError: module 'random' has no attribute '${n.f.n}'`);
+  }
   if(n.f.t==='attr'){
     const o=ev(n.f.obj,S);
     if(n.f.n==='append'&&Array.isArray(o)){
@@ -586,7 +606,8 @@ function showPrint(t){
 }
 class BreakSig{} class ContSig{}
 function run(tree, inputs){
-  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null};
+  let seed=20261; const rng=()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null, mods:{}, rng};
   const maxD=treeDepth(tree);
   const snap=o=>{
     if(S.steps.length>LIMIT) throw new Halt('limit');
@@ -642,6 +663,7 @@ function run(tree, inputs){
         if(!done&&n.orelse){ hit(n.orelse); snap({line:n.orelse.line, kind:'stmt', d, msg:'위 조건이 모두 False → <b>else</b> 안쪽을 실행해요'}); exec(n.orelse.body,d+1); }
       } else if(n.k==='break'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>break</b> → 반복을 바로 끝내요'}); throw new BreakSig(); }
       else if(n.k==='continue'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>continue</b> → 아래는 건너뛰고 반복 처음으로'}); throw new ContSig(); }
+      else if(n.k==='import'){ hit(n); S.mods[n.mod]=true; snap({line:n.line, kind:'stmt', d, msg:`<code>${n.mod}</code> 모듈을 불러와요 (무작위 수를 만들 수 있어요)`}); }
       else if(n.k==='pass'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'pass → 아무것도 하지 않아요'}); }
       else {
         hit(n);
@@ -654,7 +676,7 @@ function run(tree, inputs){
             else msg='실행';
           } else if(n.k==='assign'){
             const v=ev(n.e,S);
-            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`; }
+            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`+(S.note&&S.note.kind==='random'?' 🎲 (무작위로 뽑은 수)':''); }
             else {
               const o=ev(n.target.obj,S), i=ev(n.target.i,S);
               if(!Array.isArray(o)) throw new PyErr(`TypeError: '${tname(o)}' object does not support item assignment`);
@@ -689,6 +711,62 @@ function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').rep
 
 /* ───────── 예제 데이터 (프린트와 같은 번호) ───────── */
 const EX = {
+  f1:{no:'형식 ①', title:'for a in data:', desc:'a가 data 안에 있는 값인 동안 명령어 B를 실행해요. 리스트의 값이 a에 하나씩 차례로 들어가요', code:
+`for a in [1,2,3]:
+    print(a)`},
+  f2:{no:'형식 ②', title:'for a in range(시작, 종료):', desc:'a에 시작 숫자가 먼저 들어가고, 종료 숫자 - 1까지 명령어 B를 반복해요. 종료 숫자가 들어가면 반복 끝!', code:
+`for a in range(1, 9):
+    print(a)`},
+  g369:{no:'예제 1-1', title:'369 게임을 만들어 보자', desc:"⌨ 입력값은 내가 차례로 말하는 숫자예요. 3·6·9가 들어간 숫자는 '짝'! 틀리게 말하면 '틀렸습니다.'를 출력하고 break로 멈춰요. 입력값을 바꿔서도 해 보세요", inputs:['1','2','짝','4','5','짝','7','8','짝','10','11','12','13'], code:
+`print("3~, 6~, 9~")
+
+for i in range(1, 101):
+    say = input()
+    if '3' in str(i) or '6' in str(i) or '9' in str(i):
+        answer = "짝"
+    else:
+        answer = str(i)
+
+    if say != answer:
+        print("틀렸습니다.")
+        break`},
+  fp1:{no:'문제 (1)', title:'1부터 50까지의 숫자의 합을 구해 보자.', desc:'빈칸 정답: ① range(1, 51)   ② sum + i   →   결과 1275', code:
+`sum = 0
+for i in range(1, 51):
+    sum = sum + i
+
+print(sum)`},
+  fp2:{no:'문제 (2)', title:'숫자 하나를 입력받고, 1부터 입력받은 숫자까지의 곱을 구해 보세요.', desc:'빈칸 정답: ① 1   ② range(1, num + 1)   ③ result = result * i   →   입력 4, 결과 24', inputs:['4'], code:
+`result = 1
+num = int(input())
+for i in range(1, num + 1):
+    result = result * i
+
+print(result)`},
+  fp3:{no:'문제 (3)', title:'구구단 4단을 출력해 보자.', desc:'빈칸 정답: ① range(1, 10)   →   결과 4 X 1 = 4 … 4 X 9 = 36', code:
+`for i in range(1, 10):
+    print('4 X', i, "=", 4*i)`},
+  fc1:{no:'도전과제 (1)', title:'구구단 외울 단을 입력받아, 해당 숫자의 구구단을 외워 봅시다.', desc:'정답 예시 · ⌨ 입력값에 외울 단을 넣어요', inputs:['7'], code:
+`dan = int(input())
+for i in range(1, 10):
+    print(dan, 'X', i, '=', dan * i)`},
+  fc2:{no:'도전과제 (2)', title:'랜덤으로 곱셈 문제를 내고, 답을 맞추는 게임을 만들어 보자.', desc:'정답 예시 · 실험실에서는 매번 같은 문제(6 X 2, 9 X 2, 6 X 4)가 나와요. ⌨ 입력값이 내 답이에요 (마지막은 일부러 틀림)', inputs:['12', '18', '25'], code:
+`import random
+for i in range(3):
+    a = random.randint(2, 9)
+    b = random.randint(2, 9)
+    print(a, 'X', b, '= ?')
+    ans = int(input())
+    if ans == a * b:
+        print('정답!')
+    else:
+        print('틀렸어요. 정답은', a * b)`},
+  fc3:{no:'도전과제 (3)', title:'1부터 30까지 숫자의 홀수 짝수를 판별하는 프로그램을 만들어 보자.', desc:'정답 예시 · i % 2 == 0 이면 짝수', code:
+`for i in range(1, 31):
+    if i % 2 == 0:
+        print(i, '짝수')
+    else:
+        print(i, '홀수')`},
   e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
 `list1 = ["실드", "투시경", "물약"]
 print(list1[0], list1[-1])
@@ -768,16 +846,24 @@ for i in range(len(s)):
 `},
 };
 const APP='list';
-const SECTIONS = APP==='list' ? [
+const SECTIONS = ({
+ for1:[
+  {id:'form', name:'1) for 형식', exs:['f1','f2']},
+  {id:'game', name:'2) 예제 1-1 369 게임', exs:['g369']},
+  {id:'quiz', name:'3) 문제', exs:['fp1','fp2','fp3']},
+  {id:'challenge', name:'4) 도전과제', exs:['fc1','fc2','fc3']},
+ ],
+ list:[
   {id:'basic', name:'1) 리스트 기본', exs:['e11']},
   {id:'func', name:'2) 활용 3총사', exs:['e12']},
   {id:'loop', name:'3) 리스트 + for', exs:['e13a','e13b']},
-] : [
+ ],
+ nested:[
   {id:'forif', name:'① for 안에 if', exs:['e31']},
   {id:'whileif', name:'② while 안에 if', exs:['e32']},
   {id:'forfor', name:'③ for 안에 for', exs:['e33','e34','e35']},
   {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
-];
+ ]})[APP];
 
 /* ───────── 공통 상태 ───────── */
 const store={get(k,d){try{const v=localStorage.getItem('lfl-'+APP+'-'+k);return v===null?d:JSON.parse(v);}catch(e){return d;}},set(k,v){try{localStorage.setItem('lfl-'+APP+'-'+k,JSON.stringify(v));}catch(e){}}};
@@ -788,7 +874,7 @@ let toastT=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
 
 /* 코드 강조 */
-const KW=new Set(['for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
+const KW=new Set(['import','for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
 function hlLine(raw, loopVars){
   const ind=raw.match(/^ */)[0].length;
   let guides='';
@@ -920,7 +1006,7 @@ class Sim{
     if(err) [this.el.reset,this.el.prev,this.el.next,this.el.auto,this.el.last].forEach(b=>b.disabled=true);
     const codeEl=h('div',{class:'code nocopy'+(G.colors?' colors-on':''), 'aria-label':'코드'});
     this.an.lines.forEach(l=>{
-      const row=h('div',{class:'ln'+(l.text===''?' blank':''), 'data-line':l.no},
+      const row=h('div',{class:'ln'+(l.text===''?' emptyln':''), 'data-line':l.no},
         h('span',{class:'no'},String(l.no)), h('span',{class:'tx',html:hlLine(l.raw,this.lv)||' '}), h('span',{class:'hit'}));
       codeEl.append(row);
     });
@@ -1027,7 +1113,9 @@ class Sim{
       const dots=h('div',{class:'dots'});
       const vals=[]; // 표시할 값
       const endW=L.w&&s.kind==='exit'&&s.line===L.line;
-      for(let q=1;q<=(L.w?L.k:L.n);q++) dots.append(h('span',{class:'dot'+(q<L.k||endW?' past':'')+(q===L.k&&!endW?' now':'')},String(q)));
+      const many=!L.w&&L.n>20;
+      if(many) dots.append(h('div',{class:'lbar'}, h('i',{style:`width:${Math.min(100,(Math.min(L.k,L.n)/L.n)*100)}%`})), h('span',{class:'stepinfo'},`${Math.min(L.k,L.n)} / ${L.n}`));
+      else for(let q=1;q<=(L.w?L.k:L.n);q++) dots.append(h('span',{class:'dot'+(q<L.k||endW?' past':'')+(q===L.k&&!endW?' now':'')},String(q)));
       this.el.loops.append(h('div',{class:'loop lv'+L.d}, h('span',{class:'lname'},L.w?'while':`${L.role} ${L.v}`), dots, h('span',{class:'stepinfo'}, (L.w?endW:L.k>L.n)?'끝':`${L.k}번째`)));
     }
     // 변수
@@ -1366,7 +1454,7 @@ function buildTabs(){
   const jm=$('#jmList');
   SECTIONS.forEach(S=>{
     jm.append(h('div',{class:'sec'},S.name));
-    if(!S.exs) jm.append(h('button',{onclick:()=>{ $('#jump').open=false; location.hash=S.id; }}, h('b',{},'실험'), '들여쓰기 옮기기'));
+    if(!S.exs) jm.append(h('button',{onclick:()=>{ $('#jump').open=false; location.hash=S.id; }}, h('b',{},S.render?'정리':'실험'), S.menu||'들여쓰기 옮기기'));
     else S.exs.forEach(k=>jm.append(h('button',{onclick:()=>{ $('#jump').open=false; if(location.hash!=='#'+S.id) location.hash=S.id; showEx(S.id,k,true); }}, h('b',{},EX[k].no), EX[k].title)));
   });
 }
@@ -1375,7 +1463,7 @@ function route(){
   const S=SECTIONS.find(x=>x.id===id)||SECTIONS[0];
   SECTIONS.forEach(x=>{ $('#panel-'+x.id).hidden=x.id!==S.id; $('#tab-'+x.id).setAttribute('aria-selected',String(x.id===S.id)); if(x.id!==S.id&&sims[x.id]) sims[x.id].stop(); });
   const p=$('#panel-'+S.id);
-  if(!p.childElementCount){ if(S.exs) showEx(S.id,G.cur[S.id]||S.exs[0]); else renderLab(p); }
+  if(!p.childElementCount){ if(S.exs) showEx(S.id,G.cur[S.id]||S.exs[0]); else (S.render||renderLab)(p); }
 }
 document.addEventListener('keydown',e=>{ const id=(SECTIONS.find(x=>x.id===location.hash.slice(1))||SECTIONS[0]).id; const s=id==='indent'?LAB.sim:sims[id]; if(s) s.key(e); });
 document.addEventListener('click',e=>{ const j=$('#jump'); if(j.open&&!j.contains(e.target)) j.open=false; });
