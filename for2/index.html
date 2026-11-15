@@ -239,6 +239,18 @@ tr{cursor:pointer}
 .iq.now{border-color:var(--accent);background:var(--accent-soft)}
 .note .tt{color:var(--true)}.note .ff{color:var(--false)}
 .goalbox{font-family:var(--font-m);background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:8px 12px;white-space:pre-wrap}
+.ch-ed{width:100%;min-height:16em;resize:vertical;font-family:var(--font-m);font-size:1rem;line-height:1.6;background:var(--code-bg);color:var(--code-fg);border:2px solid var(--line-strong);border-radius:10px;padding:10px 12px;tab-size:4;white-space:pre;overflow:auto;caret-color:var(--code-hibar)}
+.ch-ed:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.reward{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;background:linear-gradient(170deg,#FFF3C4,#FFE08A);color:#3A2E10;border-radius:16px;padding:22px 16px}
+.reward .stepinfo{color:#5A4A1A}
+.rw-big{font-family:var(--font-d);font-size:2.4rem;line-height:1.1}
+.rw-t{font-family:var(--font-d);font-size:1.6rem}
+.rw-tests{list-style:none;margin:0;padding:0;font-family:var(--font-m);font-size:.9rem}
+.reward button{background:#FFFDF4;color:#3A2E10;border-color:#C9A63A}
+.ch-admin{display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+.confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
+.confetti span{position:absolute;top:-2em;font-size:1.6rem;animation:fall 1.6s ease-in forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
 </style>
 <script src="../admin.js"></script>
@@ -700,14 +712,14 @@ total = 0
 for i in range(len(s)):      # i = 자리 번호
     total += s[i]
 print(total)`},
-  e31:{no:'예제 3-1', title:'① for 안에 if - 조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
+  e31:{no:'예제 3-1', title:'조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
 `s = [90, 85, 77, 100, 68]
 cnt = 0
 for x in s:
     if x >= 80:
         cnt += 1
 print(cnt)`},
-  e32:{no:'예제 3-2', title:'② while 안에 if - 0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
+  e32:{no:'예제 3-2', title:'0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
 `total = 0
 n = int(input())
 while n != 0:
@@ -715,10 +727,21 @@ while n != 0:
         total += n
     n = int(input())
 print(total)`},
-  e33:{no:'예제 3-3', title:'③ for 안에 for - 별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
+  e33:{no:'예제 3-3', title:'별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
 `for i in range(3):
     for j in range(5):
         print('*', end='')
+    print()`},
+  e34:{no:'예제 3-4', title:'', desc:'', code:
+`for i in range(1, 3):
+    for j in range(1, 4):
+        print(i * j, end=' ')
+    print()`},
+  e35:{no:'예제 3-5', title:'', desc:'', code:
+`a = [2, 4, 6]
+for i in range(3):
+    for j in range(i + 1):
+        print(a[j], end=' ')
     print()`},
   q1:{no:'문제 1', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오.', desc:'결과: 4 8 / [9, 4, 1, 3, 8, 6] 6', quiz:true, code:
 `a = [9, 4, 1, 3, 8]
@@ -739,18 +762,10 @@ for x in nums:
 for i in range(len(s)):
     if s[i] > 4:
         print(i, end=' ')`},
-  q5:{no:'(도전)문제 5', title:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력하시오.', desc:'결과: 84.0 / 3', quiz:true, locked:true, code:
+  q5:{no:'(도전)문제 5', title:'점수의 평균을 구하고, 평균 이상인 점수가 몇 개인지 출력하시오.', desc:'결과: 84.0 / 3', quiz:true, challenge:true, code:
 `s = [90, 85, 77, 100, 68]
-total = 0
-for x in s:
-    total += x
-avg = total / len(s)
-print(avg)
-cnt = 0
-for x in s:
-    if x >= avg:
-        cnt += 1
-print(cnt)`},
+# 아래에 코드를 써 보세요.
+`},
 };
 const APP='nested';
 const SECTIONS = APP==='list' ? [
@@ -760,7 +775,7 @@ const SECTIONS = APP==='list' ? [
 ] : [
   {id:'forif', name:'① for 안에 if', exs:['e31']},
   {id:'whileif', name:'② while 안에 if', exs:['e32']},
-  {id:'forfor', name:'③ for 안에 for', exs:['e33']},
+  {id:'forfor', name:'③ for 안에 for', exs:['e33','e34','e35']},
   {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
 ];
 
@@ -1216,6 +1231,107 @@ function resultView(sec,key){
     grid, h('div',{class:'toolbar'}, h('button',{onclick:()=>{ G.unlocked[key]=false; delete G.answers[key]; showEx(sec,key); }},'↺ 다시 풀기')));
 }
 
+/* ───────── (도전)문제: 직접 쓴 코드를 숨은 테스트로 채점 ─────────
+   정답 코드는 페이지에 그대로 두지 않고, 관리자 비밀번호로 암호화해 두었어요 (PBKDF2 + AES-GCM). */
+const SOL={"s": "9lr0PJ7jdPGeYrvnR6H1iQ==", "i": "TDHHm/omKQ8jZNa3", "c": "sVeuN1YnNKMnrsNZ4wDVTc6Br9DbHqMC30eIz69KBY08oOmPbbqZUSri238OOennQ8+4dofiIkLnlr25g0RYUxZYpm3YY6YtGPfeZ4zZY/Dk4734wlaB5pZ2zHoU4EpmbnV77eR/QNF3SywO8wRWn9rQNGesptK1QsOnOU8VxEomnNnO8AYgX0qMNgWE2zWU1P+oV0avFb3z91n1A+Di23hxFH1/0D+PtaPyhWgayQ=="};
+const CH_TESTS=[ {s:[90,85,77,100,68], out:['84.0','3'], main:true}, {s:[50,70,90,60], out:['67.5','2']}, {s:[100,100], out:['100.0','2']} ];
+function chRun(code){
+  const an=analyze(code); if(an.err) return {err:`${an.err.line}번 줄 → ${an.err.msg}`, line:an.err.line};
+  const st=run(an.tree,[]), last=st[st.length-1];
+  if(last.kind==='error') return {err:`${last.line?last.line+'번 줄 → ':''}${last.msg}`, line:last.line, out:last.out};
+  return {out:last.out};
+}
+const chLines=o=>String(o||'').replace(/\r/g,'').split('\n').map(x=>x.trim()).filter(Boolean);
+function chWithList(code,arr){ const L=code.split('\n'); const k=L.findIndex(l=>/^s\s*=\s*\[/.test(l)); if(k<0) return null; L[k]='s = '+repr(arr); return L.join('\n'); }
+function chGrade(code){
+  if(chWithList(code,[1])===null) return {ok:false, msg:'첫 줄의 s = [90, 85, 77, 100, 68]은 지우지 말고 그대로 두세요.'};
+  const res=CH_TESTS.map(t=>({t, r:chRun(chWithList(code,t.s))}));
+  const m=res[0];
+  if(m.r.err) return {ok:false, msg:`실행하다가 오류가 났어요. ${m.r.err}`, res};
+  const got=chLines(m.r.out);
+  if(got.join('|')!=='84.0|3'){
+    let hint='';
+    if(got[0]==='84') hint=' 힌트: 평균은 / 로 나누면 84.0이 나와요.';
+    else if(!got.length) hint=' 힌트: print로 평균과 개수를 출력해야 해요.';
+    else if(got.length!==2) hint=' 힌트: 평균 한 줄, 개수 한 줄, 모두 두 줄을 출력해요.';
+    return {ok:false, msg:`출력이 결과와 달라요. 내 출력: ${got.join(' / ')||'(없음)'} → 결과: 84.0 / 3.${hint}`, res};
+  }
+  for(const x of res.slice(1)){
+    const g=x.r.err?null:chLines(x.r.out);
+    if(!g||g.join('|')!==x.t.out.join('|')){
+      let hint=' 숫자를 직접 쓰지 말고 리스트 s로 계산하게 만들어 보세요.';
+      if(x.t.s.join()==='100,100'&&g&&g[0]===x.t.out[0]) hint=" 힌트: '평균 이상'은 평균과 같은 점수도 세야 해요. 비교 기호를 확인해 보세요.";
+      return {ok:false, msg:`s를 ${repr(x.t.s)}(으)로 바꿔서 실행해 보니 ${g?g.join(' / ')||'(출력 없음)':'오류: '+x.r.err} 이(가) 나왔어요. 맞으려면 ${x.t.out.join(' / ')} 이(가) 나와야 해요.${hint}`, res};
+    }
+  }
+  return {ok:true, res};
+}
+async function chDecrypt(pw){
+  const b=x=>Uint8Array.from(atob(x),c=>c.charCodeAt(0));
+  const base=await crypto.subtle.importKey('raw',new TextEncoder().encode(pw),'PBKDF2',false,['deriveKey']);
+  const key=await crypto.subtle.deriveKey({name:'PBKDF2',salt:b(SOL.s),iterations:150000,hash:'SHA-256'},base,{name:'AES-GCM',length:256},false,['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:b(SOL.i)},key,b(SOL.c)));
+}
+function chConfetti(){ if(matchMedia('(prefers-reduced-motion: reduce)').matches) return; const c=h('div',{class:'confetti'}); for(let k=0;k<28;k++) c.append(h('span',{style:`left:${Math.random()*100}%;animation-delay:${Math.random()*.5}s`},['🍬','🎉','⭐','✨'][k%4])); document.body.append(c); setTimeout(()=>c.remove(),2600); }
+function challengeView(sec,key){
+  const ex=EX[key], saved=store.get('challenge-'+key,null);
+  const wrap=h('div',{class:'panel'});
+  if(saved){
+    const t=new Date(saved.at);
+    wrap.append(h('section',{class:'reward'},
+      h('div',{class:'rw-big'},'🎉 도전 성공! 🍬'),
+      h('div',{class:'rw-t'},'마이쮸 획득!'),
+      h('div',{class:'stepinfo'},`선생님께 이 화면을 보여 주세요 · 성공 시각 ${t.toLocaleDateString('ko-KR')} ${t.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'})}`),
+      h('ul',{class:'rw-tests'}, ...CH_TESTS.map(x=>h('li',{},`✔ s = ${repr(x.s)} → ${x.out.join(' / ')}`))),
+      h('div',{class:'toolbar'}, h('button',{onclick:()=>{ if(!confirm('다시 도전할까요? 지금 성공 기록이 지워져요.')) return; store.set('challenge-'+key,null); showEx(sec,key); }},'↺ 다시 도전하기'))));
+    wrap.append(h('div',{class:'pane-h'},'↓ 내가 쓴 코드를 한 단계씩 실행해 보기'));
+    const root=h('div',{class:'panel'}); wrap.append(root);
+    if(sims[sec]) sims[sec].stop();
+    sims[sec]=new Sim(root,{...ex,code:saved.code},{key:key+'-mine'});
+    return wrap;
+  }
+  const draftKey='challenge-draft-'+key;
+  const ta=h('textarea',{id:'ch-'+key,class:'ch-ed',spellcheck:'false',autocomplete:'off',autocapitalize:'off','aria-label':'(도전)문제 코드 입력'});
+  ta.value=store.get(draftKey,null)??ex.code;
+  ta.addEventListener('input',()=>{ store.set(draftKey,ta.value); out.textContent=''; fb.hidden=true; });
+  ta.addEventListener('paste',e=>{ if(document.documentElement.hasAttribute('data-copyfree')) return; e.preventDefault(); toast('✍️ 붙여넣기는 안 돼요. 직접 입력해 보세요!'); });
+  ta.addEventListener('drop',e=>{ if(document.documentElement.hasAttribute('data-copyfree')) return; e.preventDefault(); });
+  ta.addEventListener('keydown',e=>{
+    const v=ta.value, a=ta.selectionStart, b=ta.selectionEnd, ls=v.lastIndexOf('\n',a-1)+1;
+    const ins=t=>{ ta.setRangeText(t,ta.selectionStart,ta.selectionEnd,'end'); ta.dispatchEvent(new Event('input')); };
+    if(e.key==='Tab'&&!e.shiftKey&&a===b){ e.preventDefault(); ins('    '); }
+    else if(e.key==='Tab'&&e.shiftKey){ e.preventDefault(); if(v.slice(ls,ls+4)==='    '){ ta.setSelectionRange(ls,ls+4); ins(''); ta.setSelectionRange(Math.max(ls,a-4),Math.max(ls,a-4)); } }
+    else if(e.key==='Enter'&&!e.isComposing){ e.preventDefault(); const line=v.slice(ls,a); let ind=line.match(/^ */)[0]; if(/:\s*(#.*)?$/.test(line)) ind+='    '; ins('\n'+ind); }
+    else if(e.key==='Backspace'&&a===b&&a>ls&&/^ +$/.test(v.slice(ls,a))&&(a-ls)%4===0){ e.preventDefault(); ta.setSelectionRange(a-4,a); ins(''); }
+  });
+  const out=h('div',{class:'console'}), fb=h('div',{class:'banner bad','aria-live':'polite',hidden:true});
+  const runBtn=h('button',{onclick:()=>{ const r=chRun(ta.value); out.textContent=(r.out||'')+(r.err?`\n⚠ ${r.err}`:''); if(!r.out&&!r.err) out.textContent='(출력 없음)'; }},'▶ 실행해 보기');
+  let tries=store.get('challenge-tries-'+key,0);
+  const subBtn=h('button',{class:'primary',onclick:()=>{
+    const g=chGrade(ta.value); tries++; store.set('challenge-tries-'+key,tries);
+    if(g.ok){ store.set('challenge-'+key,{code:ta.value,at:Date.now(),tries}); chConfetti(); toast('🎉 도전 성공! 마이쮸 획득!'); showEx(sec,key); return; }
+    fb.hidden=false; fb.textContent=`✕ 아직이에요 (${tries}번째 제출). ${g.msg}`;
+  }},'✅ 제출하고 채점받기');
+  wrap.append(h('div',{class:'lead'}, h('span',{},'🍬'), h('span',{html:'<b>맞힌 학생만 마이쮸!</b> 프린트에 쓴 코드를 아래에 <b>직접 입력</b>하고 제출하세요. 점수 리스트를 바꿔도 맞게 나오는지 숨은 테스트로 채점해요.'})));
+  const grid=h('div',{class:'gate'},
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'내 코드 (Tab = 4칸 들여쓰기)'), ta,
+      h('div',{class:'toolbar'}, runBtn, subBtn), fb),
+    h('section',{class:'pane'}, h('div',{class:'pane-h'},'결과 (목표)'), h('div',{class:'goalbox'},'84.0\n3'),
+      h('div',{class:'pane-h'},'내 출력'), out,
+      h('div',{class:'stepinfo'},'채점 기준: 위 결과가 똑같이 나오고, 점수 리스트 s를 다른 값으로 바꿔도 평균과 개수가 맞게 나와야 해요.')));
+  wrap.append(grid);
+  // 선생님 전용: 비밀번호로 정답 풀기
+  const adm=h('div',{class:'ch-admin'});
+  const paintAdm=()=>{ adm.innerHTML=''; if(!(window.PL&&PL.admin)) return;
+    const box=h('div',{});
+    adm.append(h('button',{onclick:async()=>{ const pw=prompt('관리자 비밀번호를 입력하세요'); if(!pw) return;
+      try{ const code=await chDecrypt(pw); box.innerHTML=''; box.append(h('div',{class:'pane-h'},'정답 코드 (선생님만)'), h('pre',{class:'goalbox'},code)); }
+      catch(err){ toast('비밀번호가 달라요'); } }},'🔑 정답 코드 보기 (선생님)'), box); };
+  paintAdm(); window.addEventListener('pl-change',paintAdm);
+  wrap.append(adm);
+  return wrap;
+}
+
 /* ───────── 화면 구성 ───────── */
 let sims={};
 function showEx(sec, key, flash){
@@ -1223,10 +1339,11 @@ function showEx(sec, key, flash){
   const panel=$(`#panel-${sec}`);
   panel.innerHTML='';
   const S=SECTIONS.find(x=>x.id===sec);
-  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, `${EX[k].no} ${EX[k].title}`)));
+  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, EX[k].title?`${EX[k].no} ${EX[k].title}`:EX[k].no)));
   if(S.exs.length>1) panel.append(chips);
   const ex=EX[key];
   panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), ex.desc?h('div',{class:'exdesc'},ex.desc):null));
+  if(ex.challenge){ if(sims[sec]) sims[sec].stop(); panel.append(challengeView(sec,key)); return; }
   if(ex.quiz&&!ex.locked) panel.append(h('div',{class:'lead'}, h('span',{},'📝'), h('span',{html:'<b>먼저 프린트에 직접 풀어요.</b> 내 답을 입력해야 실행 화면이 열려요.'})));
   if(ex.locked&&!G.unlocked[key]){
     panel.append(h('div',{class:'locked'}, h('b',{},'먼저 프린트에 직접 코드를 써 보세요!'), h('span',{class:'stepinfo'},'다 썼으면 아래 버튼을 눌러 정답 코드와 실행 과정을 확인해요.'), h('button',{class:'primary',onclick:()=>{G.unlocked[key]=true; showEx(sec,key);}},'정답 코드 보기')));
