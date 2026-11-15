@@ -251,26 +251,6 @@ tr{cursor:pointer}
 .confetti{position:fixed;inset:0;pointer-events:none;z-index:70;overflow:hidden}
 .confetti span{position:absolute;top:-2em;font-size:1.6rem;animation:fall 1.6s ease-in forwards}
 @keyframes fall{to{transform:translateY(110vh) rotate(540deg)}}
-.fill{font:inherit;font-weight:700;border:2px dashed var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:8px;padding:.05em .6em;cursor:pointer;min-width:5em}
-.fill.open{border-style:solid;background:var(--accent);color:var(--accent-ink)}
-.cpt{gap:8px}
-.cpt h2{font-family:var(--font-d);font-weight:400;font-size:1.3rem;margin:0}
-.cpt p{margin:0}
-.cpt-ol{margin:0;padding-left:1.4em;display:flex;flex-direction:column;gap:4px}
-.cpt-forms{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-@media (max-width:760px){.cpt-forms{grid-template-columns:minmax(0,1fr)}}
-.cpt-form{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
-.cpt-code{font-family:var(--font-m);background:var(--code-bg);color:var(--code-fg);border-radius:10px;padding:10px 14px;white-space:pre;font-size:1.05rem}
-.cpt-code .hl{color:#FF8A8A}.cpt-code .hl2{color:#FF8A8A}
-.cpt-ex{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:.92rem}
-.cpt-ex code{font-family:var(--font-m);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:.1em .45em}
-.cpt-t{width:100%}
-.cpt-t td code{font-family:var(--font-m);font-weight:700}
-.cpt-ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px}
-.cpt-ul code{font-family:var(--font-m)}
-.btnlink{display:inline-block;text-decoration:none;font-weight:700;border-radius:8px;border:1px solid var(--line-strong);background:var(--panel);color:var(--ink);padding:.42em .9em}
-.btnlink.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
-.ck2{font-size:1.3rem;line-height:1;border:none;background:none;padding:0 .2em;cursor:pointer;color:var(--accent)}
 .lbar{width:min(220px,40vw);height:10px;border-radius:999px;background:var(--line);overflow:hidden;align-self:center}
 .lbar i{display:block;height:100%;background:var(--accent);transition:width .2s}
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--bg);font-weight:700;border-radius:10px;padding:.6em 1.1em;box-shadow:0 8px 24px rgba(0,0,0,.25);max-width:calc(100vw - 32px);text-align:center}
@@ -403,6 +383,7 @@ function parseStmt(text){
   if(/^else\s*:$/.test(text)) return {k:'else'};
   if(/^(for|while|if|elif|else)\b/.test(text)) throw new PyErr(/:$/.test(text)?'SyntaxError: invalid syntax':"SyntaxError: expected ':'");
   if(text==='break'||text==='continue'||text==='pass') return {k:text};
+  { const im=text.match(/^import\s+([A-Za-z_]\w*)$/); if(im){ if(im[1]!=='random') throw new PyErr(`ModuleNotFoundError: 이 실험실에서는 random 모듈만 쓸 수 있어요`); return {k:'import', mod:im[1]}; } }
   const toks=tokenize(text);
   const ai=toks.findIndex(t=>t.t==='op'&&(t.v==='+='||t.v==='-='||t.v==='*='));
   if(ai>0) return {k:'aug', op:toks[ai].v[0], target:parseTokens(toks.slice(0,ai)), e:parseTokens(toks.slice(ai+1))};
@@ -550,6 +531,13 @@ function showExpr(n,S){
   }
 }
 function call(n,S){
+  if(n.f.t==='attr'&&n.f.obj.t==='name'&&n.f.obj.n==='random'&&!('random' in S.vars)){
+    if(!S.mods.random) throw new PyErr("NameError: name 'random' is not defined (import random을 먼저 써요)");
+    const args=n.args.map(a=>ev(a,S));
+    if(n.f.n==='randint'){ if(args.length!==2||args.some(x=>typeof x!=='number')) throw new PyErr('TypeError: randint()에는 정수 2개가 필요해요'); const [a,b]=args; if(a>b) throw new PyErr(`ValueError: empty range in randint(${a}, ${b})`); const v=a+Math.floor(S.rng()*(b-a+1)); S.note={kind:'random',v}; return v; }
+    if(n.f.n==='choice'){ const a=args[0]; if(!Array.isArray(a)&&typeof a!=='string') throw new PyErr(`TypeError: object of type '${tname(a)}' has no len()`); if(!a.length) throw new PyErr('IndexError: Cannot choose from an empty sequence'); const v=a[Math.floor(S.rng()*a.length)]; S.note={kind:'random',v}; return v; }
+    throw new PyErr(`AttributeError: module 'random' has no attribute '${n.f.n}'`);
+  }
   if(n.f.t==='attr'){
     const o=ev(n.f.obj,S);
     if(n.f.n==='append'&&Array.isArray(o)){
@@ -618,7 +606,8 @@ function showPrint(t){
 }
 class BreakSig{} class ContSig{}
 function run(tree, inputs){
-  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null};
+  let seed=20261; const rng=()=>{ seed|=0; seed=seed+0x6D2B79F5|0; let t=Math.imul(seed^seed>>>15,1|seed); t=t+Math.imul(t^t>>>7,61|t)^t; return ((t^t>>>14)>>>0)/4294967296; };
+  const S={vars:{}, out:'', hits:{}, loops:[], steps:[], acc:[], print:null, note:null, inq:(inputs||[]).map(String), inIdx:0, inNote:null, mods:{}, rng};
   const maxD=treeDepth(tree);
   const snap=o=>{
     if(S.steps.length>LIMIT) throw new Halt('limit');
@@ -674,6 +663,7 @@ function run(tree, inputs){
         if(!done&&n.orelse){ hit(n.orelse); snap({line:n.orelse.line, kind:'stmt', d, msg:'위 조건이 모두 False → <b>else</b> 안쪽을 실행해요'}); exec(n.orelse.body,d+1); }
       } else if(n.k==='break'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>break</b> → 반복을 바로 끝내요'}); throw new BreakSig(); }
       else if(n.k==='continue'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'<b>continue</b> → 아래는 건너뛰고 반복 처음으로'}); throw new ContSig(); }
+      else if(n.k==='import'){ hit(n); S.mods[n.mod]=true; snap({line:n.line, kind:'stmt', d, msg:`<code>${n.mod}</code> 모듈을 불러와요 (무작위 수를 만들 수 있어요)`}); }
       else if(n.k==='pass'){ hit(n); snap({line:n.line, kind:'stmt', d, msg:'pass → 아무것도 하지 않아요'}); }
       else {
         hit(n);
@@ -686,7 +676,7 @@ function run(tree, inputs){
             else msg='실행';
           } else if(n.k==='assign'){
             const v=ev(n.e,S);
-            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`; }
+            if(n.target.t==='name'){ S.vars[n.target.n]=v; changed=[n.target.n]; msg=`<code>${n.target.n}</code>에 ${esc(repr(v))} 저장`+(S.note&&S.note.kind==='random'?' 🎲 (무작위로 뽑은 수)':''); }
             else {
               const o=ev(n.target.obj,S), i=ev(n.target.i,S);
               if(!Array.isArray(o)) throw new PyErr(`TypeError: '${tname(o)}' object does not support item assignment`);
@@ -740,22 +730,43 @@ for i in range(1, 101):
     if say != answer:
         print("틀렸습니다.")
         break`},
-  fp1:{no:'문제 (1)', title:'1부터 50까지의 숫자의 합을 구해 보자.', desc:'결과: 1275', quiz:true, code:
+  fp1:{no:'문제 (1)', title:'1부터 50까지의 숫자의 합을 구해 보자.', desc:'빈칸 정답: ① range(1, 51)   ② sum + i   →   결과 1275', code:
 `sum = 0
 for i in range(1, 51):
     sum = sum + i
 
 print(sum)`},
-  fp2:{no:'문제 (2)', title:'숫자 하나를 입력받고, 1부터 입력받은 숫자까지의 곱을 구해 보세요.', desc:'입력: 4 → 결과: 24', quiz:true, inputs:['4'], code:
+  fp2:{no:'문제 (2)', title:'숫자 하나를 입력받고, 1부터 입력받은 숫자까지의 곱을 구해 보세요.', desc:'빈칸 정답: ① 1   ② range(1, num + 1)   ③ result = result * i   →   입력 4, 결과 24', inputs:['4'], code:
 `result = 1
 num = int(input())
 for i in range(1, num + 1):
     result = result * i
 
 print(result)`},
-  fp3:{no:'문제 (3)', title:'구구단 4단을 출력해 보자.', desc:'결과: 4 X 1 = 4 … 4 X 9 = 36', quiz:true, code:
+  fp3:{no:'문제 (3)', title:'구구단 4단을 출력해 보자.', desc:'빈칸 정답: ① range(1, 10)   →   결과 4 X 1 = 4 … 4 X 9 = 36', code:
 `for i in range(1, 10):
     print('4 X', i, "=", 4*i)`},
+  fc1:{no:'도전과제 (1)', title:'구구단 외울 단을 입력받아, 해당 숫자의 구구단을 외워 봅시다.', desc:'정답 예시 · ⌨ 입력값에 외울 단을 넣어요', inputs:['7'], code:
+`dan = int(input())
+for i in range(1, 10):
+    print(dan, 'X', i, '=', dan * i)`},
+  fc2:{no:'도전과제 (2)', title:'랜덤으로 곱셈 문제를 내고, 답을 맞추는 게임을 만들어 보자.', desc:'정답 예시 · 실험실에서는 매번 같은 문제(6 X 2, 9 X 2, 6 X 4)가 나와요. ⌨ 입력값이 내 답이에요 (마지막은 일부러 틀림)', inputs:['12', '18', '25'], code:
+`import random
+for i in range(3):
+    a = random.randint(2, 9)
+    b = random.randint(2, 9)
+    print(a, 'X', b, '= ?')
+    ans = int(input())
+    if ans == a * b:
+        print('정답!')
+    else:
+        print('틀렸어요. 정답은', a * b)`},
+  fc3:{no:'도전과제 (3)', title:'1부터 30까지 숫자의 홀수 짝수를 판별하는 프로그램을 만들어 보자.', desc:'정답 예시 · i % 2 == 0 이면 짝수', code:
+`for i in range(1, 31):
+    if i % 2 == 0:
+        print(i, '짝수')
+    else:
+        print(i, '홀수')`},
   e11:{no:'예제 1-1', title:'리스트 기본 3단계', desc:'만들기 → 꺼내기 → 바꾸기. 인덱스는 0부터, 맨 뒤는 -1!', code:
 `list1 = ["실드", "투시경", "물약"]
 print(list1[0], list1[-1])
@@ -837,11 +848,10 @@ for i in range(len(s)):
 const APP='nested';
 const SECTIONS = ({
  for1:[
-  {id:'concept', name:'개념 정리', render:r=>renderConcept(r), menu:'반복 · 반복문 · for 형식'},
-  {id:'form', name:'for 형식', exs:['f1','f2']},
-  {id:'game', name:'예제 1-1 369 게임', exs:['g369']},
-  {id:'quiz', name:'문제', exs:['fp1','fp2','fp3']},
-  {id:'challenge', name:'도전과제', render:r=>renderChallenges(r), menu:'도전과제 3개'},
+  {id:'form', name:'1) for 형식', exs:['f1','f2']},
+  {id:'game', name:'2) 예제 1-1 369 게임', exs:['g369']},
+  {id:'quiz', name:'3) 문제', exs:['fp1','fp2','fp3']},
+  {id:'challenge', name:'4) 도전과제', exs:['fc1','fc2','fc3']},
  ],
  list:[
   {id:'basic', name:'1) 리스트 기본', exs:['e11']},
@@ -864,7 +874,7 @@ let toastT=null;
 function toast(msg){ const t=$('#toast'); t.textContent=msg; t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,2200); }
 
 /* 코드 강조 */
-const KW=new Set(['for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
+const KW=new Set(['import','for','in','print','range','len','append','if','elif','else','while','not','and','or','True','False','None','break','continue','pass','input','int','float','str','max','min','sum','abs']);
 function hlLine(raw, loopVars){
   const ind=raw.match(/^ */)[0].length;
   let guides='';
@@ -1247,15 +1257,6 @@ const digits=v=>{ const m=String(v).match(/-?\d+/); return m?m[0]:''; };
 const nospace=v=>String(v).replace(/\s+/g,'');
 const outLines=v=>String(v).replace(/\r/g,'').split('\n').map(x=>x.replace(/\s+/g,' ').trim()).filter(Boolean);
 const ASK={
-  fp1:{blank:"sum = 0\nfor i in ①:\n    sum= ②\n\nprint(sum)", goal:'1275',
-      fields:[{id:'b1',label:'빈칸 ①',ans:'range(1, 51)',ok:v=>nospace(v)==='range(1,51)'},
-              {id:'b2',label:'빈칸 ②',ans:'sum + i',ok:v=>['sum+i','i+sum'].includes(nospace(v))}]},
-  fp2:{blank:"result = ①\nnum = int(input())\nfor i in ②:\n    ③\n\nprint(result)", goal:'4\n24',
-      fields:[{id:'b1',label:'빈칸 ①',ans:'1',ok:v=>nospace(v)==='1'},
-              {id:'b2',label:'빈칸 ②',ans:'range(1, num + 1)',ok:v=>['range(1,num+1)','range(1,1+num)'].includes(nospace(v))},
-              {id:'b3',label:'빈칸 ③',ans:'result = result * i',ok:v=>['result=result*i','result=i*result','result*=i'].includes(nospace(v))}]},
-  fp3:{blank:"for i in ①:\n    print('4 X', i, \"=\", 4*i )", goal:'4 X 1 = 4\n4 X 2 = 8\n4 X 3 = 12\n4 X 4 = 16\n...\n4 X 9 = 36',
-      fields:[{id:'b1',label:'빈칸 ①',ans:'range(1, 10)',ok:v=>nospace(v)==='range(1,10)'}]},
   q1:{blank:"a = [9, 4, 1, 3, 8]\nprint(a[ ① ], a[ ② ])\na.append( ③ )\nprint(a, len(a))", goal:'4 8\n[9, 4, 1, 3, 8, 6] 6',
       fields:[{id:'b1',label:'빈칸 ①',ans:'1 (또는 -4)',ok:v=>['1','-4'].includes(digits(v))&&nospace(v).length<=3},
               {id:'b2',label:'빈칸 ②',ans:'-1 (또는 4)',ok:v=>['-1','4'].includes(digits(v))&&nospace(v).length<=3},
@@ -1417,50 +1418,6 @@ function challengeView(sec,key){
   paintAdm(); window.addEventListener('pl-change',paintAdm);
   wrap.append(adm);
   return wrap;
-}
-
-/* ───────── for문: 개념 정리 · 도전과제 ───────── */
-function fillBtn(hint,ans){ const b=h('button',{class:'fill','aria-label':`빈칸 (${hint}) 정답 보기`},`( ${hint} )`); b.addEventListener('click',()=>{ const on=b.classList.toggle('open'); b.textContent=on?ans:`( ${hint} )`; }); return b; }
-function renderConcept(root){
-  root.innerHTML='';
-  root.append(h('div',{class:'lead'}, h('span',{},'📚'), h('span',{html:'<b>시험 대비 정리</b> · 빈칸 <b>( ㅂ ㅂ )</b>을 누르면 정답이 보여요. 먼저 머릿속으로 떠올린 다음 눌러 보세요!'})));
-  const sec=(t,...kids)=>h('section',{class:'pane cpt'}, h('h2',{},t), ...kids);
-  root.append(
-    sec('1. 반복이란?', h('p',{}, fillBtn('ㅂ ㅂ','반복'), ' 이란? : 어떤 것을 계속해서 되풀이하는 것')),
-    sec('2. 반복문이란?', h('p',{}, fillBtn('ㅂ ㅂ ㅁ','반복문'), ' 이란?'),
-      h('ol',{class:'cpt-ol'},
-        h('li',{},'알고리즘의 기본 구조 중 어떤 처리를 여러 번 반복해서 실행하는 반복 구조를 사용하는 것'),
-        h('li',{},'컴퓨터의 빠른 처리 속도를 이용해서 똑같은 계산을 반복적으로 수행할 수 있도록 함'),
-        h('li',{},'많은 양의 자료도 원하는 횟수만큼 빠르게 처리할 수 있음'))),
-    sec('3. for 문의 형식',
-      h('div',{class:'cpt-forms'},
-        h('div',{class:'cpt-form'}, h('div',{class:'cpt-code',html:'<span class="t-kw">for</span> <b class="hl">a</b> <span class="t-kw">in</span> <b class="hl2">data</b>:<br>    명령어 B'}),
-          h('p',{},'a가 data 안에 있는 값인 동안 명령어 B를 실행하라'),
-          h('div',{class:'cpt-ex'}, h('code',{},'for a in [1,2,3]:  print(a)'), h('span',{},'→ 1, 2, 3'))),
-        h('div',{class:'cpt-form'}, h('div',{class:'cpt-code',html:'<span class="t-kw">for</span> <b class="hl">a</b> <span class="t-kw">in</span> <b class="hl2">range(시작, 종료)</b>:<br>    명령어 B'}),
-          h('p',{},'a에 시작 숫자가 먼저 들어가고, 종료 숫자 - 1까지 명령어 B를 반복 실행. 종료 숫자가 들어가면 반복문 종료'),
-          h('div',{class:'cpt-ex'}, h('code',{},'for a in range(1, 9):  print(a)'), h('span',{},'→ 1, 2, … , 8 (9는 안 나와요!)'))))),
-    sec('⭐ 시험에 잘 나오는 range',
-      h('table',{class:'cpt-t'},
-        h('thead',{}, h('tr',{}, h('th',{},'코드'), h('th',{},'a에 들어가는 값'), h('th',{},'반복 횟수'))),
-        h('tbody',{}, ...[['range(1, 9)','1, 2, 3, 4, 5, 6, 7, 8','8번'],['range(5)','0, 1, 2, 3, 4  (0부터 시작!)','5번'],['range(1, 51)','1, 2, … , 50','50번'],['range(1, 10)','1, 2, … , 9  (구구단)','9번'],['range(1, num + 1)','1, 2, … , num','num번'],['range(2, 10, 2)','2, 4, 6, 8  (2씩 커짐)','4번']]
-          .map(r=>h('tr',{}, h('td',{},h('code',{},r[0])), h('td',{},r[1]), h('td',{},r[2]))))),
-      h('ul',{class:'cpt-ul'},
-        h('li',{html:'<b>종료 숫자는 포함되지 않아요.</b> range(1, 9)에서 9는 안 나와요.'}),
-        h('li',{html:'<b>for 줄 끝에는 콜론(:)</b>, 반복할 명령은 <b>4칸 들여쓰기</b>!'}),
-        h('li',{html:'합계는 <code>sum = 0</code>에서 시작해 <code>sum = sum + i</code>, 곱은 <code>result = 1</code>에서 시작해 <code>result = result * i</code> (곱은 0이 아니라 1부터!)'}))),
-    h('div',{class:'toolbar'}, h('a',{class:'btnlink',href:'#form'},'for 형식 직접 실행해 보기 →'))
-  );
-}
-function renderChallenges(root){
-  root.innerHTML='';
-  const done=store.get('ch-done',{});
-  const items=['구구단 외울 단을 입력받아, 해당 숫자의 구구단을 외워 봅시다.','랜덤으로 곱셈 문제를 내고, 답을 맞추는 게임을 만들어 보자.','1부터 30까지 숫자의 홀수 짝수를 판별하는 프로그램을 만들어 보자.'];
-  root.append(h('div',{class:'exhead'}, h('span',{class:'exno'},'3)'), h('span',{class:'extitle'},'도전과제')),
-    h('div',{class:'lead'}, h('span',{},'🚀'), h('span',{html:'다 만든 과제는 □를 눌러 체크해요. 코드는 <b>내 맘대로 실험실</b>에서 직접 써 보고 한 단계씩 실행해 볼 수 있어요. (랜덤 문제는 <code>import random</code>도 돼요!)'})));
-  const ul=h('ul',{class:'mission'});
-  items.forEach((t,ix)=>{ const li=h('li',{class:done[ix]?'ok':''}, h('button',{class:'ck2','aria-pressed':String(!!done[ix]),'aria-label':`(${ix+1}) 완료 표시`,onclick:()=>{ done[ix]=!done[ix]; store.set('ch-done',done); renderChallenges(root); }}, done[ix]?'☑':'☐'), h('span',{},`(${ix+1}) ${t}`)); ul.append(li); });
-  root.append(h('section',{class:'pane'}, ul), h('div',{class:'toolbar'}, h('a',{class:'btnlink primary',href:'../mylab/index.html'},'✏️ 내 맘대로 실험실에서 만들어 보기 →')));
 }
 
 /* ───────── 화면 구성 ───────── */
