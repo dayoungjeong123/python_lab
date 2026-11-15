@@ -1,13 +1,5 @@
 [
   {
-    "file": "06_for.pdf",
-    "no": "(6)",
-    "title": "반복문 for",
-    "unit": "Ⅲ. 알고리즘과 프로그래밍",
-    "desc": "반복 · 반복문, for 형식, 예제 1-1 369 게임, 문제 (1)~(3), 도전과제",
-    "lab": "../for1/index.html"
-  },
-  {
     "file": "08_list_nested.pdf",
     "no": "(8)",
     "title": "리스트와 중첩 제어구조",
