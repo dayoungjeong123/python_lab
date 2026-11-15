@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>파이썬 흐름 실험실</title>
-<meta name="description" content="고등학교 1학년 정보 수업용 파이썬 흐름 실험실: while문, 이중 for문, 리스트">
+<title>다영쌤의 파이썬 흐름 실험실</title>
+<meta name="description" content="다영쌤의 고등학교 1학년 정보 수업용 파이썬 흐름 실험실: for문, while문, 리스트, 중첩 제어구조, 게임">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@400;700&display=swap">
 <style>
@@ -25,6 +25,19 @@
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.55}
 .wrap{max-width:980px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
+.brand{display:flex;align-items:flex-end;gap:14px}
+.mascot{flex:none;width:clamp(78px,12vw,112px);aspect-ratio:140/150;padding:0;border:none;background:none;cursor:pointer;border-radius:20px;animation:sway 3.2s ease-in-out infinite;transform-origin:50% 95%}
+.mascot svg{width:100%;height:100%;display:block}
+.mascot:hover{animation-duration:1.4s}
+.mascot:focus-visible{outline:3px solid var(--accent);outline-offset:4px}
+.mascot.hop{animation:hop .5s ease}
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes hop{30%{transform:translateY(-14px) scale(1.04)}60%{transform:translateY(0)}}
+.tip{position:relative;display:inline-block;margin:.7em 0 0;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:.35em .8em;font-size:.92rem;box-shadow:0 2px 6px rgba(20,30,50,.06)}
+.tip b{color:#3E9D5C;margin-right:.3em}
+@media (prefers-reduced-motion:reduce){.mascot,.mascot.hop{animation:none}}
+@media (max-width:600px){.brand{flex-direction:column;align-items:flex-start;gap:6px}.mascot{width:76px}}
+h1,.lead,.tip{word-break:keep-all}
 header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:14px}
 .kicker{font-size:.9rem;font-weight:700;color:var(--muted);letter-spacing:.04em}
 h1{font-family:var(--font-d);font-weight:400;font-size:clamp(2rem,6vw,2.8rem);line-height:1.1;margin:.15em 0 0;text-wrap:balance}
@@ -89,10 +102,35 @@ footer.credit b{color:var(--ink)}
 <script src="admin.js"></script></head><body>
 <div class="wrap">
   <header class="top">
-    <div>
+    <div class="brand">
+      <button type="button" class="mascot" id="mascot" aria-label="파이에게 꿀팁 듣기">
+        <svg viewBox="0 0 140 150" aria-hidden="true" focusable="false">
+          <ellipse cx="70" cy="140" rx="44" ry="6" fill="#000" opacity=".08"/>
+          <ellipse cx="70" cy="122" rx="48" ry="17" fill="#3E9D5C"/>
+          <ellipse cx="70" cy="118" rx="44" ry="13" fill="#5BC27A"/>
+          <ellipse cx="70" cy="103" rx="38" ry="14" fill="#3E9D5C"/>
+          <ellipse cx="70" cy="99" rx="34" ry="11" fill="#5BC27A"/>
+          <path d="M96 99 C112 92 112 118 92 120" fill="none" stroke="#3E9D5C" stroke-width="9" stroke-linecap="round"/>
+          <ellipse cx="72" cy="86" rx="15" ry="12" fill="#5BC27A"/>
+          <ellipse cx="70" cy="62" rx="33" ry="28" fill="#5BC27A"/>
+          <ellipse cx="70" cy="70" rx="22" ry="13" fill="#B9EBC6"/>
+          <circle cx="57" cy="57" r="8" fill="#fff"/><circle cx="83" cy="57" r="8" fill="#fff"/>
+          <circle cx="58" cy="58" r="4.6" fill="#1E2A3A"/><circle cx="84" cy="58" r="4.6" fill="#1E2A3A"/>
+          <circle cx="59.6" cy="56.2" r="1.6" fill="#fff"/><circle cx="85.6" cy="56.2" r="1.6" fill="#fff"/>
+          <ellipse cx="47" cy="69" rx="6" ry="3.6" fill="#FF9DB3" opacity=".75"/><ellipse cx="93" cy="69" rx="6" ry="3.6" fill="#FF9DB3" opacity=".75"/>
+          <path d="M63 72 Q70 78 77 72" fill="none" stroke="#1E2A3A" stroke-width="2.4" stroke-linecap="round"/>
+          <path d="M70 76 L70 82 M70 82 L67 85 M70 82 L73 85" fill="none" stroke="#F0506E" stroke-width="2" stroke-linecap="round"/>
+          <path d="M44 34 L70 22 L96 34 L70 46 Z" fill="#2B3445"/>
+          <rect x="60" y="36" width="20" height="9" rx="2" fill="#2B3445"/>
+          <path d="M96 34 L98 50" stroke="#F5B301" stroke-width="2.4" stroke-linecap="round"/><circle cx="98" cy="52" r="3.2" fill="#F5B301"/>
+        </svg>
+      </button>
+      <div>
       <div class="kicker">고등학교 1학년 정보 · 파이썬</div>
-      <h1>파이썬 흐름 실험실</h1>
+      <h1>다영쌤의 파이썬 흐름 실험실</h1>
       <p class="lead">코드를 한 줄씩 실행하면서 변수와 흐름이 어떻게 바뀌는지 살펴봐요. 카드를 골라 들어가세요.</p>
+      <p class="tip" id="tip" aria-live="polite"><b>파이</b> 안녕! 나를 누르면 코딩 꿀팁을 알려 줄게 🐍</p>
+      </div>
     </div>
     <div class="hctl"><div class="seg" id="theme-seg" role="radiogroup" aria-label="화면 모드"><button role="radio" data-theme-set="light" aria-checked="false">☀️ 라이트</button><button role="radio" data-theme-set="dark" aria-checked="false">🌙 다크</button></div><span data-admin-slot></span></div>
   </header>
@@ -146,6 +184,11 @@ function renderCards(){const st=openState(),adm=window.PL&&PL.admin;
     <div class="go"><span>${open?(l.key==='game'?'게임하러 가기':'실험실 들어가기'):peek?'관리자로 미리 보기':'곧 열려요'}</span><span class="arr" aria-hidden="true">${open?'→':peek?'👀':'🔒'}</span></div>
   </${tag}></li>`}).join('')}
 renderCards();
+// 마스코트 '파이': 누르면 꿀팁
+const TIPS=['range(1, 9)는 1부터 8까지! 끝 숫자는 안 들어가요','for·if·while 줄 끝에는 콜론(:)을 꼭!','반복할 줄은 4칸 들여쓰기','리스트 인덱스는 0부터 세요. 맨 뒤는 -1!','같은지 비교할 때는 = 말고 ==','while 조건이 계속 True면 무한 반복!','합계는 0에서, 곱은 1에서 시작해요','break는 반복을 바로 끝내요',"print(x, end=' ')는 줄을 안 바꿔요",'막히면 05 내 맘대로에서 한 줄씩 실행해 봐요'];
+let tipI=-1;
+document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIPS.length;document.getElementById('tip').innerHTML='<b>파이</b> '+TIPS[tipI].replace(/&/g,'&amp;').replace(/</g,'&lt;');
+  const m=e.currentTarget;m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),520)});
 fetch('labs.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){published={...DEFAULT_OPEN,...j};renderCards()}}).catch(()=>{});
 window.addEventListener('pl-change',()=>{if(!PL.admin)draft=null;renderCards()});
 // 관리자 패널: 카드 스위치
