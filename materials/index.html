@@ -76,11 +76,12 @@ footer.credit b{color:var(--ink)}
 <script>
 // 학습지 목록은 list.json에서 읽어요. 새 학습지를 올리면 이 폴더에 PDF를 넣고 list.json에 한 줄 추가하면 돼요.
 const FALLBACK=[
-  {file:'08_list_nested.pdf',no:'(8)',title:'리스트와 중첩 제어구조',unit:'Ⅲ. 알고리즘과 프로그래밍',desc:'리스트 · 인덱스 · len · append · 슬라이싱, for 안에 if · while 안에 if · for 안에 for, 문제 1~4, (도전)문제 5',lab:'../for2/index.html'}
+  {file:'(8)리스트와 중첩 제어구조.pdf',no:'(8)',title:'리스트와 중첩 제어구조',unit:'Ⅲ. 알고리즘과 프로그래밍',desc:'리스트 · 인덱스 · len · append · 슬라이싱, for 안에 if · while 안에 if · for 안에 for, 문제 1~4, (도전)문제 5',lab:'../for2/index.html'}
 ];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-const safeFile=f=>/^[\w.-]+\.pdf$/i.test(f)?f:null;
+const safeFile=f=>typeof f==='string'&&/^[^\/\\]+\.pdf$/i.test(f)&&!f.startsWith('.')?f:null;
+const url=f=>encodeURIComponent(f);
 function render(items){
   const ok=items.filter(x=>safeFile(x.file));
   if(!ok.length){$('list').innerHTML='<li class="empty">아직 올라온 학습지가 없어요.</li>';return}
@@ -89,8 +90,8 @@ function render(items){
     <div class="info"><span class="unit">${esc(x.unit||'')}</span><h2>${esc(x.no?x.no+' ':'')}${esc(x.title)}</h2>${x.desc?`<p>${esc(x.desc)}</p>`:''}</div>
     <div class="acts">
       <button type="button" class="btn primary" data-view="${i}" aria-expanded="false" aria-controls="viewer-${i}">👀 바로 보기</button>
-      <a class="btn" href="${esc(x.file)}" target="_blank" rel="noopener">↗ 새 창</a>
-      <a class="btn" href="${esc(x.file)}" download>⬇ 내려받기</a>
+      <a class="btn" href="${url(x.file)}" target="_blank" rel="noopener">↗ 새 창</a>
+      <a class="btn" href="${url(x.file)}" download="${esc(x.file)}">⬇ 내려받기</a>
       ${x.lab?`<a class="btn" href="${esc(x.lab)}">🧪 실험실</a>`:''}
     </div>
     <div class="viewer" id="viewer-${i}" hidden></div>
@@ -98,7 +99,7 @@ function render(items){
   $('list').querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>{
     const i=+b.dataset.view,x=ok[i],v=$('viewer-'+i),li=$('doc-'+i),open=v.hidden;
     v.hidden=!open;li.classList.toggle('open',open);b.setAttribute('aria-expanded',String(open));b.textContent=open?'✕ 닫기':'👀 바로 보기';
-    if(open&&!v.firstChild){v.innerHTML=`<iframe src="${esc(x.file)}#view=FitH" title="${esc(x.title)} 학습지"></iframe><p class="hint">휴대폰에서 잘 안 보이면 <b>↗ 새 창</b>이나 <b>⬇ 내려받기</b>를 눌러 주세요.</p>`}
+    if(open&&!v.firstChild){v.innerHTML=`<iframe src="${url(x.file)}#view=FitH" title="${esc(x.title)} 학습지"></iframe><p class="hint">휴대폰에서 잘 안 보이면 <b>↗ 새 창</b>이나 <b>⬇ 내려받기</b>를 눌러 주세요.</p>`}
     if(open)li.scrollIntoView({block:'start',behavior:'smooth'});
   }));
 }
