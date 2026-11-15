@@ -712,14 +712,14 @@ total = 0
 for i in range(len(s)):      # i = 자리 번호
     total += s[i]
 print(total)`},
-  e31:{no:'예제 3-1', title:'① for 안에 if - 조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
+  e31:{no:'예제 3-1', title:'조건에 맞는 값 골라내기', desc:'위 코드는 80점 이상인 점수의 ( 개수 )를 구해요', code:
 `s = [90, 85, 77, 100, 68]
 cnt = 0
 for x in s:
     if x >= 80:
         cnt += 1
 print(cnt)`},
-  e32:{no:'예제 3-2', title:'② while 안에 if - 0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
+  e32:{no:'예제 3-2', title:'0을 입력할 때까지 짝수만 더하기', desc:'입력 : 3 4 5 6 0', inputs:['3','4','5','6','0'], code:
 `total = 0
 n = int(input())
 while n != 0:
@@ -727,10 +727,21 @@ while n != 0:
         total += n
     n = int(input())
 print(total)`},
-  e33:{no:'예제 3-3', title:'③ for 안에 for - 별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
+  e33:{no:'예제 3-3', title:'별찍기', desc:'바깥 for가 1번 돌 때, 안쪽 for는 ( 끝까지 ) 돌아요. 안쪽 명령의 실행 횟수 = 바깥 반복 횟수 ( 곱하기 ) 안쪽 반복 횟수', code:
 `for i in range(3):
     for j in range(5):
         print('*', end='')
+    print()`},
+  e34:{no:'예제 3-4', title:'', desc:'', code:
+`for i in range(1, 3):
+    for j in range(1, 4):
+        print(i * j, end=' ')
+    print()`},
+  e35:{no:'예제 3-5', title:'', desc:'', code:
+`a = [2, 4, 6]
+for i in range(3):
+    for j in range(i + 1):
+        print(a[j], end=' ')
     print()`},
   q1:{no:'문제 1', title:'결과가 오른쪽처럼 나오도록 빈칸을 채우시오.', desc:'결과: 4 8 / [9, 4, 1, 3, 8, 6] 6', quiz:true, code:
 `a = [9, 4, 1, 3, 8]
@@ -764,7 +775,7 @@ const SECTIONS = APP==='list' ? [
 ] : [
   {id:'forif', name:'① for 안에 if', exs:['e31']},
   {id:'whileif', name:'② while 안에 if', exs:['e32']},
-  {id:'forfor', name:'③ for 안에 for', exs:['e33']},
+  {id:'forfor', name:'③ for 안에 for', exs:['e33','e34','e35']},
   {id:'quiz', name:'문제를 풀어봅시다', exs:['q1','q2','q3','q4','q5']},
 ];
 
@@ -1328,7 +1339,7 @@ function showEx(sec, key, flash){
   const panel=$(`#panel-${sec}`);
   panel.innerHTML='';
   const S=SECTIONS.find(x=>x.id===sec);
-  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, `${EX[k].no} ${EX[k].title}`)));
+  const chips=h('div',{class:'chips'}, ...S.exs.map(k=>h('button',{class:'chip','aria-pressed':String(k===key), onclick:()=>showEx(sec,k)}, EX[k].title?`${EX[k].no} ${EX[k].title}`:EX[k].no)));
   if(S.exs.length>1) panel.append(chips);
   const ex=EX[key];
   panel.append(h('div',{class:'exhead'}, h('span',{class:'exno'},ex.no), h('span',{class:'extitle'},ex.title), ex.desc?h('div',{class:'exdesc'},ex.desc):null));
