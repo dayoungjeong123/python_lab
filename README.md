@@ -69,11 +69,11 @@
 첫 화면 위쪽 **📄 학습지** 버튼으로 들어가요 (카드 아님). 학습지마다 👀 바로 보기 · ↗ 새 창 · ⬇ 내려받기 · 🧪 실험실 바로 가기가 있어요.
 
 **새 학습지 올리는 법 (GitHub 웹에서)**
-1. 저장소에서 `materials` 폴더 → **Add file → Upload files** → PDF를 끌어다 놓고 **Commit changes**. 파일 이름은 영어·숫자로 (예: `07_while.pdf`).
+1. 저장소에서 `materials` 폴더 → **Add file → Upload files** → PDF를 끌어다 놓고 **Commit changes**. 파일 이름은 한글도 돼요 (예: `(7)반복문 while.pdf`). 같은 이름으로 올리면 새 파일로 바뀌어요.
 2. `materials/list.json`을 열고 ✏️ 연필 → 아래 형식으로 한 덩어리를 추가하고 Commit.
 ```json
   {
-    "file": "07_while.pdf",
+    "file": "(7)반복문 while.pdf",
     "no": "(7)",
     "title": "반복문 while",
     "unit": "Ⅲ. 알고리즘과 프로그래밍",
