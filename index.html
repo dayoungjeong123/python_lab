@@ -24,7 +24,7 @@
 *{box-sizing:border-box}
 html{font-size:17px}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-b);line-height:1.55}
-.wrap{max-width:980px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
+.wrap{position:relative;max-width:980px;margin:0 auto;padding:28px max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;gap:28px;min-height:100vh}
 .brand{display:flex;align-items:flex-end;gap:14px}
 .mascot{flex:none;width:clamp(78px,12vw,112px);aspect-ratio:140/150;padding:0;border:none;background:none;cursor:pointer;border-radius:20px;animation:sway 3.2s ease-in-out infinite;transform-origin:50% 95%}
 .mascot svg{width:100%;height:100%;display:block}
@@ -96,6 +96,8 @@ li.wide{grid-column:1/-1}
 @media (prefers-reduced-motion:reduce){.wemo span{animation:none}}
 footer.credit{margin-top:auto;border-top:1px solid var(--line);padding-top:14px;text-align:center;color:var(--muted);font-size:.92rem}
 footer.credit b{color:var(--ink)}
+.today{position:absolute;top:8px;right:max(16px,env(safe-area-inset-right,0px));font-size:.78rem;color:var(--muted);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+.today b{color:var(--ink);font-weight:700}
 .hctl{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
 .docbtn{display:inline-flex;align-items:center;gap:.3em;font-weight:700;text-decoration:none;border-radius:999px;border:1px solid var(--accent);background:var(--panel);color:var(--accent);padding:.38em .95em;white-space:nowrap}
 .docbtn:hover{background:var(--accent-soft)}
@@ -104,6 +106,7 @@ footer.credit b{color:var(--ink)}
 </style>
 <script src="admin.js"></script></head><body>
 <div class="wrap">
+  <div class="today" id="today" hidden aria-label="오늘 방문자 수">today: <b id="today-n"></b></div>
   <header class="top">
     <div class="brand">
       <button type="button" class="mascot" id="mascot" aria-label="파이에게 꿀팁 듣기">
@@ -192,6 +195,22 @@ const TIPS=['range(1, 9)는 1부터 8까지! 끝 숫자는 안 들어가요','fo
 let tipI=-1;
 document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIPS.length;document.getElementById('tip').innerHTML='<b>파이</b> '+TIPS[tipI].replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const m=e.currentTarget;m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),520)});
+// 오늘 방문자 수 (무료 카운터 Abacus 사용, 같은 브라우저는 하루에 한 번만 셈, 실패하면 숨김)
+(()=>{
+  const API='https://abacus.jasoncameron.dev', NS='dayoungjeong123-pylab';
+  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+  const key='day-'+day;
+  let seen=null; try{ seen=localStorage.getItem('pl-visit-day'); }catch(e){}
+  const first=seen!==day;
+  const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
+  fetch(`${API}/${first?'hit':'get'}/${NS}/${key}`,{signal:ctl.signal,cache:'no-store'})
+    .then(r=>r.status===404?{value:0}:(r.ok?r.json():Promise.reject()))
+    .then(j=>{ const n=Number(j&&j.value); if(!Number.isFinite(n)||n<0) return;
+      if(first){ try{ localStorage.setItem('pl-visit-day',day); }catch(e){} }
+      document.getElementById('today-n').textContent=n.toLocaleString('ko-KR');
+      document.getElementById('today').hidden=false; })
+    .catch(()=>{});
+})();
 fetch('labs.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){published={...DEFAULT_OPEN,...j};renderCards()}}).catch(()=>{});
 window.addEventListener('pl-change',()=>{if(!PL.admin)draft=null;renderCards()});
 // 관리자 패널: 카드 스위치
