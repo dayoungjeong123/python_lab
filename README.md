@@ -85,7 +85,7 @@
 
 ## 오늘 방문자 수 (today)
 첫 화면 오른쪽 위에 `today: N`이 작게 나와요. 무료 방문자 통계 [GoatCounter](https://www.goatcounter.com)를 써요.
-- **켜는 법:** GoatCounter에 가입해 Code(예: `dayoung-pylab`)를 정하고, Settings에서 "Allow adding visitor counts on your website"를 켠 뒤, `index.html`의 `const GC_CODE='';`에 Code를 넣어요. 비어 있으면 숫자를 숨겨요.
+- **켜는 법:** GoatCounter에 가입해 Code(예: `dayoung-pylab`)를 정하고, Settings에서 "Allow adding visitor counts on your website"를 켠 뒤, `index.html`의 `const GC_CODE='...';`에 Code를 넣어요 (지금: `dayoung` → https://dayoung.goatcounter.com). 비어 있으면 숫자를 숨겨요.
 - 같은 브라우저는 하루에 한 번만 세요(새로고침해도 안 늘어남). 첫 화면을 연 사람만 세요.
 - GoatCounter 하루는 세계 표준시(UTC) 기준이라 한국 시간 오전 9시에 0부터 다시 세요. 숫자는 몇 시간 늦게 반영될 수 있어요.
 - GoatCounter 사이트(`https://코드.goatcounter.com`)에 로그인하면 날짜별 방문 그래프도 볼 수 있어요.

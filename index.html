@@ -197,7 +197,7 @@ document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIP
   const m=e.currentTarget;m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),520)});
 // 오늘 방문자 수 (GoatCounter). GC_CODE에 GoatCounter 가입 때 정한 Code를 넣으면 켜져요. 비어 있으면 숨김.
 (()=>{
-  const GC_CODE='';
+  const GC_CODE='dayoung';
   if(!/^[a-z0-9-]{2,50}$/.test(GC_CODE)) return;
   const BASE=`https://${GC_CODE}.goatcounter.com`;
   const utcDay=new Date().toISOString().slice(0,10);
