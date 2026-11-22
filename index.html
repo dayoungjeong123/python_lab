@@ -195,21 +195,27 @@ const TIPS=['range(1, 9)는 1부터 8까지! 끝 숫자는 안 들어가요','fo
 let tipI=-1;
 document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIPS.length;document.getElementById('tip').innerHTML='<b>파이</b> '+TIPS[tipI].replace(/&/g,'&amp;').replace(/</g,'&lt;');
   const m=e.currentTarget;m.classList.remove('hop');void m.offsetWidth;m.classList.add('hop');setTimeout(()=>m.classList.remove('hop'),520)});
-// 오늘 방문자 수 (무료 카운터 Abacus 사용, 같은 브라우저는 하루에 한 번만 셈, 실패하면 숨김)
+// 오늘 방문자 수 (GoatCounter). GC_CODE에 GoatCounter 가입 때 정한 Code를 넣으면 켜져요. 비어 있으면 숨김.
 (()=>{
-  const API='https://abacus.jasoncameron.dev', NS='dayoungjeong123-pylab';
-  const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  const key='day-'+day;
+  const GC_CODE='dayoung';
+  if(!/^[a-z0-9-]{2,50}$/.test(GC_CODE)) return;
+  const BASE=`https://${GC_CODE}.goatcounter.com`;
+  const utcDay=new Date().toISOString().slice(0,10);
+  const kstDay=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
   let seen=null; try{ seen=localStorage.getItem('pl-visit-day'); }catch(e){}
-  const first=seen!==day;
-  const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
-  fetch(`${API}/${first?'hit':'get'}/${NS}/${key}`,{signal:ctl.signal,cache:'no-store'})
-    .then(r=>r.status===404?{value:0}:(r.ok?r.json():Promise.reject()))
-    .then(j=>{ const n=Number(j&&j.value); if(!Number.isFinite(n)||n<0) return;
-      if(first){ try{ localStorage.setItem('pl-visit-day',day); }catch(e){} }
-      document.getElementById('today-n').textContent=n.toLocaleString('ko-KR');
-      document.getElementById('today').hidden=false; })
-    .catch(()=>{});
+  const first=seen!==kstDay;
+  if(first){ // 이 브라우저의 오늘 첫 방문일 때만 한 번 셈
+    const sc=document.createElement('script'); sc.async=true; sc.src='https://gc.zgo.at/count.js'; sc.dataset.goatcounter=BASE+'/count'; document.head.appendChild(sc);
+    try{ localStorage.setItem('pl-visit-day',kstDay); }catch(e){}
+  }
+  const show=()=>{ const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
+    fetch(`${BASE}/counter/TOTAL.json?start=${utcDay}`,{signal:ctl.signal,cache:'no-store'})
+      .then(r=>(r.ok||r.status===404)?r.json():Promise.reject())
+      .then(j=>{ const n=parseInt(String(j&&j.count||'0').replace(/[^0-9]/g,''),10)||0;
+        document.getElementById('today-n').textContent=n.toLocaleString('ko-KR');
+        document.getElementById('today').hidden=false; })
+      .catch(()=>{}); };
+  setTimeout(show, first?1500:0);
 })();
 fetch('labs.json',{cache:'no-store'}).then(r=>r.ok?r.json():null).then(j=>{if(j&&typeof j==='object'){published={...DEFAULT_OPEN,...j};renderCards()}}).catch(()=>{});
 window.addEventListener('pl-change',()=>{if(!PL.admin)draft=null;renderCards()});
