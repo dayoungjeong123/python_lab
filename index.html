@@ -202,11 +202,11 @@ document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIP
   const BASE=`https://${GC_CODE}.goatcounter.com`;
   const utcDay=new Date().toISOString().slice(0,10);
   const kstDay=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-  let seen=null; try{ seen=localStorage.getItem('pl-visit-day'); }catch(e){}
+  let seen=null; try{ seen=localStorage.getItem('pl-gc-day'); }catch(e){}
   const first=seen!==kstDay;
   if(first){ // 이 브라우저의 오늘 첫 방문일 때만 한 번 셈
     const sc=document.createElement('script'); sc.async=true; sc.src='https://gc.zgo.at/count.js'; sc.dataset.goatcounter=BASE+'/count'; document.head.appendChild(sc);
-    try{ localStorage.setItem('pl-visit-day',kstDay); }catch(e){}
+    try{ localStorage.setItem('pl-gc-day',kstDay); }catch(e){}
   }
   const show=()=>{ const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
     fetch(`${BASE}/counter/TOTAL.json?start=${utcDay}`,{signal:ctl.signal,cache:'no-store'})
