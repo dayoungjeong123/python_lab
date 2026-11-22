@@ -211,8 +211,13 @@ document.getElementById('mascot').addEventListener('click',e=>{tipI=(tipI+1)%TIP
   }
   const num=j=>parseInt(String(j&&j.count||'0').replace(/[^0-9]/g,''),10)||0;
   const get=(q,signal)=>fetch(`${BASE}/counter/TOTAL.json${q}`,{signal,cache:'no-store'}).then(r=>(r.ok||r.status===404)?r.json():Promise.reject()).then(num);
+  // GoatCounter는 같은 날짜 범위의 답을 서버에 4시간 저장해 둬요. 범위 끝(end)을 5분마다 다른 미래 날짜로 바꿔
+  // 물어보면 숫자는 같고(미래에는 방문이 없으니) 늦어도 5분 안에 새 숫자를 받아요.
+  const addDays=(d,n)=>{ const [y,m,dd]=d.split('-').map(Number); return new Date(Date.UTC(y,m-1,dd+n)).toISOString().slice(0,10); };
+  const slot=Math.floor((Date.now()%86400000)/300000);
+  const endDay=addDays(utcDay,2+slot);
   const show=()=>{ const ctl=new AbortController(); setTimeout(()=>ctl.abort(),6000);
-    Promise.all([get(`?start=${utcDay}`,ctl.signal),get('',ctl.signal)])
+    Promise.all([get(`?start=${utcDay}&end=${endDay}`,ctl.signal),get(`?start=2026-01-01&end=${endDay}`,ctl.signal)])
       .then(([today,total])=>{ total=Math.max(total,today);
         document.getElementById('today-n').textContent=today.toLocaleString('ko-KR');
         document.getElementById('total-n').textContent=total.toLocaleString('ko-KR');
